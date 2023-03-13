@@ -86,10 +86,10 @@ public class ChessPlayer {
         // pawn first move
         if (from.getCol() == to.getCol() && BoardGame.pieceLoc(new Square(to.getCol(), to.getRow())) == null) {
             if (BoardGame.pieceLoc(new Square(from.getCol(), from.getRow())).player == this) {
-                if (from.getRow() == 1 && this.colour == 0) return (to.getRow() == 2 || to.getRow() == 3)
-                        && this.colour == 0 && isClearVertically(from, to);
-                else if (from.getRow() == 6 && this.colour == 1) return (to.getRow() == 5 || to.getRow() == 4)
-                        && this.colour == 1 && isClearVertically(from, to);
+                if (this.colour == 0 && BoardGame.pieceLoc(new Square(from.getCol(), from.getRow())).currentMove == 0)
+                    return (to.getRow() - from.getRow() < 3) && isClearVertically(from, to);
+                else if (this.colour == 1 && BoardGame.pieceLoc(new Square(from.getCol(), from.getRow())).currentMove == 0)
+                    return (from.getRow() - to.getRow() < 3) && isClearVertically(from, to);
                 else if (this.colour == 0 && to.getRow() - from.getRow() == 1 && isClearVertically(from, to)) return true;
                 else return this.colour == 1 && to.getRow() - from.getRow() == -1 && isClearVertically(from, to);
             }
@@ -335,7 +335,6 @@ public class ChessPlayer {
                 break;
             }
         }
-        System.out.println(opponent.piecesDiscovered);
         for (Square s : opponentDiscoveredSquares) {
             // checks squares around king to ensure you can't walk into check
             if (tempPiece.col == s.col && tempPiece.row == s.row && tempPiece.getType() != PieceType.KING) {

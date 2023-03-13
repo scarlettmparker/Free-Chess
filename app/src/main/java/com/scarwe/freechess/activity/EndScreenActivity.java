@@ -73,7 +73,6 @@ public class EndScreenActivity extends AppCompatActivity {
                 FileInputStream stream = new FileInputStream(readFrom);
                 // re-reads config so reader isn't empty
                 stream.read(content);
-                System.out.println(new String(content));
                 board.config = new String(content);
                 board.resetBoard();
             } catch (IOException | CloneNotSupportedException e) {

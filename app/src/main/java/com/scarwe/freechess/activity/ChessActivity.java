@@ -355,7 +355,6 @@ public class ChessActivity extends Activity implements ChessDelegate {
             }
         }
         System.out.println(BoardGame.pgnMoves);
-        System.out.println("\nNEW MOVE");
         findViewById(R.id.board_view).invalidate();
         if (gameState != 0) {
             System.out.println("game end");
