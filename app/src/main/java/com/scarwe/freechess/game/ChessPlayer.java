@@ -299,6 +299,7 @@ public class ChessPlayer {
     public void isKingDiscovered(ChessPiece tempPiece, Square to) {
         LinkedHashSet<Square> opponentDiscoveredSquares = new LinkedHashSet<>();
         ChessPlayer opponent;
+        ChessPiece pieceChecking = null;
         int kingRow = 0, kingCol = 0;
         discovered = false;
         boolean possibleCheck = false;
@@ -335,14 +336,23 @@ public class ChessPlayer {
                 break;
             }
         }
-        for (Square s : opponentDiscoveredSquares) {
-            // checks squares around king to ensure you can't walk into check
-            if (tempPiece.col == s.col && tempPiece.row == s.row && tempPiece.getType() != PieceType.KING) {
-                movedIntoDiscovered = true;
+        for (ChessPiece p : opponent.pieces) {
+            for (Square s : p.discoveredSquares) {
+                // checks squares around king to ensure you can't walk into check
+                if (tempPiece.col == s.col && tempPiece.row == s.row && tempPiece.getType() != PieceType.KING) {
+                    movedIntoDiscovered = true;
+                    pieceChecking = p;
+                    break;
+                }
             }
-            if (to.col == s.col && to.row == s.row && opponent.piecesDiscovered < 2) {
-                movedIntoDiscovered = false;
-                break;
+        }
+
+        if (movedIntoDiscovered) {
+            for (Square s : pieceChecking.discoveredSquares) {
+                if (to.col == s.col && to.row == s.row) {
+                    movedIntoDiscovered = false;
+                    break;
+                }
             }
         }
 
