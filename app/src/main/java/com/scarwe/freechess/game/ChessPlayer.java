@@ -87,9 +87,9 @@ public class ChessPlayer {
         if (from.getCol() == to.getCol() && BoardGame.pieceLoc(new Square(to.getCol(), to.getRow())) == null) {
             if (BoardGame.pieceLoc(new Square(from.getCol(), from.getRow())).player == this) {
                 if (this.colour == 0 && BoardGame.pieceLoc(new Square(from.getCol(), from.getRow())).currentMove == 0)
-                    return (to.getRow() - from.getRow() == 2) && isClearVertically(from, to);
+                    return (to.getRow() - from.getRow() == 2 || to.getRow() - from.getRow() == 1) && isClearVertically(from, to);
                 else if (this.colour == 1 && BoardGame.pieceLoc(new Square(from.getCol(), from.getRow())).currentMove == 0)
-                    return (from.getRow() - to.getRow() == 2) && isClearVertically(from, to);
+                    return (from.getRow() - to.getRow() == 2 || from.getRow() - to.getRow() == 1) && isClearVertically(from, to);
                 else if (this.colour == 0 && to.getRow() - from.getRow() == 1 && isClearVertically(from, to)) return true;
                 else return this.colour == 1 && to.getRow() - from.getRow() == -1 && isClearVertically(from, to);
             }
