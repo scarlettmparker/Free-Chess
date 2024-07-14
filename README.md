@@ -1,0 +1,1 @@
+This project was developed for a mobile development course and has now been discontinued. If you wish to follow development of this project, it is being re-written as a web game, which can be found in [my portfolio repository](https://github.com/scarlettmparker/Portfolio).
