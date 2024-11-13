@@ -22,24 +22,27 @@ export const handleMouseMove = (e: MouseEvent, draggingPiece: Accessor<PieceType
 // mouse up handler
 export const handleMouseUp = (dragPos: Accessor<Position | null>, setDragPos: (value: Position | null) => void, draggingPiece: Accessor<PieceType | null>,
     setDraggingPiece: (value: PieceType | null) => void, pieces: Accessor<PieceType[]>, setPieces: (value: PieceType[]) => void) => {
-    if (draggingPiece()) {
-        const newX = Math.floor((dragPos()!.x + WIDTH / 4) / WIDTH) - BOARD_SIZE + 2;
-        const newY = Math.floor((dragPos()!.y + 1) / HEIGHT) - 2; // pretty sure i had this + 1 in other code idk why it's like this
 
-        // ensure new position is within bounds
-        if (newX >= 0 && newX < BOARD_SIZE && newY >= 0 && newY < BOARD_SIZE) {
-            const updatedPieces = pieces().map(piece => {
-                if (piece === draggingPiece()) {
-                    return { ...piece, i: newY, j: newX };
-                }
-                return piece;
-            });
-            setPieces(updatedPieces);
-        }
-
-        setDraggingPiece(null);
-        setDragPos(null);
+    if (!draggingPiece()) {
+        return;
     }
+    
+    const newX = Math.floor((dragPos()!.x + WIDTH / 4) / WIDTH) - BOARD_SIZE + 2;
+    const newY = Math.floor((dragPos()!.y + 1) / HEIGHT) - 2; // pretty sure i had this + 1 in other code idk why it's like this
+
+    // ensure new position is within bounds
+    if (newX >= 0 && newX < BOARD_SIZE && newY >= 0 && newY < BOARD_SIZE) {
+        const updatedPieces = pieces().map(piece => {
+            if (piece === draggingPiece()) {
+                return { ...piece, i: newY, j: newX };
+            }
+            return piece;
+        });
+        setPieces(updatedPieces);
+    }
+
+    setDraggingPiece(null);
+    setDragPos(null);
 }
 
 export default null;

@@ -2,7 +2,7 @@ import { MetaProvider, Title } from "@solidjs/meta";
 import { Accessor, createEffect, createSignal, JSX } from "solid-js";
 
 // helpers
-import setBit from "~/utils/bitboard";
+import setBit, { getBit } from "~/utils/bitboard";
 import { BOARD_SIZE, HEIGHT, WIDTH } from "~/consts/board";
 
 // types
