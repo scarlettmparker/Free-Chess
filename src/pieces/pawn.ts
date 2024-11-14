@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import { notAFile, notHFile } from "~/routes";
+import { notAFile, notHFile } from "~/consts/board";
 import { updateBitboard } from "~/utils/board/bitboard";
 import { PawnState } from "./statetype";
 import { rawPosToNot } from "~/utils/squarehelper";

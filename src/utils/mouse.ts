@@ -27,7 +27,7 @@ export const handleMouseUp = (dragPos: Accessor<Position | null>, setDragPos: (v
         return;
     }
     
-    const newX = Math.floor((dragPos()!.x + WIDTH / 4) / WIDTH) - BOARD_SIZE + 2;
+    const newX = Math.floor((dragPos()!.x - (WIDTH / 2) + 1) / WIDTH) - BOARD_SIZE + 2;
     const newY = Math.floor((dragPos()!.y + 1) / HEIGHT) - 2; // pretty sure i had this + 1 in other code idk why it's like this
 
     // ensure new position is within bounds

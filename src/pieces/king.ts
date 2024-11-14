@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { KingState } from "./statetype";
 import { updateBitboard } from "~/utils/board/bitboard";
-import { notAFile, notHFile } from "~/routes";
+import { notAFile, notHFile } from "~/consts/board";
 
 const [kibitboard, setkiBitboard] = createSignal<bigint>(BigInt(0));
 const [attacks, setAttacks] = createSignal(BigInt(0));

@@ -21,6 +21,7 @@ import { getkiState, maskKingAttacks } from "~/pieces/king";
 import { maskBishopAttacks, maskBishopAttacksOTF } from "~/pieces/bishop";
 import { maskRookAttacks, maskRookAttacksOTF } from "~/pieces/rook";
 import { setOccupancyBits } from "~/utils/occupancies";
+import { generateMagicNumber, getRandomU32Number, getRandomU64Number } from "~/utils/random";
 
 export interface Position {
   x: number;
@@ -31,14 +32,6 @@ export type Colors = {
   WHITE: number;
   BLACK: number;
 };
-
-/**
-* CONSTS --------------------------------------------------------
-*/
-export const notAFile: bigint = 18374403900871474942n;
-export const notABFile: bigint = 18229723555195321596n;
-export const notHFile: bigint = 9187201950435737471n;
-export const notHGFile: bigint = 4557430888798830399n;
 
 export default function Home() {
 
@@ -55,7 +48,8 @@ export default function Home() {
 
   // initialization stuff
   onMount(() => {
-    // initLeaperAttacks();
+    initLeaperAttacks();
+    printBitboard(generateMagicNumber());
   })
 
   // build the board

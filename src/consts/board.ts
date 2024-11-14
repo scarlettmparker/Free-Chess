@@ -16,4 +16,10 @@ export const colors: Colors = Object.freeze({
     BLACK: 1
 })
 
+// bit board
+export const notAFile: bigint = 18374403900871474942n;
+export const notABFile: bigint = 18229723555195321596n;
+export const notHFile: bigint = 9187201950435737471n;
+export const notHGFile: bigint = 4557430888798830399n;
+
 export default initialPieces;

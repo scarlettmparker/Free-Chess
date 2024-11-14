@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import { notABFile, notAFile, notHFile, notHGFile } from "~/routes";
+import { notABFile, notAFile, notHFile, notHGFile } from "~/consts/board";
 import { updateBitboard } from "~/utils/board/bitboard";
 import { KnightState } from "./statetype";
 
