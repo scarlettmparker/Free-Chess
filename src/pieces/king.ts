@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import { KingState } from "./statetype";
-import { updateBitboard } from "~/utils/bitboard";
+import { updateBitboard } from "~/utils/board/bitboard";
 import { notAFile, notHFile } from "~/routes";
 
 const [kibitboard, setkiBitboard] = createSignal<bigint>(BigInt(0));
@@ -9,10 +9,10 @@ export const [kingState, setKingState] = createSignal<KingState>(Array(64).fill(
 
 /**
  * 
- * @param pos Position (e.g. a1) on a Chess board.
+ * @param pos Position on the bitboard.
  * @returns Attack bitboard for a king on a specified square.
  */
-export const maskKingAttacks = (pos: string) => {
+export const maskKingAttacks = (pos: number) => {
     let currentAttacks = BigInt(0);
     let currentBitboard = BigInt(0);
 

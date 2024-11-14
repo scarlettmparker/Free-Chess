@@ -1,36 +1,36 @@
 import { createSignal } from "solid-js";
 import { notABFile, notAFile, notHFile, notHGFile } from "~/routes";
-import { updateBitboard } from "~/utils/bitboard";
+import { updateBitboard } from "~/utils/board/bitboard";
 import { KnightState } from "./statetype";
 
-const [kbitboard, setkBitboard] = createSignal<bigint>(BigInt(0));
-const [attacks, setAttacks] = createSignal(BigInt(0));
-export const [knightState, setKnightState] = createSignal<KnightState>(Array(64).fill(BigInt(0)));
+const [kbitboard, setkBitboard] = createSignal<bigint>(0n);
+const [attacks, setAttacks] = createSignal(0n);
+export const [knightState, setKnightState] = createSignal<KnightState>(Array(64).fill(0n));
 
 /**
  * 
- * @param pos Position (e.g. a1) on a Chess board.
+ * @param pos Position on the bitboard.
  * @returns Attack bitboard for a knight on a specified square.
  */
-export const maskKnightAttacks = (pos: string) => {
-    let currentAttacks = BigInt(0);
-    let currentBitboard = BigInt(0)
+export const maskKnightAttacks = (pos: number) => {
+    let currentAttacks = 0n;
+    let currentBitboard = 0n;
 
     updateBitboard(currentBitboard, setkBitboard, pos, true);
 
     // prevent wrapping around board
-    if ((kbitboard() >> BigInt(17) & notHFile) !== 0n) currentAttacks |= (kbitboard() >> BigInt(17));
-    if ((kbitboard() >> BigInt(15) & notAFile) !== 0n) currentAttacks |= (kbitboard() >> BigInt(15));
+    if ((kbitboard() >> 17n & notHFile) !== 0n) currentAttacks |= (kbitboard() >> 17n);
+    if ((kbitboard() >> 15n & notAFile) !== 0n) currentAttacks |= (kbitboard() >> 15n);
 
-    if ((kbitboard() >> BigInt(10) & notHGFile) !== 0n) currentAttacks |= (kbitboard() >> BigInt(10));
-    if ((kbitboard() >> BigInt(6) & notABFile) !== 0n) currentAttacks |= (kbitboard() >> BigInt(6));
+    if ((kbitboard() >> 10n & notHGFile) !== 0n) currentAttacks |= (kbitboard() >> 10n);
+    if ((kbitboard() >> 6n & notABFile) !== 0n) currentAttacks |= (kbitboard() >> 6n);
 
     // opposite direction
-    if ((kbitboard() << BigInt(17) & notAFile) !== 0n) currentAttacks |= (kbitboard() << BigInt(17));
-    if ((kbitboard() << BigInt(15) & notHFile) !== 0n) currentAttacks |= (kbitboard() << BigInt(15));
+    if ((kbitboard() << 17n & notAFile) !== 0n) currentAttacks |= (kbitboard() << 17n);
+    if ((kbitboard() << 15n & notHFile) !== 0n) currentAttacks |= (kbitboard() << 15n);
 
-    if ((kbitboard() << BigInt(10) & notABFile) !== 0n) currentAttacks |= (kbitboard() << BigInt(10));
-    if ((kbitboard() << BigInt(6) & notHGFile) !== 0n) currentAttacks |= (kbitboard() << BigInt(6));
+    if ((kbitboard() << 10n & notABFile) !== 0n) currentAttacks |= (kbitboard() << 10n);
+    if ((kbitboard() << 6n & notHGFile) !== 0n) currentAttacks |= (kbitboard() << 6n);
 
     setAttacks(currentAttacks);
     return attacks();

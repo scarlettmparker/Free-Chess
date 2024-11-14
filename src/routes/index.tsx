@@ -3,10 +3,10 @@ import { Accessor, createEffect, createSignal, JSX, onMount } from "solid-js";
 
 // helpers
 import { BOARD_SIZE, colors, HEIGHT, WIDTH } from "~/consts/board";
-import { rawPosToNot, squareToNot } from "~/utils/squarehelper";
+import { notToRawPos, rawPosToNot, squareToNot } from "~/utils/squarehelper";
 import { handleMouseDown, handleMouseMove, handleMouseUp } from "~/utils/mouse";
 
-import setBit, { getBit, printBitboard, setBitRaw, updateBitboard } from "~/utils/bitboard";
+import setBit, { countBits, getBit, getLSFBIndex, printBitboard, updateBitboard } from "~/utils/board/bitboard";
 import { getpState, maskPawnAttacks } from "~/pieces/pawn";
 import { getkState, maskKnightAttacks } from "~/pieces/knight";
 
@@ -15,9 +15,12 @@ import PieceType from '~/components/Piece/type';
 
 // components
 import Piece from "~/components/Piece";
-import buildBoard from "~/utils/board";
+import buildBoard from "~/utils/board/board";
 import initLeaperAttacks from "~/pieces/leapers";
 import { getkiState, maskKingAttacks } from "~/pieces/king";
+import { maskBishopAttacks, maskBishopAttacksOTF } from "~/pieces/bishop";
+import { maskRookAttacks, maskRookAttacksOTF } from "~/pieces/rook";
+import { setOccupancyBits } from "~/utils/occupancies";
 
 export interface Position {
   x: number;
@@ -41,7 +44,10 @@ export default function Home() {
 
   const [boardDivs, setBoardDivs] = createSignal<JSX.Element[]>([]);
   const [pieces, setPieces] = createSignal<PieceType[]>([]);
-  const [bitboard, setBitboard] = createSignal<bigint>(BigInt(0));
+
+  // big ints
+  const [bitboard, setBitboard] = createSignal<bigint>(0n);
+  const [block, setBlock] = createSignal<bigint>(0n);
 
   // piece states
   const [draggingPiece, setDraggingPiece] = createSignal<PieceType | null>(null);
@@ -49,10 +55,7 @@ export default function Home() {
 
   // initialization stuff
   onMount(() => {
-    initLeaperAttacks();
-    for (let square = 0; square < 64; square++) {
-      printBitboard(getkiState(square));
-    }
+    // initLeaperAttacks();
   })
 
   // build the board

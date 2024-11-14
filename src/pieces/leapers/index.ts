@@ -1,6 +1,5 @@
 import { colors } from "~/consts/board";
 import { maskPawnAttacks, setPawnState } from "../pawn";
-import { rawPosToNot } from "~/utils/squarehelper";
 import { KingState, KnightState, PawnState } from "../statetype";
 import { maskKnightAttacks, setKnightState } from "../knight";
 import { maskKingAttacks, setKingState } from "../king";
@@ -11,26 +10,26 @@ import { maskKingAttacks, setKingState } from "../king";
 const initLeaperAttacks = () => {
     // pawn state
     const newPawnState: PawnState = [
-        Array(64).fill(BigInt(0)),
-        Array(64).fill(BigInt(0))
+        Array(64).fill(0n),
+        Array(64).fill(0n)
     ];
 
     // knight state
-    const newKnightState: KnightState = Array(64).fill(BigInt(0));
+    const newKnightState: KnightState = Array(64).fill(0n);
 
     // king state
-    const newKingState: KingState = Array(64).fill(BigInt(0));
+    const newKingState: KingState = Array(64).fill(0n);
 
     for (let square = 0; square < 64; square++) {
         // pawn
-        newPawnState[colors.WHITE][square] = maskPawnAttacks(colors.WHITE, rawPosToNot(square));
-        newPawnState[colors.BLACK][square] = maskPawnAttacks(colors.BLACK, rawPosToNot(square));
+        newPawnState[colors.WHITE][square] = maskPawnAttacks(colors.WHITE, square);
+        newPawnState[colors.BLACK][square] = maskPawnAttacks(colors.BLACK, square);
 
         // knight
-        newKnightState[square] = maskKnightAttacks(rawPosToNot(square));
+        newKnightState[square] = maskKnightAttacks(square);
 
         // king
-        newKingState[square] = maskKingAttacks(rawPosToNot(square));
+        newKingState[square] = maskKingAttacks(square);
     }
 
     setPawnState(newPawnState);

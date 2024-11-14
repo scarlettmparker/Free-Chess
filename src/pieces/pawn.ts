@@ -1,35 +1,36 @@
 import { createSignal } from "solid-js";
 import { notAFile, notHFile } from "~/routes";
-import { updateBitboard } from "~/utils/bitboard";
+import { updateBitboard } from "~/utils/board/bitboard";
 import { PawnState } from "./statetype";
+import { rawPosToNot } from "~/utils/squarehelper";
 
-const [pbitboard, setpBitboard] = createSignal<bigint>(BigInt(0));
-const [attacks, setAttacks] = createSignal(BigInt(0));
+const [pbitboard, setpBitboard] = createSignal<bigint>(0n);
+const [attacks, setAttacks] = createSignal(0n);
 export const [pawnState, setPawnState] = createSignal<PawnState>([
-    Array(64).fill(BigInt(0)),
-    Array(64).fill(BigInt(0))
+    Array(64).fill(0n),
+    Array(64).fill(0n)
 ])
 
 /**
  * 
- * @param pos Position (e.g. a1) on a Chess board.
+ * @param pos Position on the bitboard.
  * @param side Colour of piece (either WHITE or BLACK).
  * @returns Attack bitboard for a pawn on a specified square.
  */
-export const maskPawnAttacks = (side: number, pos: string) => {
-    let currentAttacks = BigInt(0);
-    let currentBitboard = BigInt(0);
+export const maskPawnAttacks = (side: number, pos: number) => {
+    let currentAttacks = 0n
+    let currentBitboard = 0n
 
     updateBitboard(currentBitboard, setpBitboard, pos, true);
 
     // white pawns
     if (side == 0) {
-        if ((pbitboard() >> BigInt(7) & notAFile) !== 0n) currentAttacks |= (pbitboard() >> BigInt(7));
-        if ((pbitboard() >> BigInt(9) & notHFile) !== 0n) currentAttacks |= (pbitboard() >> BigInt(9));
+        if ((pbitboard() >> 7n & notAFile) !== 0n) currentAttacks |= (pbitboard() >> 7n);
+        if ((pbitboard() >> 9n & notHFile) !== 0n) currentAttacks |= (pbitboard() >> 9n);
     // black pawns
     } else {
-        if ((pbitboard() << BigInt(7) & notHFile) !== 0n) currentAttacks |= (pbitboard() << BigInt(7));
-        if ((pbitboard() << BigInt(9) & notAFile) !== 0n) currentAttacks |= (pbitboard() << BigInt(9));
+        if ((pbitboard() << 7n & notHFile) !== 0n) currentAttacks |= (pbitboard() << 7n);
+        if ((pbitboard() << 9n & notAFile) !== 0n) currentAttacks |= (pbitboard() << 9n);
     }
 
     setAttacks(currentAttacks);

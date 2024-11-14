@@ -9,10 +9,30 @@ export function squareToNot(i: number, j: number) {
     return (letter + "" + (j + 1));
 }
 
+/**
+ * 
+ * @param square Square on a Chess board.
+ * @returns Position (e.g. a1) on a Chess board.
+ */
 export function rawPosToNot(square: number) {
     const column = String.fromCharCode('a'.charCodeAt(0) + (square % 8));
-    const row = Math.floor(square / 8);
+    const row = 8 - Math.floor(square / 8);
     return column + row;
+}
+
+/**
+ * 
+ * @param position Position (e.g. a1) on a Chess board.
+ * @returns Square number (0 to 63).
+ */
+export function notToRawPos(position: string): number {
+    const column = position[0];
+    const row = parseInt(position[1], 10);
+
+    const columnIndex = column.charCodeAt(0) - 'a'.charCodeAt(0);
+    const rowIndex = 8 - row;
+
+    return rowIndex * 8 + columnIndex;
 }
 
 /**
