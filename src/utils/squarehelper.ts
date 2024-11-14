@@ -9,6 +9,12 @@ export function squareToNot(i: number, j: number) {
     return (letter + "" + (j + 1));
 }
 
+export function rawPosToNot(square: number) {
+    const column = String.fromCharCode('a'.charCodeAt(0) + (square % 8));
+    const row = Math.floor(square / 8);
+    return column + row;
+}
+
 /**
  * 
  * @param pos Position (e.g. a1) on a Chess board.
@@ -17,8 +23,8 @@ export function squareToNot(i: number, j: number) {
 function notToSquare(pos: string) {
     if (pos.length != 2) { return "Invalid input!" }
 
-    const column = pos[0].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0);
-    const row = Number(pos[1]) - 1;
+    const column = pos[0].toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0) ;
+    const row = Number(pos[1]);
 
     if (column < 0 || column > 7 || row < 0 || row > 7) {
         return "Invalid position!";

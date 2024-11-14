@@ -2,6 +2,7 @@ import { JSX } from "solid-js";
 import PieceType from "~/components/Piece/type";
 import Square from "~/components/Square";
 import initialPieces from "~/consts/board";
+import { Colors } from "~/routes";
 
 /**
  * 
@@ -10,7 +11,7 @@ import initialPieces from "~/consts/board";
  * @param HEIGHT Height of each square.
  * @returns List of square divs and list of pieces.
  */
-const buildBoard = (BOARD_SIZE: number, WIDTH: number, HEIGHT: number) => {
+const buildBoard = (BOARD_SIZE: number, WIDTH: number, HEIGHT: number, colors: Colors) => {
     const divs: JSX.Element[] = [];
     const piecesList: PieceType[] = [];
 
@@ -20,7 +21,7 @@ const buildBoard = (BOARD_SIZE: number, WIDTH: number, HEIGHT: number) => {
             const piece = initialPieces[`${i},${j}`];
             if (piece) {
                 // get piece type from notation
-                const color = piece == piece.toLowerCase() ? 0 : 1;
+                const color = piece == piece.toLowerCase() ? colors.WHITE : colors.BLACK;
                 piece && piecesList.push({ i, j, color, piece });
             }
             divs.push(

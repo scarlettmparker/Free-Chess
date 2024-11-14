@@ -1,9 +1,14 @@
 import { MetaProvider, Title } from "@solidjs/meta";
-import { Accessor, createEffect, createSignal, JSX } from "solid-js";
+import { Accessor, createEffect, createSignal, JSX, onMount } from "solid-js";
 
 // helpers
-import setBit, { getBit } from "~/utils/bitboard";
-import { BOARD_SIZE, HEIGHT, WIDTH } from "~/consts/board";
+import { BOARD_SIZE, colors, HEIGHT, WIDTH } from "~/consts/board";
+import { rawPosToNot, squareToNot } from "~/utils/squarehelper";
+import { handleMouseDown, handleMouseMove, handleMouseUp } from "~/utils/mouse";
+
+import setBit, { getBit, printBitboard, setBitRaw, updateBitboard } from "~/utils/bitboard";
+import { getpState, maskPawnAttacks } from "~/pieces/pawn";
+import { getkState, maskKnightAttacks } from "~/pieces/knight";
 
 // types
 import PieceType from '~/components/Piece/type';
@@ -11,39 +16,51 @@ import PieceType from '~/components/Piece/type';
 // components
 import Piece from "~/components/Piece";
 import buildBoard from "~/utils/board";
-import { handleMouseDown, handleMouseMove, handleMouseUp } from "~/utils/mouse";
+import initLeaperAttacks from "~/pieces/leapers";
+import { getkiState, maskKingAttacks } from "~/pieces/king";
 
 export interface Position {
   x: number;
   y: number;
 }
 
+export type Colors = {
+  WHITE: number;
+  BLACK: number;
+};
+
+/**
+* CONSTS --------------------------------------------------------
+*/
+export const notAFile: bigint = 18374403900871474942n;
+export const notABFile: bigint = 18229723555195321596n;
+export const notHFile: bigint = 9187201950435737471n;
+export const notHGFile: bigint = 4557430888798830399n;
+
 export default function Home() {
+
   const [boardDivs, setBoardDivs] = createSignal<JSX.Element[]>([]);
   const [pieces, setPieces] = createSignal<PieceType[]>([]);
-  const [bitBoard, setBitBoard] = createSignal<bigint>(BigInt(0));
+  const [bitboard, setBitboard] = createSignal<bigint>(BigInt(0));
 
   // piece states
   const [draggingPiece, setDraggingPiece] = createSignal<PieceType | null>(null);
   const [dragPos, setDragPos] = createSignal<Position | null>(null);
 
+  // initialization stuff
+  onMount(() => {
+    initLeaperAttacks();
+    for (let square = 0; square < 64; square++) {
+      printBitboard(getkiState(square));
+    }
+  })
+
+  // build the board
   createEffect(() => {
-    const { divs, piecesList } = buildBoard(BOARD_SIZE, WIDTH, HEIGHT);
+    const { divs, piecesList } = buildBoard(BOARD_SIZE, WIDTH, HEIGHT, colors);
     setBoardDivs(divs);
     setPieces(piecesList);
   });
-
-  // example of how to update bit board
-  createEffect(() => {
-    const currentBitBoard = bitBoard();
-    let updatedBitBoard = currentBitBoard;
-
-    // updatedBitBoard = setBit(updatedBitBoard, "e4", true);
-
-    if (updatedBitBoard !== currentBitBoard) {
-      setBitBoard(updatedBitBoard);
-    }
-  }, [bitBoard])
 
   // deal with event listeners for dragging pieces
   createEffect(() => {
