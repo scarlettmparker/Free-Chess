@@ -99,7 +99,7 @@ export function printBitboard(bitboard: bigint) {
 /**
  * Prints the current state of the Chess board.
  * @param bitboards Bitboards to consider when printing.
- * @param side Current player to move (0, white, 1 black).
+ * @param side Current player to move (0. white, 1. black).
  * @param enpassant Current enpassant square if valid.
  * @param castle Castling rights per player.
  */

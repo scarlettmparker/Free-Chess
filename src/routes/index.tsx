@@ -3,10 +3,14 @@ import { createEffect, createSignal, onMount } from "solid-js";
 
 // helpers
 import initLeaperAttacks, { initSliderAttacks } from "~/pieces/init";
-import board, { sliders, BigIntSignalArray, colors } from "~/consts/board";
-import { printBitboard, printBoard } from "~/utils/board/bitboard";
-import { bitboards, castle, enpassant, occupancies, parseFEN, side } from "~/utils/fen";
+import board, { sliders, BigIntSignalArray, colors, charPieces } from "~/consts/board";
+import { printBitboard, printBoard, updateBitboard } from "~/utils/board/bitboard";
+import { bitboards, castle, enpassant, occupancies, parseFEN, setOccupancies, side } from "~/utils/fen";
 import { getter } from "~/utils/bigint";
+import { getQueenAttacks } from "~/pieces/queen";
+import { notToRawPos } from "~/utils/squarehelper";
+import { getpState } from "~/pieces/pawn";
+import { printAttackedSquares } from "~/utils/board/attacks";
 
 export interface Position {
   x: number;
@@ -33,12 +37,14 @@ const cmkPosition = "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 
 
 export default function Home() {
   // initialization stuff
+  const [occupancy, setOccupancy] = createSignal(0n);
+
   onMount(() => {
     initAll();
     
-    parseFEN(startPosition);
+    parseFEN(trickyPosition);
     printBoard(bitboards, side(), enpassant(), castle());
-    printBitboard(getter(occupancies, colors.BOTH)());
+    printAttackedSquares(colors.WHITE);
   })
 
   const initAll = () => {

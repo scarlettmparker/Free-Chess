@@ -3,7 +3,6 @@ import { RookState } from "./statetype";
 import { rookMagicNumbers } from "~/consts/magic";
 import { rookBitMask, rookRelevantBits } from "~/consts/bits";
 
-const [rbitboard, setRbitboard] = createSignal(0n);
 const [attacks, setAttacks] = createSignal(0n);
 export const [rookMask, setRookMask] = createSignal(new BigUint64Array(64));
 export const [rookState, setRookState] = createSignal<RookState>(Array.from({ length: 64 }, () => new BigUint64Array(4096)));
@@ -91,7 +90,7 @@ export const maskRookAttacksOTF = (pos: number, block: bigint) => {
 export const getRookAttacks = (pos: number, occupancy: bigint) => {
     occupancy &= rookMask()[pos];
     occupancy = (occupancy * rookMagicNumbers[pos]) >> (64n - BigInt(rookRelevantBits[pos]));
-    let maskedOccupancy = occupancy & rookBitMask;
+    const maskedOccupancy = occupancy & rookBitMask;
 
     return rookState()[pos][Number(maskedOccupancy)];
 }

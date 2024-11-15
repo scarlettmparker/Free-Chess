@@ -16,6 +16,10 @@ export const [side, setSide] = createSignal(-1);
 export const [enpassant, setEnpassant] = createSignal(-1);
 export const [castle, setCastle] = createSignal(0n);
 
+/**
+ * Parses a FEN and sets the board's position.
+ * @param fen FEN of a Chess board position.
+ */
 export const parseFEN = (fen: string) => {
     // reset board data
     setBitboards(bitboards().map(() => createSignal(0n)));
