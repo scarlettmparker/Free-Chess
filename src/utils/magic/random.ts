@@ -1,4 +1,4 @@
-let state = 1804289383n;
+let randomState = 1804289383n;
 
 /**
  * Generate 64-bit pseudo legal numbers.
@@ -21,21 +21,13 @@ export const getRandomU64Number = () => {
  * @returns Random U32 number (big int masked with U32).
  */
 export const getRandomU32Number = () => {
-    let number = state;
+    let number = randomState;
 
     // XOR shift algorithm
     number ^= number << 13n;
     number ^= number >> 17n;
     number ^= number << 5n;
 
-    state = number;
+    randomState = number;
     return number & 0xFFFFFFFFn;
-}
-
-/**
- * 
- * @returns Magic number candidate.
- */
-export const generateMagicNumber = () => {
-    return getRandomU64Number() & getRandomU64Number() & getRandomU64Number();
 }

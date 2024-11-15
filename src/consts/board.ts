@@ -1,11 +1,5 @@
-import { Colors } from "~/routes";
-
-const initialPieces: Record<string, string> = {
-    '0,0': 'R', '0,1': 'N', '0,2': 'B', '0,3': 'Q', '0,4': 'K', '0,5': 'B', '0,6': 'N', '0,7': 'R', // white pieces
-    '1,0': 'P', '1,1': 'P', '1,2': 'P', '1,3': 'P', '1,4': 'P', '1,5': 'P', '1,6': 'P', '1,7': 'P', // white pawns
-    '6,0': 'p', '6,1': 'p', '6,2': 'p', '6,3': 'p', '6,4': 'p', '6,5': 'p', '6,6': 'p', '6,7': 'p', // black pawns
-    '7,0': 'r', '7,1': 'n', '7,2': 'b', '7,3': 'q', '7,4': 'k', '7,5': 'b', '7,6': 'n', '7,7': 'r', // black pieces
-};
+import { Accessor, Setter, Signal } from "solid-js";
+import { Colors, Sliders } from "~/routes";
 
 export const WIDTH = 64;
 export const HEIGHT = 64;
@@ -13,8 +7,34 @@ export const BOARD_SIZE = 8;
 
 export const colors: Colors = Object.freeze({
     WHITE: 0,
-    BLACK: 1
-})
+    BLACK: 1,
+    BOTH: 2
+});
+
+export const sliders: Sliders = Object.freeze({
+    ROOK: 0,
+    BISHOP: 1
+});
+
+export const pieces = Object.freeze({
+    wk: 1,
+    wq: 2,
+    bk: 4,
+    bq: 8
+});
+
+export const charPieces: { [key: string]: number } = {
+    P: 0, N: 1, B: 2, R: 3, Q: 4, K: 5,
+    p: 6, n: 7, b: 8, r: 9, q: 10, k: 11
+};
+
+export const unicodePieces = [
+    '\u2659', '\u2658', '\u2657', '\u2656', '\u2655', '\u2654',
+    '\u265F', '\u265E', '\u265D', '\u265C', '\u265B', '\u265A'
+];
+
+export type BitboardSignal = [Accessor<bigint>, Setter<bigint>];
+export type BigIntSignalArray = Signal<bigint>[];
 
 // bit board
 export const notAFile: bigint = 18374403900871474942n;
@@ -22,4 +42,4 @@ export const notABFile: bigint = 18229723555195321596n;
 export const notHFile: bigint = 9187201950435737471n;
 export const notHGFile: bigint = 4557430888798830399n;
 
-export default initialPieces;
+export default null;

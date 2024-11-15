@@ -1,6 +1,13 @@
 import { createSignal } from "solid-js";
+import { BishopState } from "./statetype";
+import { bishopMagicNumbers } from "~/consts/magic";
+import { bishopBitMask, bishopRelevantBits } from "~/consts/bits";
+import { printBitboard } from "~/utils/board/bitboard";
 
+const [bibitboard, setBibitboard] = createSignal(0n);
 const [attacks, setAttacks] = createSignal(0n);
+export const [bishopMask, setBishopMask] = createSignal(new BigUint64Array(64));
+export const [bishopState, setBishopState] = createSignal<BishopState>(Array.from({ length: 64 }, () => new BigUint64Array(512)));
 
 /**
  * 
@@ -78,3 +85,19 @@ export const maskBishopAttacksOTF = (pos: number, block: bigint) => {
     setAttacks(currentAttacks);
     return attacks();
 }
+
+/**
+ * 
+ * @param pos Position on the bitboard.
+ * @param occupancy Current occupancy of the board
+ * @returns A bitboard representing squares attacked by the bishop.
+ */
+export const getBishopAttacks = (pos: number, occupancy: bigint) => {
+    occupancy &= bishopMask()[pos];
+    occupancy = (occupancy * bishopMagicNumbers[pos]) >> (64n - BigInt(bishopRelevantBits[pos]));
+    let maskedOccupancy = occupancy & bishopBitMask;
+
+    return bishopState()[pos][Number(maskedOccupancy)];
+}
+
+export default null;

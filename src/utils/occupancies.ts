@@ -1,4 +1,4 @@
-import { getLSFBIndex, updateBitboard } from "./board/bitboard";
+import { getLSFBIndex } from "./board/bitboard";
 
 /**
  * 
@@ -24,3 +24,5 @@ export const setOccupancyBits = (idx: number, bitsInMask: number, attackMask: bi
 
     return occupancy;
 }
+
+export default null;

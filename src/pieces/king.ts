@@ -3,9 +3,9 @@ import { KingState } from "./statetype";
 import { updateBitboard } from "~/utils/board/bitboard";
 import { notAFile, notHFile } from "~/consts/board";
 
-const [kibitboard, setkiBitboard] = createSignal<bigint>(BigInt(0));
-const [attacks, setAttacks] = createSignal(BigInt(0));
-export const [kingState, setKingState] = createSignal<KingState>(Array(64).fill(0));
+const [kibitboard, setkiBitboard] = createSignal<bigint>(0n);
+const [attacks, setAttacks] = createSignal(0n);
+export const [kingState, setKingState] = createSignal<KingState>(new BigUint64Array(64));
 
 /**
  * 
@@ -13,22 +13,22 @@ export const [kingState, setKingState] = createSignal<KingState>(Array(64).fill(
  * @returns Attack bitboard for a king on a specified square.
  */
 export const maskKingAttacks = (pos: number) => {
-    let currentAttacks = BigInt(0);
-    let currentBitboard = BigInt(0);
+    let currentAttacks = 0n;
+    let currentBitboard = 0n;
 
     updateBitboard(currentBitboard, setkiBitboard, pos, true);
 
     // king attacks
-    if (kibitboard() >> BigInt(8) !== 0n) currentAttacks |= (kibitboard() >> BigInt(8));
-    if ((kibitboard() >> BigInt(9) & notHFile) !== 0n) currentAttacks |= (kibitboard() >> BigInt(9));
-    if ((kibitboard() >> BigInt(7) & notAFile) !== 0n) currentAttacks |= (kibitboard() >> BigInt(7));
-    if ((kibitboard() >> BigInt(1) & notHFile) !== 0n) currentAttacks |= (kibitboard() >> BigInt(1));
+    if (kibitboard() >> 8n !== 0n) currentAttacks |= (kibitboard() >> 8n);
+    if ((kibitboard() >> 9n & notHFile) !== 0n) currentAttacks |= (kibitboard() >> 9n);
+    if ((kibitboard() >> 7n & notAFile) !== 0n) currentAttacks |= (kibitboard() >> 7n);
+    if ((kibitboard() >> 1n & notHFile) !== 0n) currentAttacks |= (kibitboard() >> 1n);
 
     // opposite direction
-    if (kibitboard() << BigInt(8) !== 0n) currentAttacks |= (kibitboard() << BigInt(8));
-    if ((kibitboard() << BigInt(9) & notAFile) !== 0n) currentAttacks |= (kibitboard() << BigInt(9));
-    if ((kibitboard() << BigInt(7) & notHFile) !== 0n) currentAttacks |= (kibitboard() << BigInt(7));
-    if ((kibitboard() << BigInt(1) & notAFile) !== 0n) currentAttacks |= (kibitboard() << BigInt(1));
+    if (kibitboard() << 8n !== 0n) currentAttacks |= (kibitboard() << 8n);
+    if ((kibitboard() << 9n & notAFile) !== 0n) currentAttacks |= (kibitboard() << 9n);
+    if ((kibitboard() << 7n & notHFile) !== 0n) currentAttacks |= (kibitboard() << 7n);
+    if ((kibitboard() << 1n & notAFile) !== 0n) currentAttacks |= (kibitboard() << 1n);
 
     setAttacks(currentAttacks);
     return attacks();
@@ -41,3 +41,5 @@ export const maskKingAttacks = (pos: number) => {
 export const getkiState = (square: number) => {
     return kingState()[square];
 }
+
+export default null;

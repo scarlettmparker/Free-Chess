@@ -1,6 +1,12 @@
 import { createSignal } from "solid-js";
+import { RookState } from "./statetype";
+import { rookMagicNumbers } from "~/consts/magic";
+import { rookBitMask, rookRelevantBits } from "~/consts/bits";
 
-const [attacks, setAttacks] = createSignal(BigInt(0));
+const [rbitboard, setRbitboard] = createSignal(0n);
+const [attacks, setAttacks] = createSignal(0n);
+export const [rookMask, setRookMask] = createSignal(new BigUint64Array(64));
+export const [rookState, setRookState] = createSignal<RookState>(Array.from({ length: 64 }, () => new BigUint64Array(4096)));
 
 /**
  * 
@@ -8,7 +14,7 @@ const [attacks, setAttacks] = createSignal(BigInt(0));
  * @returns Rook occupancy bits to form a key.
  */
 export const maskRookAttacks = (pos: number) => {
-    let currentAttacks = BigInt(0);
+    let currentAttacks = 0n;
 
     const targetRank = Math.floor(pos / 8);
     const targetFile = pos % 8;
@@ -75,3 +81,20 @@ export const maskRookAttacksOTF = (pos: number, block: bigint) => {
     setAttacks(currentAttacks);
     return attacks();
 }
+
+/**
+ * 
+ * @param pos Position on the bitboard.
+ * @param occupancy Current occupancy of the board
+ * @returns A bitboard representing squares attacked by the rook.
+ */
+export const getRookAttacks = (pos: number, occupancy: bigint) => {
+    occupancy &= rookMask()[pos];
+    occupancy = (occupancy * rookMagicNumbers[pos]) >> (64n - BigInt(rookRelevantBits[pos]));
+    let maskedOccupancy = occupancy & rookBitMask;
+
+    return rookState()[pos][Number(maskedOccupancy)];
+}
+
+
+export default null;

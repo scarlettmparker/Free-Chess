@@ -1,3 +1,4 @@
+export const bishopBitMask = 0x1FFn;
 export const bishopRelevantBits = [
     6, 5, 5, 5, 5, 5, 5, 6,
     5, 5, 5, 5, 5, 5, 5, 5,
@@ -9,6 +10,7 @@ export const bishopRelevantBits = [
     6, 5, 5, 5, 5, 5, 5, 6,
 ]
 
+export const rookBitMask = 0x1FFn;
 export const rookRelevantBits = [
     12, 11, 11, 11, 11, 11, 11, 12,
     11, 10, 10, 10, 10, 10, 10, 11,

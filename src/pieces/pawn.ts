@@ -2,13 +2,12 @@ import { createSignal } from "solid-js";
 import { notAFile, notHFile } from "~/consts/board";
 import { updateBitboard } from "~/utils/board/bitboard";
 import { PawnState } from "./statetype";
-import { rawPosToNot } from "~/utils/squarehelper";
 
 const [pbitboard, setpBitboard] = createSignal<bigint>(0n);
 const [attacks, setAttacks] = createSignal(0n);
 export const [pawnState, setPawnState] = createSignal<PawnState>([
-    Array(64).fill(0n),
-    Array(64).fill(0n)
+    new BigUint64Array(64),
+    new BigUint64Array(64)
 ])
 
 /**
@@ -46,3 +45,5 @@ export const maskPawnAttacks = (side: number, pos: number) => {
 export const getpState = (side: number, square: number) => {
     return pawnState()[side][square];
 }
+
+export default null;

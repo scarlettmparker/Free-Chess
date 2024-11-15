@@ -1,27 +1,12 @@
 import { MetaProvider, Title } from "@solidjs/meta";
-import { Accessor, createEffect, createSignal, JSX, onMount } from "solid-js";
+import { createEffect, createSignal, onMount } from "solid-js";
 
 // helpers
-import { BOARD_SIZE, colors, HEIGHT, WIDTH } from "~/consts/board";
-import { notToRawPos, rawPosToNot, squareToNot } from "~/utils/squarehelper";
-import { handleMouseDown, handleMouseMove, handleMouseUp } from "~/utils/mouse";
-
-import setBit, { countBits, getBit, getLSFBIndex, printBitboard, updateBitboard } from "~/utils/board/bitboard";
-import { getpState, maskPawnAttacks } from "~/pieces/pawn";
-import { getkState, maskKnightAttacks } from "~/pieces/knight";
-
-// types
-import PieceType from '~/components/Piece/type';
-
-// components
-import Piece from "~/components/Piece";
-import buildBoard from "~/utils/board/board";
-import initLeaperAttacks from "~/pieces/leapers";
-import { getkiState, maskKingAttacks } from "~/pieces/king";
-import { maskBishopAttacks, maskBishopAttacksOTF } from "~/pieces/bishop";
-import { maskRookAttacks, maskRookAttacksOTF } from "~/pieces/rook";
-import { setOccupancyBits } from "~/utils/occupancies";
-import { generateMagicNumber, getRandomU32Number, getRandomU64Number } from "~/utils/random";
+import initLeaperAttacks, { initSliderAttacks } from "~/pieces/init";
+import board, { sliders, BigIntSignalArray, colors } from "~/consts/board";
+import { printBitboard, printBoard } from "~/utils/board/bitboard";
+import { bitboards, castle, enpassant, occupancies, parseFEN, side } from "~/utils/fen";
+import { getter } from "~/utils/bigint";
 
 export interface Position {
   x: number;
@@ -31,61 +16,40 @@ export interface Position {
 export type Colors = {
   WHITE: number;
   BLACK: number;
+  BOTH: number;
 };
 
+export type Sliders = {
+  ROOK: number;
+  BISHOP: number;
+}
+
+// FEN board positions
+const emptyBoard = "8/8/8/8/8/8/8/8 w - - ";
+const startPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 ";
+const trickyPosition = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1 ";
+const killerPosition = "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1";
+const cmkPosition = "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 ";
+
 export default function Home() {
-
-  const [boardDivs, setBoardDivs] = createSignal<JSX.Element[]>([]);
-  const [pieces, setPieces] = createSignal<PieceType[]>([]);
-
-  // big ints
-  const [bitboard, setBitboard] = createSignal<bigint>(0n);
-  const [block, setBlock] = createSignal<bigint>(0n);
-
-  // piece states
-  const [draggingPiece, setDraggingPiece] = createSignal<PieceType | null>(null);
-  const [dragPos, setDragPos] = createSignal<Position | null>(null);
-
   // initialization stuff
   onMount(() => {
+    initAll();
+    
+    parseFEN(startPosition);
+    printBoard(bitboards, side(), enpassant(), castle());
+    printBitboard(getter(occupancies, colors.BOTH)());
+  })
+
+  const initAll = () => {
     initLeaperAttacks();
-    printBitboard(generateMagicNumber());
-  })
-
-  // build the board
-  createEffect(() => {
-    const { divs, piecesList } = buildBoard(BOARD_SIZE, WIDTH, HEIGHT, colors);
-    setBoardDivs(divs);
-    setPieces(piecesList);
-  });
-
-  // deal with event listeners for dragging pieces
-  createEffect(() => {
-    const onMouseMove = (e: MouseEvent) => handleMouseMove(e, draggingPiece, setDragPos);
-    const onMouseUp = () => handleMouseUp(dragPos, setDragPos, draggingPiece, setDraggingPiece, pieces, setPieces);
-
-    // add event listeners when dragging starts
-    if (draggingPiece()) {
-      window.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
-    } else {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    }
-  })
+    initSliderAttacks(sliders.BISHOP);
+    initSliderAttacks(sliders.ROOK);
+  }
 
   return (
     <MetaProvider>
       <Title>Free Chess</Title>
-      <div class='absolute left-1/2 top-32 transform -translate-x-1/2 flex flex-row flex-wrap' style={{ width: `${WIDTH * BOARD_SIZE}px` }}> {/*wrapper */}
-        {boardDivs()}
-        {pieces().map((piece) => {
-          return (
-            <Piece i={piece.i} j={piece.j} WIDTH={WIDTH} HEIGHT={HEIGHT} piece={piece.piece}
-              onMouseDown={() => handleMouseDown(piece.i, piece.j, piece.piece, pieces, setDraggingPiece, setDragPos)} />
-          )
-        })}
-      </div>
     </MetaProvider>
   );
 }

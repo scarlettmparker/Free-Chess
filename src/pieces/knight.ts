@@ -5,7 +5,7 @@ import { KnightState } from "./statetype";
 
 const [kbitboard, setkBitboard] = createSignal<bigint>(0n);
 const [attacks, setAttacks] = createSignal(0n);
-export const [knightState, setKnightState] = createSignal<KnightState>(Array(64).fill(0n));
+export const [knightState, setKnightState] = createSignal<KnightState>(new BigUint64Array(64));
 
 /**
  * 
@@ -44,3 +44,5 @@ export const maskKnightAttacks = (pos: number) => {
 export const getkState = (square: number) => {
     return knightState()[square];
 }
+
+export default null;
