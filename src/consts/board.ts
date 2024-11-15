@@ -1,5 +1,17 @@
-import { Accessor, Setter, Signal } from "solid-js";
+import { Accessor, createSignal, Setter, Signal } from "solid-js";
 import { Colors, Sliders } from "~/routes";
+
+// bitboards
+export const [bitboards, setBitboards]: [() => BigIntSignalArray, (value: BigIntSignalArray) => void] = createSignal(
+    Array.from({ length: 12 }, () => createSignal(0n))
+);
+export const [occupancies, setOccupancies]: [() => BigIntSignalArray, (value: BigIntSignalArray) => void] = createSignal(
+    Array.from({ length: 3 }, () => createSignal(0n))
+);
+
+export const [side, setSide] = createSignal(-1);
+export const [enpassant, setEnpassant] = createSignal(-1);
+export const [castle, setCastle] = createSignal(0n);
 
 export const WIDTH = 64;
 export const HEIGHT = 64;

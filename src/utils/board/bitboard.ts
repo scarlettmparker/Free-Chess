@@ -1,7 +1,7 @@
 import { Accessor } from "solid-js";
-import { rawPosToNot } from "../squarehelper";
 import { BOARD_SIZE, charPieces, unicodePieces, pieces, BitboardSignal } from "~/consts/board";
 import { getter } from "../bigint";
+import { rawPosToNot } from "./squarehelper";
 
 /**
  * 
@@ -27,6 +27,9 @@ function setBit(bitboard: bigint, pos: number, push: boolean) {
  */
 export function updateBitboard(bitboard: bigint, setBitboard: (bitboard: bigint) => void, pos: number, push: boolean) {
     let updatedBitboard = setBit(bitboard, pos, push);
+    if (push == false) {
+        console.log(updatedBitboard);
+    }
     setBitboard(updatedBitboard);
 };
 
@@ -65,7 +68,7 @@ export function countBits(bitboard: bigint) {
  */
 export function getLSFBIndex(bitboard: bigint) {
     if (bitboard > 0n) {
-        return Math.floor(Math.log2(Number(bitboard & -bitboard)));
+        return countBits((bitboard & -bitboard) - 1n);
     } else {
         return -1; // illegal index
     }

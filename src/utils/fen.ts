@@ -1,20 +1,8 @@
 import { createSignal } from "solid-js";
-import { BigIntSignalArray, BOARD_SIZE, charPieces, colors, pieces } from "~/consts/board";
+import { BigIntSignalArray, bitboards, BOARD_SIZE, castle, charPieces, colors, occupancies, pieces, setBitboards, setCastle, setEnpassant, setOccupancies, setSide } from "~/consts/board";
 import { getBit, updateBitboard } from "./board/bitboard";
 import { setter, getter } from "./bigint";
-import { notToRawPos } from "./squarehelper";
-
-// bitboards
-export const [bitboards, setBitboards]: [() => BigIntSignalArray, (value: BigIntSignalArray) => void] = createSignal(
-    Array.from({ length: 12 }, () => createSignal(0n))
-);
-export const [occupancies, setOccupancies]: [() => BigIntSignalArray, (value: BigIntSignalArray) => void] = createSignal(
-    Array.from({ length: 3 }, () => createSignal(0n))
-);
-
-export const [side, setSide] = createSignal(-1);
-export const [enpassant, setEnpassant] = createSignal(-1);
-export const [castle, setCastle] = createSignal(0n);
+import { notToRawPos } from "./board/squarehelper";
 
 /**
  * Parses a FEN and sets the board's position.
@@ -78,16 +66,14 @@ export const parseFEN = (fen: string) => {
         fenIndex++;
     }
 
-    fenIndex++;
-    
     // parse side to move
     fen[fenIndex] == 'w' ? setSide(0) : setSide(1);
-    fenIndex++;
+    fenIndex += 2;
 
     // parse castling rights
     while (fen[fenIndex] != ' ') {
         let currCastle = castle();
-        switch(fen[fenIndex]) {
+        switch (fen[fenIndex]) {
             case 'K':
                 currCastle |= BigInt(pieces.wk); break;
             case 'Q':
@@ -104,7 +90,7 @@ export const parseFEN = (fen: string) => {
     }
 
     fenIndex++;
-    
+
     // parse en passant square
     if (fen[fenIndex] != '-') {
         const file = fen[fenIndex];

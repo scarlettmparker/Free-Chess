@@ -1,7 +1,6 @@
-import { BOARD_SIZE, charPieces, colors } from "~/consts/board";
+import { bitboards, BOARD_SIZE, charPieces, colors, occupancies } from "~/consts/board";
 import { getpState } from "~/pieces/pawn";
 import { getter } from "../bigint";
-import { bitboards, occupancies } from "../fen";
 import { getkState } from "~/pieces/knight";
 import { getkiState } from "~/pieces/king";
 import { getBishopAttacks } from "~/pieces/bishop";
