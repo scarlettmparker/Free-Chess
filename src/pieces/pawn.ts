@@ -17,8 +17,8 @@ export const [pawnState, setPawnState] = createSignal<PawnState>([
  * @returns Attack bitboard for a pawn on a specified square.
  */
 export const maskPawnAttacks = (side: number, pos: number) => {
-    let currentAttacks = 0n
-    let currentBitboard = 0n
+    let currentAttacks = 0n;
+    let currentBitboard = 0n;
 
     updateBitboard(currentBitboard, setpBitboard, pos, true);
 

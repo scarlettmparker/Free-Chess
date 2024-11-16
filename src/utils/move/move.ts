@@ -21,12 +21,12 @@ export const addMove = (moves: MoveList, move: number) => {
 /**
  * Makes a move by recursively calling the move function and copying/restoring the board state.
  * @param move Encoded move.
- * @param moveFlag Move type
- * @returns 
+ * @param moveFlag Move type.
+ * @returns 1 (legal move), 0 (illegal move).
  */
 export const makeMove = (move: number, moveFlag: number) => {
     if (moveFlag == moveType.ALL_MOVES) {
-        copyBoard();
+        const copies = copyBoard();
 
         // parse the move
         const sourceSquare = getMoveSource(move);
@@ -35,7 +35,7 @@ export const makeMove = (move: number, moveFlag: number) => {
         const promoted = getMovePromoted(move);
         const capture = getMoveCapture(move);
         const double = getMoveDouble(move);
-        const enpassant = getMoveEnpassant(move);
+        const enpassantFlag = getMoveEnpassant(move);
         const castling = getMoveCastle(move);
 
         // move the piece
@@ -70,7 +70,7 @@ export const makeMove = (move: number, moveFlag: number) => {
         }
 
         // en passant
-        if (enpassant) {
+        if (enpassantFlag) {
             (side() == colors.WHITE) ? updateBitboard(getter(bitboards, charPieces.p)(), setter(bitboards, charPieces.p), targetSquare + 8, false)
                 : updateBitboard(getter(bitboards, charPieces.P)(), setter(bitboards, charPieces.P), targetSquare - 8, false);
         }
@@ -78,7 +78,7 @@ export const makeMove = (move: number, moveFlag: number) => {
 
         // double pawn push
         if (double) {
-            (side() == colors.WHITE) ? (setEnpassant(targetSquare + 8)) : setEnpassant(targetSquare - 8);
+            (side() == colors.WHITE) ? setEnpassant(targetSquare + 8) : setEnpassant(targetSquare - 8);
         }
 
         // castling moves
@@ -91,6 +91,7 @@ export const makeMove = (move: number, moveFlag: number) => {
                 case (notToRawPos("c1")):
                     updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos("a1"), false);
                     updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos("d1"), true);
+                    break;
                 case (notToRawPos("g8")):
                     updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos("h8"), false);
                     updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos("f8"), true);
@@ -98,33 +99,37 @@ export const makeMove = (move: number, moveFlag: number) => {
                 case (notToRawPos("c8")):
                     updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos("a8"), false);
                     updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos("d8"), true);
+                    break;
             }
         }
 
+
         // update castling rights
-        setCastle(castle() & BigInt(castlingRights[sourceSquare]));
-        setCastle(castle() & BigInt(castlingRights[targetSquare]));
+        let newCastle = castle();
+        newCastle &= BigInt(castlingRights[sourceSquare]);
+        newCastle &= BigInt(castlingRights[targetSquare]);
+        setCastle(newCastle);
 
         // update occupancies
         for (let i = 0; i < 3; i++) {
             const setOccupancy = setter(occupancies, i);
             setOccupancy(0n);
         }
-        
+
         // update white pieces occupancies
         let whiteOccupancy = getter(occupancies, colors.WHITE)();
+        const setWhiteOccupancy = setter(occupancies, colors.WHITE);
         for (let bbPiece = charPieces.P; bbPiece <= charPieces.K; bbPiece++) {
-            const setOccupancy = setter(occupancies, colors.WHITE);
             whiteOccupancy |= getter(bitboards, bbPiece)();
-            setOccupancy(whiteOccupancy);
+            setWhiteOccupancy(whiteOccupancy);
         }
 
         // update black pieces occupancies
         let blackOccupancy = getter(occupancies, colors.BLACK)();
+        const setBlackOccupancy = setter(occupancies, colors.BLACK);
         for (let bbPiece = charPieces.p; bbPiece <= charPieces.k; bbPiece++) {
-            const setOccupancy = setter(occupancies, colors.BLACK);
             blackOccupancy |= getter(bitboards, bbPiece)();
-            setOccupancy(blackOccupancy);
+            setBlackOccupancy(blackOccupancy);
         }
 
         const setOccupancy = setter(occupancies, colors.BOTH);
@@ -136,15 +141,17 @@ export const makeMove = (move: number, moveFlag: number) => {
         setOccupancy(bothOccupancy);
 
         // change side
-        let newSide = side();
-        newSide ^= 1;
-        setSide(newSide);
+        if (side() == 0) {
+            setSide(1);
+        } else {
+            setSide(0);
+        }
 
         // check if king exposed to check
         if (isSquareAttacked((side() == colors.WHITE) ? getLSFBIndex(getter(bitboards, charPieces.k)())
             : getLSFBIndex(getter(bitboards, charPieces.K)()), side())) {
-                takeBack();
-                return 0; // illegal move
+            takeBack(copies);
+            return 0; // illegal move
         } else {
             return 1; // legal move
         }

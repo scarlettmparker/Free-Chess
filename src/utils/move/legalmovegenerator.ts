@@ -18,7 +18,8 @@ import { getkState } from "~/pieces/knight";
  */
 export const generateMoves = (moves: MoveList) => {
     let sourceSquare, targetSquare;
-    let bitboard, attacks = 0n;
+    let bitboard, attacks;
+    moves.count = 0;
 
     for (let piece = charPieces.P; piece <= charPieces.k; piece++) {
         bitboard = getter(bitboards, piece)();
@@ -39,8 +40,8 @@ export const generateMoves = (moves: MoveList) => {
                         } else {
                             // one square ahead push
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 0, 0, 0, 0));
-                            if ((sourceSquare >= notToRawPos("a2") && sourceSquare <= notToRawPos("h2")
-                                && !getBit(getter(occupancies, colors.BOTH)(), targetSquare - 8))) {
+                            if ((sourceSquare >= notToRawPos("a2") && sourceSquare <= notToRawPos("h2"))
+                                && !getBit(getter(occupancies, colors.BOTH)(), targetSquare - 8)) {
                                 addMove(moves, encodeMove(sourceSquare, targetSquare - 8, piece, 0, 0, 1, 0, 0));
                             }
                         }
@@ -59,7 +60,7 @@ export const generateMoves = (moves: MoveList) => {
                         } else {
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 1, 0, 0, 0));
                         }
-                        attacks &= attacks - 1n;
+                        attacks &= ~(1n << BigInt(targetSquare));
                     }
 
                     // generate en passant captures
@@ -70,7 +71,7 @@ export const generateMoves = (moves: MoveList) => {
                             addMove(moves, encodeMove(sourceSquare, targetEnpassant, piece, 0, 1, 0, 1, 0));
                         }
                     }
-                    bitboard &= bitboard - 1n;
+                    bitboard &= ~(1n << BigInt(sourceSquare));
                 }
             }
 
@@ -79,7 +80,7 @@ export const generateMoves = (moves: MoveList) => {
                 if (castle() & BigInt(pieces.wk)) {
                     if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos("f1"))
                         && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("g1"))) {
-                        if (!isSquareAttacked(notToRawPos("e1"), colors.BLACK) && !isSquareAttacked(notToRawPos("g1"), colors.BLACK)) {
+                        if (!isSquareAttacked(notToRawPos("e1"), colors.BLACK) && !isSquareAttacked(notToRawPos("f1"), colors.BLACK)) {
                             addMove(moves, encodeMove(notToRawPos("e1"), notToRawPos("g1"), piece, 0, 0, 0, 0, 1));
                         }
                     }
@@ -119,7 +120,7 @@ export const generateMoves = (moves: MoveList) => {
 
                     // initialize pawn attacks bitboard
                     attacks = getpState(side(), sourceSquare) & getter(occupancies, colors.WHITE)();
-                    while (attacks) {
+                    while (attacks > 0n) {
                         targetSquare = getLSFBIndex(attacks);
                         // pawn capture promotion
                         if (sourceSquare >= notToRawPos("a2") && sourceSquare <= notToRawPos("h2")) {
@@ -130,7 +131,7 @@ export const generateMoves = (moves: MoveList) => {
                         } else {
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 1, 0, 0, 0));
                         }
-                        attacks &= attacks - 1n;
+                        attacks &= ~(1n << BigInt(targetSquare));
                     }
 
                     // generate en passant captures
@@ -141,7 +142,7 @@ export const generateMoves = (moves: MoveList) => {
                             addMove(moves, encodeMove(sourceSquare, targetEnpassant, piece, 0, 1, 0, 1, 0));
                         }
                     }
-                    bitboard &= bitboard - 1n;
+                    bitboard &= ~(1n << BigInt(sourceSquare));
                 }
             }
 
@@ -171,12 +172,12 @@ export const generateMoves = (moves: MoveList) => {
 
         // generate knight moves
         if ((side() == colors.WHITE) ? piece == charPieces.N : piece == charPieces.n) {
-            while (bitboard) {
+            while (bitboard > 0n) {
                 sourceSquare = getLSFBIndex(bitboard);
                 attacks = getkState(sourceSquare) & ((side() == colors.WHITE)
                     ? ~getter(occupancies, colors.WHITE)() : ~getter(occupancies, colors.BLACK)());
 
-                while (attacks) {
+                while (attacks > 0n) {
                     targetSquare = getLSFBIndex(attacks);
 
                     // quiet move
@@ -185,9 +186,9 @@ export const generateMoves = (moves: MoveList) => {
                     } else {
                         addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 1, 0, 0, 0));
                     }
-                    attacks &= attacks - 1n;
+                    attacks &= ~(1n << BigInt(targetSquare));
                 }
-                bitboard &= bitboard - 1n;
+                bitboard &= ~(1n << BigInt(sourceSquare));
             }
         }
 
@@ -207,9 +208,9 @@ export const generateMoves = (moves: MoveList) => {
                     } else {
                         addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 1, 0, 0, 0));
                     }
-                    attacks &= attacks - 1n;
+                    attacks &= ~(1n << BigInt(targetSquare));
                 }
-                bitboard &= bitboard - 1n;
+                bitboard &= ~(1n << BigInt(sourceSquare));
             }
         }
 
@@ -229,9 +230,9 @@ export const generateMoves = (moves: MoveList) => {
                     } else {
                         addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 1, 0, 0, 0));
                     }
-                    attacks &= attacks - 1n;
+                    attacks &= ~(1n << BigInt(targetSquare));
                 }
-                bitboard &= bitboard - 1n;
+                bitboard &= ~(1n << BigInt(sourceSquare));
             }
         }
 
@@ -251,9 +252,9 @@ export const generateMoves = (moves: MoveList) => {
                     } else {
                         addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 1, 0, 0, 0));
                     }
-                    attacks &= attacks - 1n;
+                    attacks &= ~(1n << BigInt(targetSquare));
                 }
-                bitboard &= bitboard - 1n;
+                bitboard &= ~(1n << BigInt(sourceSquare));
             }
         }
 
@@ -273,10 +274,12 @@ export const generateMoves = (moves: MoveList) => {
                     } else {
                         addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 1, 0, 0, 0));
                     }
-                    attacks &= attacks - 1n;
+                    attacks &= ~(1n << BigInt(targetSquare));
                 }
-                bitboard &= bitboard - 1n;
+                bitboard &= ~(1n << BigInt(sourceSquare));
             }
         }
     }
+
+    return moves;
 }

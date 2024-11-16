@@ -9,9 +9,15 @@ export const [occupancies, setOccupancies]: [() => BigIntSignalArray, (value: Bi
     Array.from({ length: 3 }, () => createSignal(0n))
 );
 
-export const [side, setSide] = createSignal(-1);
+export const [side, setSide] = createSignal(0);
 export const [enpassant, setEnpassant] = createSignal(-1);
 export const [castle, setCastle] = createSignal(0n);
+
+export const [nodes, setNodes] = createSignal(0);
+export const [captures, setCaptures] = createSignal(0);
+export const [promotions, setPromotions] = createSignal(0);
+export const [castles, setCastles] = createSignal(0);
+export const [checks, setChecks] = createSignal(0);
 
 export const WIDTH = 64;
 export const HEIGHT = 64;
