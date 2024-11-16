@@ -1,4 +1,4 @@
-import { bitboards, castle, charPieces, colors, enpassant, occupancies, setCastle, setEnpassant, setSide, side, unicodePieces } from "~/consts/board";
+import { bitboards, castle, charPieces, colors, enpassant, occupancies, setCastle, setEnpassant, setOccupancies, setSide, side, unicodePieces } from "~/consts/board";
 import { notToRawPos, rawPosToNot } from "../board/squarehelper"
 import { getMoveCapture, getMoveCastle, getMoveDouble, getMoveEnpassant, getMovePiece, getMovePromoted, getMoveSource, getMoveTarget, MoveList, promotedPieces } from "./movedef"
 import { moveType } from "~/consts/move";
@@ -7,6 +7,7 @@ import { getBit, getLSFBIndex, printBoard, updateBitboard } from "../board/bitbo
 import { getter, setter } from "../bigint";
 import { castlingRights } from "~/consts/bits";
 import { isSquareAttacked } from "../board/attacks";
+import { createSignal } from "solid-js";
 
 /**
  * Adds a move to the move list.
@@ -105,10 +106,10 @@ export const makeMove = (move: number, moveFlag: number) => {
 
 
         // update castling rights
-        let newCastle = castle();
-        newCastle &= BigInt(castlingRights[sourceSquare]);
-        newCastle &= BigInt(castlingRights[targetSquare]);
-        setCastle(newCastle);
+        let newCastle = Number(castle());
+        newCastle &= (castlingRights[sourceSquare]);
+        newCastle &= (castlingRights[targetSquare]);
+        setCastle(BigInt(newCastle));
 
         // update occupancies
         for (let i = 0; i < 3; i++) {
@@ -133,19 +134,13 @@ export const makeMove = (move: number, moveFlag: number) => {
         }
 
         const setOccupancy = setter(occupancies, colors.BOTH);
-        let bothOccupancy = getter(occupancies, colors.BOTH)();
-
         // update both sides occupancies
-        bothOccupancy |= whiteOccupancy;
+        let bothOccupancy = whiteOccupancy;
         bothOccupancy |= blackOccupancy;
         setOccupancy(bothOccupancy);
 
         // change side
-        if (side() == 0) {
-            setSide(1);
-        } else {
-            setSide(0);
-        }
+        setSide(side() ^ 1);
 
         // check if king exposed to check
         if (isSquareAttacked((side() == colors.WHITE) ? getLSFBIndex(getter(bitboards, charPieces.k)())

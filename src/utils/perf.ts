@@ -1,5 +1,5 @@
-import { bitboards, captures, castle, castles, checks, enpassant, nodes, promotions, setCaptures, setCastles, setChecks, setNodes, setPromotions, side } from "~/consts/board"
-import { getMoveCapture, getMoveCastle, getMovePromoted, MoveList } from "./move/movedef";
+import {nodes, setNodes, } from "~/consts/board"
+import { MoveList } from "./move/movedef";
 import { generateMoves } from "./move/legalmovegenerator";
 import { moveType } from "~/consts/move";
 import { copyBoard, takeBack } from "./board/copy";
@@ -35,3 +35,5 @@ export const perftDriver = (depth: number) => {
     }
     
 }
+
+export default null;

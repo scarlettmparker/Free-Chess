@@ -87,7 +87,7 @@ export const generateMoves = (moves: MoveList) => {
                 }
 
                 // queen side
-                if (castle() && BigInt(pieces.wq)) {
+                if (castle() & BigInt(pieces.wq)) {
                     if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos("d1")) && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("c1"))
                         && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("b1"))) {
                         if (!isSquareAttacked(notToRawPos("e1"), colors.BLACK) && !isSquareAttacked(notToRawPos("d1"), colors.BLACK)) {
@@ -158,7 +158,7 @@ export const generateMoves = (moves: MoveList) => {
                 }
 
                 // queen side
-                if (castle() && BigInt(pieces.bq)) {
+                if (castle() & BigInt(pieces.bq)) {
                     if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos("d8"))
                         && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("c8"))
                         && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("b8"))) {

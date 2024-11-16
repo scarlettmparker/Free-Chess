@@ -63,11 +63,11 @@ export function countBits(bitboard: bigint) {
  * @param bitboard Bitboard to get LFSB from.
  * @returns Least significant 1st bit index.
  */
-export function getLSFBIndex(bitboard: bigint): number {
+export function getLSFBIndex(bitboard: bigint) {
     if (bitboard > 0n) {
-        return Math.floor(Math.log2(Number(bitboard & -bitboard))); // Get the position of the least significant 1 bit
+        return countBits((bitboard & -bitboard) - 1n);
     } else {
-        return -1; // Illegal index
+        return -1; // illegal index
     }
 }
 
