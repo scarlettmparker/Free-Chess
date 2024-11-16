@@ -1,6 +1,4 @@
-import { Accessor } from "solid-js";
-import { BOARD_SIZE, charPieces, unicodePieces, pieces, BitboardSignal, gameState } from "~/consts/board";
-import { getter } from "../bigint";
+import { BOARD_SIZE, charPieces, unicodePieces, pieces, gameState } from "~/consts/board";
 import { rawPosToNot } from "./squarehelper";
 
 /**

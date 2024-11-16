@@ -1,6 +1,5 @@
 import { BOARD_SIZE, charPieces, colors, gameState } from "~/consts/board";
 import { getpState } from "~/pieces/pawn";
-import { getter } from "../bigint";
 import { getkState } from "~/pieces/knight";
 import { getkiState } from "~/pieces/king";
 import { getBishopAttacks } from "~/pieces/bishop";

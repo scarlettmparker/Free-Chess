@@ -3,8 +3,6 @@ import { notAFile, notHFile } from "~/consts/board";
 import { PawnState } from "./statetype";
 import setBit from "~/utils/board/bitboard";
 
-const [pbitboard, setpBitboard] = createSignal<bigint>(0n);
-const [attacks, setAttacks] = createSignal(0n);
 export const [pawnState, setPawnState] = createSignal<PawnState>([
     new BigUint64Array(64),
     new BigUint64Array(64)

@@ -1,7 +1,5 @@
-import { createSignal } from "solid-js";
 import {  BOARD_SIZE, charPieces, colors, gameState, pieces} from "~/consts/board";
 import setBit, { getBit } from "./board/bitboard";
-import { setter, getter } from "./bigint";
 import { notToRawPos } from "./board/squarehelper";
 
 /**

@@ -1,5 +1,3 @@
-import { Accessor, createSignal, Signal } from "solid-js";
-import { getter } from "../bigint";
 import { gameState } from "~/consts/board";
 
 /**

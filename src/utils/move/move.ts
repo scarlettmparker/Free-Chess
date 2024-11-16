@@ -3,11 +3,9 @@ import { notToRawPos, rawPosToNot } from "../board/squarehelper"
 import { getMoveCapture, getMoveCastle, getMoveDouble, getMoveEnpassant, getMovePiece, getMovePromoted, getMoveSource, getMoveTarget, MoveList, promotedPieces } from "./movedef"
 import { moveType } from "~/consts/move";
 import { copyBoard, takeBack } from "../board/copy";
-import setBit, { getBit, getLSFBIndex, printBoard } from "../board/bitboard";
-import { getter, setter } from "../bigint";
+import setBit, { getBit, getLSFBIndex } from "../board/bitboard";
 import { castlingRights } from "~/consts/bits";
 import { isSquareAttacked } from "../board/attacks";
-import { createSignal } from "solid-js";
 
 /**
  * Adds a move to the move list.
@@ -100,7 +98,7 @@ export const makeMove = (move: number, moveFlag: number) => {
                     break;
                 case (notToRawPos["c8"]):
                     tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["a8"], false);
-                    tempBitboards[charPieces.r]= setBit(tempBitboards[charPieces.r], notToRawPos["d8"], true);
+                    tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["d8"], true);
                     break;
             }
         }

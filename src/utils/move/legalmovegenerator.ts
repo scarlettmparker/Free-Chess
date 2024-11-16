@@ -1,7 +1,6 @@
 import { blackPromotions, charPieces, colors, gameState, pieces, whitePromotions } from "~/consts/board";
-import { getter, setter } from "../bigint";
-import { getBit, getLSFBIndex, printBitboard } from "../board/bitboard";
-import { notToRawPos, rawPosToNot } from "../board/squarehelper";
+import { getBit, getLSFBIndex } from "../board/bitboard";
+import { notToRawPos } from "../board/squarehelper";
 import { getpState } from "~/pieces/pawn";
 import { isSquareAttacked } from "../board/attacks";
 import { getkiState } from "~/pieces/king";
@@ -114,7 +113,7 @@ export const generateMoves = (moves: MoveList) => {
                             addMove(movesCopy, encodeMove(sourceSquare, targetSquare, piece, 0, 0, 0, 0, 0));
                             if ((sourceSquare >= notToRawPos["a7"] && sourceSquare <= notToRawPos["h7"]
                                 && !getBit(gameState.occupancies[colors.BOTH], targetSquare + 8))) {
-                                    addMove(movesCopy, encodeMove(sourceSquare, targetSquare + 8, piece, 0, 0, 1, 0, 0));
+                                addMove(movesCopy, encodeMove(sourceSquare, targetSquare + 8, piece, 0, 0, 1, 0, 0));
                             }
                         }
                     }
@@ -176,7 +175,7 @@ export const generateMoves = (moves: MoveList) => {
                 sourceSquare = getLSFBIndex(bitboard);
                 attacks = getkState(sourceSquare) & ((gameState.side == colors.WHITE)
                     ? ~gameState.occupancies[colors.WHITE] : ~gameState.occupancies[colors.BLACK]);
-                    
+
                 while (attacks > 0n) {
                     targetSquare = getLSFBIndex(attacks);
                     // quiet move

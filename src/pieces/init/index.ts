@@ -1,11 +1,11 @@
 import { colors } from "~/consts/board";
 import { maskPawnAttacks, setPawnState } from "../pawn";
-import { BishopState, KingState, KnightState, PawnState, RookState } from "../statetype";
+import { KingState, KnightState, PawnState, RookState } from "../statetype";
 import { maskKnightAttacks, setKnightState } from "../knight";
 import { maskKingAttacks, setKingState } from "../king";
 import { bishopMask, bishopState, maskBishopAttacks, maskBishopAttacksOTF, setBishopMask, setBishopState } from "../bishop";
 import { maskRookAttacks, maskRookAttacksOTF, rookMask, rookState, setRookMask, setRookState } from "../rook";
-import { countBits, printBitboard} from "~/utils/board/bitboard";
+import { countBits } from "~/utils/board/bitboard";
 import { setOccupancyBits } from "~/utils/occupancies";
 import { bishopMagicNumbers, rookMagicNumbers } from "~/consts/magic";
 import { bishopBitMask, bishopRelevantBits, rookBitMask, rookRelevantBits } from "~/consts/bits";

@@ -1,4 +1,4 @@
-import { Accessor, createSignal, Setter, Signal } from "solid-js";
+import { Accessor, Setter, Signal } from "solid-js";
 import { Colors, Sliders } from "~/routes";
 
 // bitboards

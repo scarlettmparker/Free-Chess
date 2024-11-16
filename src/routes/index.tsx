@@ -1,19 +1,16 @@
 import { MetaProvider, Title } from "@solidjs/meta";
-import { Accessor, createContext, createEffect, createMemo, createSignal, JSX, onMount } from "solid-js";
-
-// helpers
+import { Accessor, createMemo, createSignal, JSX, onMount } from "solid-js";
 import initLeaperAttacks, { initSliderAttacks } from "~/pieces/init";
 import { sliders, WIDTH, HEIGHT, BOARD_SIZE, charPieces, unicodePieces, colors, DARK_HIGHLIGHTED, LIGHT_HIGHLIGHTED, gameState } from "~/consts/board";
-import { getBit, printBitboard, printBoard, } from "~/utils/board/bitboard";
+import { getBit } from "~/utils/board/bitboard";
 import { parseFEN } from "~/utils/fen";
-import { perftDriver } from "~/utils/perf";
-import { getter } from "~/utils/bigint";
-import { isDarkSquare, rawPosToNot } from "~/utils/board/squarehelper";
-import { getMovePiece, getMoveSource, getMoveTarget, MoveList } from "~/utils/move/movedef";
+import { isDarkSquare } from "~/utils/board/squarehelper";
+import { getMoveSource, getMoveTarget, MoveList } from "~/utils/move/movedef";
 import { generateMoves } from "~/utils/move/legalmovegenerator";
 import { moveType } from "~/consts/move";
 import { makeMove } from "~/utils/move/move";
 import { copyBoard, takeBack } from "~/utils/board/copy";
+import { resetGameState } from "~/utils/board/game";
 
 export interface Position {
   x: number;
@@ -47,6 +44,7 @@ export default function Home() {
   const [side, setSide] = createSignal(0);
 
   onMount(() => {
+    resetGameState();
     initAll();
     parseFEN(startPosition);
     setSide(gameState.side);
@@ -86,7 +84,6 @@ export default function Home() {
       }
 
       const pieceMoves = movesBySquare.get(square) || { moves: [], count: 0 };
-
       newPieces.push(
         <Piece piece={piece} odd={odd} square={square} moves={pieceMoves} currentMoves={currentMoves}
           setCurrentMoves={setCurrentMoves} currentSquare={currentSquare} setCurrentSquare={setCurrentSquare}
@@ -143,8 +140,6 @@ const BuildBoard = ({ squares, pieces }: { squares: Accessor<JSX.Element[]>, pie
 };
 
 /**
- * 
- * @param param0 
  * @returns JSX Element of an empty square.
  */
 const Square = ({ odd, square }: { odd: number, square: number }) => {
@@ -156,8 +151,6 @@ const Square = ({ odd, square }: { odd: number, square: number }) => {
 }
 
 /**
- * 
- * @param param0 
  * @returns JSX Element of a piece.
  */
 const Piece = ({ piece, odd, square, moves, currentMoves, setCurrentMoves, currentSquare, setCurrentSquare, side, setSide }: {
@@ -171,17 +164,14 @@ const Piece = ({ piece, odd, square, moves, currentMoves, setCurrentMoves, curre
   return (
     <div data-piece={square} class={`flex justify-center items-center text-3xl ${colour} ${background} bg-opacity-50`} style={squareStyle}
       onClick={() => currentSquare() == -1 ? pieceClick(piece, moves, square, setCurrentMoves, setCurrentSquare)
-        : movePiece(piece, square, currentSquare(), setCurrentSquare, currentMoves(), setCurrentMoves, side, setSide)}>
+        : movePiece(square, currentSquare(), setCurrentSquare, currentMoves(), setCurrentMoves, side, setSide)}>
       {piece != -1 ? unicodePieces[piece] : ''}
     </div>
   )
 }
 
 /**
- * 
- * @param piece 
- * @param square 
- * @returns 
+ * Updates graphical interface when clicking on a piece.
  */
 const pieceClick = (piece: number, moves: MoveList, square: number, setCurrentMoves: (value: MoveList) => void, setCurrentSquare: (value: number) => void) => {
   const isSide = gameState.side == colors.WHITE ? piece < 6 : piece >= 6;
@@ -196,6 +186,7 @@ const pieceClick = (piece: number, moves: MoveList, square: number, setCurrentMo
     return
   };
 
+  // remove illegal moves
   for (let moveCount = 0; moveCount < moves.count; moveCount++) {
     const copies = copyBoard();
     if (!(makeMove(moves.moves[moveCount], moveType.ALL_MOVES))) {
@@ -225,12 +216,8 @@ const pieceClick = (piece: number, moves: MoveList, square: number, setCurrentMo
 
 /**
  * Move a piece (updates graphically).
- * @param piece 
- * @param square 
- * @param moves 
- * @param setPieceSelected 
  */
-const movePiece = (piece: number, square: number, currentSquare: number, setCurrentSquare: (value: number) => void, moves: MoveList, setCurrentMoves: (value: MoveList) => void, side: Accessor<number>, setSide: (value: number) => void) => {
+const movePiece = (square: number, currentSquare: number, setCurrentSquare: (value: number) => void, moves: MoveList, setCurrentMoves: (value: MoveList) => void, side: Accessor<number>, setSide: (value: number) => void) => {
   let canMove = false;
   let nextMove: number = 0;
   let targetSquare = 0;
@@ -252,6 +239,7 @@ const movePiece = (piece: number, square: number, currentSquare: number, setCurr
     }
   }
 
+  // handle stuff with de-selecting
   if (canMove) {
     makeMove(nextMove, moveType.ALL_MOVES);
     setSide(side() ^ 1);
