@@ -2,26 +2,25 @@ import { Accessor, createSignal, Setter, Signal } from "solid-js";
 import { Colors, Sliders } from "~/routes";
 
 // bitboards
-export const [bitboards, setBitboards]: [() => BigIntSignalArray, (value: BigIntSignalArray) => void] = createSignal(
-    Array.from({ length: 12 }, () => createSignal(0n))
-);
-export const [occupancies, setOccupancies]: [() => BigIntSignalArray, (value: BigIntSignalArray) => void] = createSignal(
-    Array.from({ length: 3 }, () => createSignal(0n))
-);
-
-export const [side, setSide] = createSignal(0);
-export const [enpassant, setEnpassant] = createSignal(-1);
-export const [castle, setCastle] = createSignal(0n);
-
-export const [nodes, setNodes] = createSignal(0);
-export const [captures, setCaptures] = createSignal(0);
-export const [promotions, setPromotions] = createSignal(0);
-export const [castles, setCastles] = createSignal(0);
-export const [checks, setChecks] = createSignal(0);
+export const gameState = {
+    bitboards: Array.from({ length: 12 }, () => 0n),
+    occupancies: Array.from({ length: 3 }, () => 0n),
+    side: 0,
+    enpassant: -1,
+    castle: 0n,
+    nodes: 0,
+    captures: 0,
+    promotions: 0,
+    castles: 0,
+    checks: 0
+};
 
 export const WIDTH = 64;
 export const HEIGHT = 64;
 export const BOARD_SIZE = 8;
+
+export const LIGHT_HIGHLIGHTED = 'rgb(252 165 165)';
+export const DARK_HIGHLIGHTED = 'rgb(239 68 68)';
 
 export const colors: Colors = Object.freeze({
     WHITE: 0,
@@ -51,7 +50,7 @@ export const blackPromotions = [charPieces.q, charPieces.r, charPieces.b, charPi
 
 export const unicodePieces = [
     '\u2659', '\u2658', '\u2657', '\u2656', '\u2655', '\u2654',
-    '\u265F', '\u265E', '\u265D', '\u265C', '\u265B', '\u265A'
+    '\u2659', '\u2658', '\u2657', '\u2656', '\u2655', '\u2654'
 ];
 
 export type BitboardSignal = [Accessor<bigint>, Setter<bigint>];

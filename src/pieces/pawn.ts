@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { notAFile, notHFile } from "~/consts/board";
-import { updateBitboard } from "~/utils/board/bitboard";
 import { PawnState } from "./statetype";
+import setBit from "~/utils/board/bitboard";
 
 const [pbitboard, setpBitboard] = createSignal<bigint>(0n);
 const [attacks, setAttacks] = createSignal(0n);
@@ -19,21 +19,19 @@ export const [pawnState, setPawnState] = createSignal<PawnState>([
 export const maskPawnAttacks = (side: number, pos: number) => {
     let currentAttacks = 0n;
     let currentBitboard = 0n;
-
-    updateBitboard(currentBitboard, setpBitboard, pos, true);
+    currentBitboard = setBit(currentBitboard, pos, true);
 
     // white pawns
     if (side == 0) {
-        if ((pbitboard() >> 7n & notAFile) !== 0n) currentAttacks |= (pbitboard() >> 7n);
-        if ((pbitboard() >> 9n & notHFile) !== 0n) currentAttacks |= (pbitboard() >> 9n);
+        if ((currentBitboard >> 7n & notAFile) !== 0n) currentAttacks |= (currentBitboard >> 7n);
+        if ((currentBitboard >> 9n & notHFile) !== 0n) currentAttacks |= (currentBitboard >> 9n);
     // black pawns
     } else {
-        if ((pbitboard() << 7n & notHFile) !== 0n) currentAttacks |= (pbitboard() << 7n);
-        if ((pbitboard() << 9n & notAFile) !== 0n) currentAttacks |= (pbitboard() << 9n);
+        if ((currentBitboard << 7n & notHFile) !== 0n) currentAttacks |= (currentBitboard << 7n);
+        if ((currentBitboard << 9n & notAFile) !== 0n) currentAttacks |= (currentBitboard << 9n);
     }
 
-    setAttacks(currentAttacks);
-    return attacks();
+    return currentAttacks;
 }
 
 /**

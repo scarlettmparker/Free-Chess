@@ -3,7 +3,6 @@ import { BishopState } from "./statetype";
 import { bishopMagicNumbers } from "~/consts/magic";
 import { bishopBitMask, bishopRelevantBits } from "~/consts/bits";
 
-const [attacks, setAttacks] = createSignal(0n);
 export const [bishopMask, setBishopMask] = createSignal(new BigUint64Array(64));
 export const [bishopState, setBishopState] = createSignal<BishopState>(Array.from({ length: 64 }, () => new BigUint64Array(512)));
 
@@ -38,8 +37,7 @@ export const maskBishopAttacks = (pos: number) => {
         currentAttacks |= (1n << BigInt(rank * 8 + file));
     }
 
-    setAttacks(currentAttacks);
-    return attacks();
+    return currentAttacks;
 }
 
 /**
@@ -80,8 +78,7 @@ export const maskBishopAttacksOTF = (pos: number, block: bigint) => {
         if ((1n << BigInt(rank * 8 + file) & block) !== 0n) break;
     }
 
-    setAttacks(currentAttacks);
-    return attacks();
+    return currentAttacks;
 }
 
 /**

@@ -1,9 +1,9 @@
-import { bitboards, castle, charPieces, colors, enpassant, occupancies, setCastle, setEnpassant, setOccupancies, setSide, side, unicodePieces } from "~/consts/board";
+import { charPieces, colors, gameState, unicodePieces } from "~/consts/board";
 import { notToRawPos, rawPosToNot } from "../board/squarehelper"
 import { getMoveCapture, getMoveCastle, getMoveDouble, getMoveEnpassant, getMovePiece, getMovePromoted, getMoveSource, getMoveTarget, MoveList, promotedPieces } from "./movedef"
 import { moveType } from "~/consts/move";
 import { copyBoard, takeBack } from "../board/copy";
-import { getBit, getLSFBIndex, printBoard, updateBitboard } from "../board/bitboard";
+import setBit, { getBit, getLSFBIndex, printBoard } from "../board/bitboard";
 import { getter, setter } from "../bigint";
 import { castlingRights } from "~/consts/bits";
 import { isSquareAttacked } from "../board/attacks";
@@ -29,6 +29,8 @@ export const makeMove = (move: number, moveFlag: number) => {
     if (moveFlag == moveType.ALL_MOVES) {
         const copies = copyBoard();
 
+        let tempBitboards = gameState.bitboards;
+
         // parse the move
         const sourceSquare = getMoveSource(move);
         const targetSquare = getMoveTarget(move);
@@ -40,13 +42,13 @@ export const makeMove = (move: number, moveFlag: number) => {
         const castling = getMoveCastle(move);
 
         // move the piece
-        updateBitboard(getter(bitboards, piece)(), setter(bitboards, piece), sourceSquare, false);
-        updateBitboard(getter(bitboards, piece)(), setter(bitboards, piece), targetSquare, true);
+        tempBitboards[piece] = setBit(tempBitboards[piece], sourceSquare, false);
+        tempBitboards[piece] = setBit(tempBitboards[piece], targetSquare, true);
 
         // captures
         if (capture) {
             let startPiece, endPiece;
-            if (side() == colors.WHITE) {
+            if (gameState.side == colors.WHITE) {
                 startPiece = charPieces.p;
                 endPiece = charPieces.k;
             } else {
@@ -56,8 +58,8 @@ export const makeMove = (move: number, moveFlag: number) => {
 
             // loop over bitboard of opposite side
             for (let bbPiece = startPiece; bbPiece <= endPiece; bbPiece++) {
-                if (getBit(getter(bitboards, bbPiece)(), targetSquare)) { // piece on target square
-                    updateBitboard(getter(bitboards, bbPiece)(), setter(bitboards, bbPiece), targetSquare, false);
+                if (getBit(tempBitboards[bbPiece], targetSquare)) { // piece on target square
+                    tempBitboards[bbPiece] = setBit(tempBitboards[bbPiece], targetSquare, false);
                     break;
                 }
             }
@@ -65,86 +67,82 @@ export const makeMove = (move: number, moveFlag: number) => {
 
         // promotions
         if (promoted) {
-            updateBitboard(getter(bitboards, side() == colors.WHITE ? charPieces.P : charPieces.p)(),
-                setter(bitboards, side() == colors.WHITE ? charPieces.P : charPieces.p), targetSquare, false);
-            updateBitboard(getter(bitboards, promoted)(), setter(bitboards, promoted), targetSquare, true);
+            tempBitboards[gameState.side == colors.WHITE ? charPieces.P : charPieces.p] = setBit(tempBitboards[gameState.side == colors.WHITE ? charPieces.P : charPieces.p], targetSquare, false);
+            tempBitboards[promoted] = setBit(tempBitboards[promoted], targetSquare, true);
         }
 
         // en passant
         if (enpassantFlag) {
-            (side() == colors.WHITE) ? updateBitboard(getter(bitboards, charPieces.p)(), setter(bitboards, charPieces.p), targetSquare + 8, false)
-                : updateBitboard(getter(bitboards, charPieces.P)(), setter(bitboards, charPieces.P), targetSquare - 8, false);
+            (gameState.side == colors.WHITE) ? tempBitboards[charPieces.p] = setBit(tempBitboards[charPieces.p], targetSquare + 8, false)
+                : tempBitboards[charPieces.P] = setBit(tempBitboards[charPieces.P], targetSquare - 8, false)
         }
-        setEnpassant(-1);
+        gameState.enpassant = -1;
 
         // double pawn push
         if (double) {
-            (side() == colors.WHITE) ? setEnpassant(targetSquare + 8) : setEnpassant(targetSquare - 8);
+            (gameState.side == colors.WHITE) ? gameState.enpassant = targetSquare + 8 : gameState.enpassant = targetSquare - 8;
         }
 
         // castling moves
         if (castling) {
             switch (targetSquare) {
                 case (notToRawPos["g1"]):
-                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos["h1"], false);
-                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos["f1"], true);
+                    tempBitboards[charPieces.R] = setBit(tempBitboards[charPieces.R], notToRawPos["h1"], false);
+                    tempBitboards[charPieces.R] = setBit(tempBitboards[charPieces.R], notToRawPos["f1"], true);
                     break;
                 case (notToRawPos["c1"]):
-                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos["a1"], false);
-                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos["d1"], true);
+                    tempBitboards[charPieces.R] = setBit(tempBitboards[charPieces.R], notToRawPos["a1"], false);
+                    tempBitboards[charPieces.R] = setBit(tempBitboards[charPieces.R], notToRawPos["d1"], true);
                     break;
                 case (notToRawPos["g8"]):
-                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos["h8"], false);
-                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos["f8"], true);
+                    tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["h8"], false);
+                    tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["f8"], true);
                     break;
                 case (notToRawPos["c8"]):
-                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos["a8"], false);
-                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos["d8"], true);
+                    tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["a8"], false);
+                    tempBitboards[charPieces.r]= setBit(tempBitboards[charPieces.r], notToRawPos["d8"], true);
                     break;
             }
         }
 
 
         // update castling rights
-        let newCastle = Number(castle());
+        let newCastle = Number(gameState.castle);
         newCastle &= (castlingRights[sourceSquare]);
         newCastle &= (castlingRights[targetSquare]);
-        setCastle(BigInt(newCastle));
+        gameState.castle = BigInt(newCastle);
 
         // update occupancies
         for (let i = 0; i < 3; i++) {
-            const setOccupancy = setter(occupancies, i);
-            setOccupancy(0n);
+            gameState.occupancies[i] = 0n;
         }
 
         // update white pieces occupancies
-        let whiteOccupancy = getter(occupancies, colors.WHITE)();
-        const setWhiteOccupancy = setter(occupancies, colors.WHITE);
+        let whiteOccupancy = gameState.occupancies[colors.WHITE];
         for (let bbPiece = charPieces.P; bbPiece <= charPieces.K; bbPiece++) {
-            whiteOccupancy |= getter(bitboards, bbPiece)();
-            setWhiteOccupancy(whiteOccupancy);
+            whiteOccupancy |= tempBitboards[bbPiece];
         }
+        gameState.occupancies[colors.WHITE] = whiteOccupancy;
 
         // update black pieces occupancies
-        let blackOccupancy = getter(occupancies, colors.BLACK)();
-        const setBlackOccupancy = setter(occupancies, colors.BLACK);
+        let blackOccupancy = gameState.occupancies[colors.BLACK];
         for (let bbPiece = charPieces.p; bbPiece <= charPieces.k; bbPiece++) {
-            blackOccupancy |= getter(bitboards, bbPiece)();
-            setBlackOccupancy(blackOccupancy);
+            blackOccupancy |= tempBitboards[bbPiece];
         }
+        gameState.occupancies[colors.BLACK] = blackOccupancy;
 
-        const setOccupancy = setter(occupancies, colors.BOTH);
         // update both sides occupancies
-        let bothOccupancy = whiteOccupancy;
+        let bothOccupancy = gameState.occupancies[colors.BOTH];
+        bothOccupancy |= whiteOccupancy;
         bothOccupancy |= blackOccupancy;
-        setOccupancy(bothOccupancy);
+        gameState.occupancies[colors.BOTH] = bothOccupancy;
 
         // change side
-        setSide(side() ^ 1);
+        gameState.side ^= 1;
+        gameState.bitboards = tempBitboards;
 
         // check if king exposed to check
-        if (isSquareAttacked((side() == colors.WHITE) ? getLSFBIndex(getter(bitboards, charPieces.k)())
-            : getLSFBIndex(getter(bitboards, charPieces.K)()), side())) {
+        if (isSquareAttacked((gameState.side == colors.WHITE) ? getLSFBIndex(tempBitboards[charPieces.k]) : getLSFBIndex(tempBitboards[charPieces.K]), gameState.side)) {
             takeBack(copies);
             return 0; // illegal move
         } else {

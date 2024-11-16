@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
-import { BigIntSignalArray, bitboards, BOARD_SIZE, castle, charPieces, colors, occupancies, pieces, setBitboards, setCastle, setEnpassant, setOccupancies, setSide } from "~/consts/board";
-import { getBit, updateBitboard } from "./board/bitboard";
+import {  BOARD_SIZE, charPieces, colors, gameState, pieces} from "~/consts/board";
+import setBit, { getBit } from "./board/bitboard";
 import { setter, getter } from "./bigint";
 import { notToRawPos } from "./board/squarehelper";
 
@@ -10,23 +10,15 @@ import { notToRawPos } from "./board/squarehelper";
  */
 export const parseFEN = (fen: string) => {
     // reset board data
-    setBitboards(bitboards().map(() => createSignal(0n)));
-    setOccupancies(occupancies().map(() => createSignal(0n)));
+    gameState.bitboards.map(() => 0n);
+    gameState.occupancies.map(() => 0n);
 
     // reset player data
-    setSide(0);
-    setEnpassant(-1);
-    setCastle(0n);
+    gameState.side = -0;
+    gameState.enpassant = -1;
+    gameState.castle = 0n;
 
     // occupancies
-    const setWhiteOccupancies = setter(occupancies, colors.WHITE);
-    const setBlackOccupancies = setter(occupancies, colors.BLACK);
-    const setBothOccupancies = setter(occupancies, colors.BOTH);
-
-    let whiteOccupancies = getter(occupancies, colors.WHITE)();
-    let blackOccupancies = getter(occupancies, colors.BLACK)();
-    let bothOccupancies = getter(occupancies, colors.BOTH)();
-
     let fenIndex = 0;
     for (let rank = 0; rank < BOARD_SIZE; rank++) {
         for (let file = 0; file < BOARD_SIZE; file++) {
@@ -37,7 +29,7 @@ export const parseFEN = (fen: string) => {
             if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')) {
                 let pieceIndex = charPieces[char];
                 if (pieceIndex !== undefined) {
-                    updateBitboard(getter(bitboards, pieceIndex)(), setter(bitboards, pieceIndex), square, true);
+                    gameState.bitboards[pieceIndex] = setBit(gameState.bitboards[pieceIndex], square, true);
                 }
                 fenIndex++;
             }
@@ -48,7 +40,7 @@ export const parseFEN = (fen: string) => {
 
                 // loop over all piece bitboards
                 for (let bbPiece = charPieces.P; bbPiece <= charPieces.k; bbPiece++) {
-                    if (getBit(getter(bitboards, bbPiece)(), square)) {
+                    if (getBit(gameState.bitboards[bbPiece], square)) {
                         piece = bbPiece;
                     }
                 }
@@ -67,12 +59,12 @@ export const parseFEN = (fen: string) => {
     }
 
     // parse side to move
-    fen[fenIndex] == 'w' ? setSide(0) : setSide(1);
+    fen[fenIndex] == 'w' ? gameState.side = 0 : gameState.side = 1;
     fenIndex += 2;
 
     // parse castling rights
     while (fen[fenIndex] != ' ') {
-        let currCastle = castle();
+        let currCastle = gameState.castle;
         switch (fen[fenIndex]) {
             case 'K':
                 currCastle |= BigInt(pieces.wk); break;
@@ -85,7 +77,7 @@ export const parseFEN = (fen: string) => {
             case '-':
                 break;
         }
-        setCastle(currCastle);
+        gameState.castle = currCastle;
         fenIndex++;
     }
 
@@ -96,29 +88,30 @@ export const parseFEN = (fen: string) => {
         const file = fen[fenIndex];
         const rank = fen[fenIndex + 1];
         const square = notToRawPos[file + rank];
-        setEnpassant(square);
+        gameState.enpassant = square;
     } else {
-        setEnpassant(-1);
+        gameState.enpassant = -1;
     }
 
     // loop over white pieces bitboard
+    let whiteOccupancies = gameState.occupancies[colors.WHITE];
     for (let piece = charPieces.P; piece <= charPieces.K; piece++) {
-        whiteOccupancies |= getter(bitboards, piece)();
+        whiteOccupancies |= gameState.bitboards[piece];
     }
-
-    setWhiteOccupancies(whiteOccupancies);
+    gameState.occupancies[colors.WHITE] = whiteOccupancies;
 
     // loop over black pieces bitboard
-    for (let piece = charPieces.p; piece <= charPieces.k; piece++) {
-        blackOccupancies |= getter(bitboards, piece)();
+    let blackOccupancies = gameState.occupancies[colors.BLACK];
+    for (let piece = charPieces.P; piece <= charPieces.K; piece++) {
+        blackOccupancies |= gameState.bitboards[piece];
     }
-
-    setBlackOccupancies(blackOccupancies);
+    gameState.occupancies[colors.BLACK] = blackOccupancies;
 
     // include all occupancies in both
-    bothOccupancies |= whiteOccupancies;
-    bothOccupancies |= blackOccupancies
-    setBothOccupancies(bothOccupancies);
+    let bothOccupancies = gameState.occupancies[colors.BOTH];
+    bothOccupancies |= gameState.occupancies[colors.WHITE];
+    bothOccupancies |= gameState.occupancies[colors.BLACK];
+    gameState.occupancies[colors.BOTH] = bothOccupancies;
 }
 
 export default null;

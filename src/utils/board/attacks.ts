@@ -1,4 +1,4 @@
-import { bitboards, BOARD_SIZE, charPieces, colors, occupancies } from "~/consts/board";
+import { BOARD_SIZE, charPieces, colors, gameState } from "~/consts/board";
 import { getpState } from "~/pieces/pawn";
 import { getter } from "../bigint";
 import { getkState } from "~/pieces/knight";
@@ -16,29 +16,29 @@ import { getQueenAttacks } from "~/pieces/queen";
 export const isSquareAttacked = (pos: number, side: number) => {
     // pawns
     if ((side == colors.WHITE) && getpState(colors.BLACK, pos)
-        & getter(bitboards, charPieces.P)()) return true;
+        & gameState.bitboards[charPieces.P]) return true;
     if ((side == colors.BLACK) && getpState(colors.WHITE, pos)
-        & getter(bitboards, charPieces.p)()) return true;
+        & gameState.bitboards[charPieces.p]) return true;
 
     // knights
-    if (getkState(pos) & ((side == colors.WHITE) ? getter(bitboards, charPieces.N)()
-        : getter(bitboards, charPieces.n)())) return true;
+    if (getkState(pos) & ((side == colors.WHITE) ? gameState.bitboards[charPieces.N]
+        : gameState.bitboards[charPieces.n])) return true;
 
     // bishops
-    if (getBishopAttacks(pos, getter(occupancies, colors.BOTH)())
-        & ((side == colors.WHITE) ? getter(bitboards, charPieces.B)() : getter(bitboards, charPieces.b)())) return true;
+    if (getBishopAttacks(pos, gameState.occupancies[colors.BOTH])
+        & ((side == colors.WHITE) ? gameState.bitboards[charPieces.B] : gameState.bitboards[charPieces.b])) return true;
 
     // rooks
-    if (getRookAttacks(pos, getter(occupancies, colors.BOTH)())
-        & ((side == colors.WHITE) ? getter(bitboards, charPieces.R)() : getter(bitboards, charPieces.r)())) return true;
+    if (getRookAttacks(pos, gameState.occupancies[colors.BOTH])
+        & ((side == colors.WHITE) ? gameState.bitboards[charPieces.R] : gameState.bitboards[charPieces.r])) return true;
 
     // queens
-    if (getQueenAttacks(pos, getter(occupancies, colors.BOTH)())
-        & ((side == colors.WHITE) ? getter(bitboards, charPieces.Q)() : getter(bitboards, charPieces.q)())) return true;
+    if (getQueenAttacks(pos, gameState.occupancies[colors.BOTH])
+        & ((side == colors.WHITE) ? gameState.bitboards[charPieces.Q] : gameState.bitboards[charPieces.q])) return true;
 
     // kings
-    if (getkiState(pos) & ((side == colors.WHITE) ? getter(bitboards, charPieces.K)()
-        : getter(bitboards, charPieces.k)())) return true;
+    if (getkiState(pos) & ((side == colors.WHITE) ? gameState.bitboards[charPieces.K]
+        : gameState.bitboards[charPieces.k])) return true;
 
     return false;
 }

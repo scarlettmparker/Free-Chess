@@ -1,12 +1,9 @@
 import { createSignal } from "solid-js";
 import { KingState } from "./statetype";
-import { updateBitboard } from "~/utils/board/bitboard";
 import { notAFile, notHFile } from "~/consts/board";
+import setBit from "~/utils/board/bitboard";
 
-const [kibitboard, setkiBitboard] = createSignal<bigint>(0n);
-const [attacks, setAttacks] = createSignal(0n);
 export const [kingState, setKingState] = createSignal<KingState>(new BigUint64Array(64));
-
 /**
  * 
  * @param pos Position on the bitboard.
@@ -15,23 +12,21 @@ export const [kingState, setKingState] = createSignal<KingState>(new BigUint64Ar
 export const maskKingAttacks = (pos: number) => {
     let currentAttacks = 0n;
     let currentBitboard = 0n;
-
-    updateBitboard(currentBitboard, setkiBitboard, pos, true);
+    currentBitboard = setBit(currentBitboard, pos, true);
 
     // king attacks
-    if (kibitboard() >> 8n !== 0n) currentAttacks |= (kibitboard() >> 8n);
-    if ((kibitboard() >> 9n & notHFile) !== 0n) currentAttacks |= (kibitboard() >> 9n);
-    if ((kibitboard() >> 7n & notAFile) !== 0n) currentAttacks |= (kibitboard() >> 7n);
-    if ((kibitboard() >> 1n & notHFile) !== 0n) currentAttacks |= (kibitboard() >> 1n);
+    if (currentBitboard >> 8n !== 0n) currentAttacks |= (currentBitboard >> 8n);
+    if ((currentBitboard >> 9n & notHFile) !== 0n) currentAttacks |= (currentBitboard >> 9n);
+    if ((currentBitboard >> 7n & notAFile) !== 0n) currentAttacks |= (currentBitboard >> 7n);
+    if ((currentBitboard >> 1n & notHFile) !== 0n) currentAttacks |= (currentBitboard >> 1n);
 
     // opposite direction
-    if (kibitboard() << 8n !== 0n) currentAttacks |= (kibitboard() << 8n);
-    if ((kibitboard() << 9n & notAFile) !== 0n) currentAttacks |= (kibitboard() << 9n);
-    if ((kibitboard() << 7n & notHFile) !== 0n) currentAttacks |= (kibitboard() << 7n);
-    if ((kibitboard() << 1n & notAFile) !== 0n) currentAttacks |= (kibitboard() << 1n);
+    if (currentBitboard << 8n !== 0n) currentAttacks |= (currentBitboard << 8n);
+    if ((currentBitboard << 9n & notAFile) !== 0n) currentAttacks |= (currentBitboard << 9n);
+    if ((currentBitboard << 7n & notHFile) !== 0n) currentAttacks |= (currentBitboard << 7n);
+    if ((currentBitboard << 1n & notAFile) !== 0n) currentAttacks |= (currentBitboard << 1n);
 
-    setAttacks(currentAttacks);
-    return attacks();
+    return currentAttacks;
 }
 
 /**

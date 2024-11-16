@@ -1,3 +1,9 @@
+export function isDarkSquare(square: number) {
+    const row = Math.floor(square / 8);
+    const col = square % 8;
+    return (row + col) % 2 !== 0;
+}
+
 /**
  * 
  * @param i index for the square position.

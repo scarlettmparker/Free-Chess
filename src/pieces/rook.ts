@@ -3,7 +3,6 @@ import { RookState } from "./statetype";
 import { rookMagicNumbers } from "~/consts/magic";
 import { rookBitMask, rookRelevantBits } from "~/consts/bits";
 
-const [attacks, setAttacks] = createSignal(0n);
 export const [rookMask, setRookMask] = createSignal(new BigUint64Array(64));
 export const [rookState, setRookState] = createSignal<RookState>(Array.from({ length: 64 }, () => new BigUint64Array(4096)));
 
@@ -38,8 +37,7 @@ export const maskRookAttacks = (pos: number) => {
         currentAttacks |= (1n << BigInt(targetRank * 8 + file));
     }
 
-    setAttacks(currentAttacks);
-    return attacks();
+    return currentAttacks;
 }
 
 /**
@@ -77,8 +75,7 @@ export const maskRookAttacksOTF = (pos: number, block: bigint) => {
         if ((1n << BigInt(targetRank * 8 + file) & block) != 0n) break;
     }
 
-    setAttacks(currentAttacks);
-    return attacks();
+    return currentAttacks;
 }
 
 /**

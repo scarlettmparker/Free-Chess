@@ -1,4 +1,4 @@
-import {nodes, setNodes, } from "~/consts/board"
+import { gameState } from "~/consts/board"
 import { MoveList } from "./move/movedef";
 import { generateMoves } from "./move/legalmovegenerator";
 import { moveType } from "~/consts/move";
@@ -12,7 +12,7 @@ import { isSquareAttacked } from "./board/attacks";
  */
 export const perftDriver = (depth: number) => {
     if (depth === 0) {
-        setNodes(nodes() + 1);
+        gameState.nodes += 1;
         return;
     }
 

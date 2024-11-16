@@ -1,5 +1,5 @@
 import { Accessor } from "solid-js";
-import { BOARD_SIZE, charPieces, unicodePieces, pieces, BitboardSignal } from "~/consts/board";
+import { BOARD_SIZE, charPieces, unicodePieces, pieces, BitboardSignal, gameState } from "~/consts/board";
 import { getter } from "../bigint";
 import { rawPosToNot } from "./squarehelper";
 
@@ -17,18 +17,6 @@ function setBit(bitboard: bigint, pos: number, push: boolean) {
         return bitboard & ~(1n << BigInt(pos));
     }
 }
-
-/**
- * Helper function to set the state of a bitboard.
- * @param bitboard Accessor of bitboard to update.
- * @param setBitboard Bitboard setter.
- * @param pos Position (e.g. a1) on a Chess board.
- * @param push True: sets to 1, False: sets to 0.
- */
-export function updateBitboard(bitboard: bigint, setBitboard: (bitboard: bigint) => void, pos: number, push: boolean) {
-    let updatedBitboard = setBit(bitboard, pos, push);
-    setBitboard(updatedBitboard);
-};
 
 /**
  * 
@@ -113,7 +101,7 @@ export function printBitboard(bitboard: bigint) {
  * @param enpassant Current enpassant square if valid.
  * @param castle Castling rights per player.
  */
-export const printBoard = (bitboards: Accessor<BitboardSignal[]>, side: number, enpassant: number, castle: bigint) => {
+export const printBoard = () => {
     let board = "";
     for (let rank = 0; rank < BOARD_SIZE; rank++) {
         board += `${8 - rank}  `;
@@ -124,7 +112,7 @@ export const printBoard = (bitboards: Accessor<BitboardSignal[]>, side: number, 
 
             // loop over all piece bitboards
             for (let bbPiece = charPieces.P; bbPiece <= charPieces.k; bbPiece++) {
-                if (getBit(getter(bitboards, bbPiece)(), square)) {
+                if (getBit(gameState.bitboards[bbPiece], square)) {
                     piece = bbPiece;
                 }
             }
@@ -135,9 +123,9 @@ export const printBoard = (bitboards: Accessor<BitboardSignal[]>, side: number, 
     }
 
     board += "   a  b  c  d  e  f  g  h\n\n";
-    board += `   Side to move: ${side == 0 ? "white" : "black"}\n`;
-    board += `   En passant: ${enpassant >= 0 ? rawPosToNot[enpassant] : "none"}\n`;
-    board += `   Castle: ${getCastling(castle)}`;
+    board += `   Side to move: ${gameState.side == 0 ? "white" : "black"}\n`;
+    board += `   En passant: ${gameState.enpassant >= 0 ? rawPosToNot[gameState.enpassant] : "none"}\n`;
+    board += `   Castle: ${getCastling(gameState.castle)}`;
     console.log(board);
 }
 
