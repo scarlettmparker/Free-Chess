@@ -6,4 +6,4 @@ export const moveType = Object.freeze({
     ONLY_CAPTURES: 1
 });
 
-export const [moves, setMoves] = createSignal<MoveList>({ moves: [], count: 0 });
+export default null;

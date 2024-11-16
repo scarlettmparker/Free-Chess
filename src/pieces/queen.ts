@@ -1,5 +1,3 @@
-import { createSignal } from "solid-js";
-import { RookState } from "./statetype";
 import { bishopMagicNumbers, rookMagicNumbers } from "~/consts/magic";
 import { bishopBitMask, bishopRelevantBits, rookBitMask, rookRelevantBits } from "~/consts/bits";
 import { bishopMask, bishopState } from "./bishop";
@@ -31,3 +29,5 @@ export const getQueenAttacks = (pos: number, occupancy: bigint) => {
     queenState |= rookState()[pos][Number(maskedRookOccupancy)];
     return queenState;
 }
+
+export default null;

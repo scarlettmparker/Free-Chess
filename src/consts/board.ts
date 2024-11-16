@@ -46,6 +46,9 @@ export const charPieces: { [key: string]: number } = {
     p: 6, n: 7, b: 8, r: 9, q: 10, k: 11
 };
 
+export const whitePromotions = [charPieces.Q, charPieces.R, charPieces.B, charPieces.N];
+export const blackPromotions = [charPieces.q, charPieces.r, charPieces.b, charPieces.n];
+
 export const unicodePieces = [
     '\u2659', '\u2658', '\u2657', '\u2656', '\u2655', '\u2654',
     '\u265F', '\u265E', '\u265D', '\u265C', '\u265B', '\u265A'

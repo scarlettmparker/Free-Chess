@@ -191,3 +191,5 @@ export const printMoveList = (moves: MoveList) => {
     output += `Total moves: ${moves.count}\n`;
     console.log(output);
 }
+
+export default null;

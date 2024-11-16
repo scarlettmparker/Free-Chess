@@ -95,7 +95,7 @@ export const parseFEN = (fen: string) => {
     if (fen[fenIndex] != '-') {
         const file = fen[fenIndex];
         const rank = fen[fenIndex + 1];
-        const square = notToRawPos(file + rank);
+        const square = notToRawPos[file + rank];
         setEnpassant(square);
     } else {
         setEnpassant(-1);
@@ -120,3 +120,5 @@ export const parseFEN = (fen: string) => {
     bothOccupancies |= blackOccupancies
     setBothOccupancies(bothOccupancies);
 }
+
+export default null;

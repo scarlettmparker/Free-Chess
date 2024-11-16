@@ -1,20 +1,12 @@
 import { MetaProvider, Title } from "@solidjs/meta";
-import { createEffect, createSignal, onMount } from "solid-js";
+import { onMount } from "solid-js";
 
 // helpers
 import initLeaperAttacks, { initSliderAttacks } from "~/pieces/init";
-import board, { sliders, BigIntSignalArray, colors, charPieces, bitboards, castle, enpassant, side, unicodePieces, occupancies, setBitboards, setOccupancies, setSide, setEnpassant, setCastle, nodes, captures, castles, checks, promotions } from "~/consts/board";
-import { printBitboard, printBoard, updateBitboard } from "~/utils/board/bitboard";
+import { sliders, bitboards, castle, enpassant, side, nodes } from "~/consts/board";
+import { printBoard, } from "~/utils/board/bitboard";
 import { parseFEN } from "~/utils/fen";
-import { printAttackedSquares } from "~/utils/board/attacks";
-import { generateMoves } from "~/utils/move/legalmovegenerator";
-import { notToRawPos, rawPosToNot } from "~/utils/board/squarehelper";
-import { encodeMove, MoveList } from "~/utils/move/movedef";
-import { addMove, makeMove, printMove, printMoveList } from "~/utils/move/move";
-import { moveType, setMoves } from "~/consts/move";
-import { getter } from "~/utils/bigint";
 import { perftDriver } from "~/utils/perf";
-import { takeBack } from "~/utils/board/copy";
 
 export interface Position {
   x: number;
@@ -43,11 +35,12 @@ export default function Home() {
   onMount(() => {
     initAll();
 
-    parseFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    parseFEN(startPosition);
     printBoard(bitboards, side(), enpassant(), castle());
 
+    const depth = 4;
     console.time("perft");
-    perftDriver(3);
+    perftDriver(depth);
     console.timeEnd("perft");
     console.log(`nodes: ${nodes()}`);
   })

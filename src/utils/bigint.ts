@@ -9,3 +9,5 @@ export const getter = (signal: Accessor<BitboardSignal[]>, index: number) => {
 export const setter = (signal: Accessor<BitboardSignal[]>, index: number) => {
     return signal()[index][1];
 }
+
+export default null;

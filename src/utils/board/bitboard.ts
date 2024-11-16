@@ -42,19 +42,28 @@ export function getBit(bitboard: bigint, pos: number) {
     return Number(bit);
 }
 
+const BIT_COUNT_LOOKUP: number[] = Array(256).fill(0).map((_, i) => {
+    let count = 0;
+    let num = i;
+    while (num) {
+        num &= num - 1;
+        count++;
+    }
+    return count;
+});
+
 /**
  * 
  * @param bitboard Bitboard to count.
  * @returns Number of bits available on the bitboard.
  */
-export function countBits(bitboard: bigint) {
+export function countBits(bitboard: bigint): number {
     let count = 0;
-
     while (bitboard > 0n) {
-        count++;
-        bitboard &= bitboard - 1n;
+        const chunk = Number(bitboard & 0xffn);
+        count += BIT_COUNT_LOOKUP[chunk];
+        bitboard >>= 8n;
     }
-
     return count;
 }
 
@@ -65,7 +74,8 @@ export function countBits(bitboard: bigint) {
  */
 export function getLSFBIndex(bitboard: bigint) {
     if (bitboard > 0n) {
-        return countBits((bitboard & -bitboard) - 1n);
+        const lsb = bitboard & -bitboard;
+        return Math.floor(Math.log2(Number(lsb)));
     } else {
         return -1; // illegal index
     }

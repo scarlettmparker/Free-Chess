@@ -35,7 +35,6 @@ export const notToRawPos: { [key: string]: number } = (() => {
     return result;
 })();
 
-
 /**
  * 
  * @param pos Position (e.g. a1) on a Chess board.

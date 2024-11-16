@@ -4,16 +4,15 @@ import { generateMoves } from "./move/legalmovegenerator";
 import { moveType } from "~/consts/move";
 import { copyBoard, takeBack } from "./board/copy";
 import { makeMove } from "./move/move";
+import { isSquareAttacked } from "./board/attacks";
 
 /**
  * Performance test & move path enumeration
  * @param depth Number of moves from root
  */
 export const perftDriver = (depth: number) => {
-    if (depth == 0) {
-        let currNodes = nodes();
-        currNodes++;
-        setNodes(currNodes);
+    if (depth === 0) {
+        setNodes(nodes() + 1);
         return;
     }
 

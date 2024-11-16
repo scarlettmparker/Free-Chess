@@ -31,3 +31,5 @@ export const getRandomU32Number = () => {
     randomState = number;
     return number & 0xFFFFFFFFn;
 }
+
+export default null;

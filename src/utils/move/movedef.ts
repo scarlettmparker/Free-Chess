@@ -43,3 +43,5 @@ export function getMoveEnpassant(move: number): number {
 export function getMoveCastle(move: number): number {
     return (move & 0x800000)
 }
+
+export default null;
