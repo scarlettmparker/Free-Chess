@@ -30,8 +30,8 @@ export const generateMoves = (moves: MoveList) => {
                 while (bitboard > 0n) {
                     sourceSquare = getLSFBIndex(bitboard);
                     targetSquare = sourceSquare - 8;
-                    if (!(targetSquare < notToRawPos("a8")) && !getBit(getter(occupancies, colors.BOTH)(), targetSquare)) {
-                        if (sourceSquare >= notToRawPos("a7") && sourceSquare <= notToRawPos("h7")) {
+                    if (!(targetSquare < notToRawPos["a8"]) && !getBit(getter(occupancies, colors.BOTH)(), targetSquare)) {
+                        if (sourceSquare >= notToRawPos["a7"] && sourceSquare <= notToRawPos["h7"]) {
                             // promotions
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.Q, 0, 0, 0, 0));
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.R, 0, 0, 0, 0));
@@ -40,7 +40,7 @@ export const generateMoves = (moves: MoveList) => {
                         } else {
                             // one square ahead push
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 0, 0, 0, 0));
-                            if ((sourceSquare >= notToRawPos("a2") && sourceSquare <= notToRawPos("h2"))
+                            if ((sourceSquare >= notToRawPos["a2"] && sourceSquare <= notToRawPos["h2"])
                                 && !getBit(getter(occupancies, colors.BOTH)(), targetSquare - 8)) {
                                 addMove(moves, encodeMove(sourceSquare, targetSquare - 8, piece, 0, 0, 1, 0, 0));
                             }
@@ -52,7 +52,7 @@ export const generateMoves = (moves: MoveList) => {
                     while (attacks > 0n) {
                         targetSquare = getLSFBIndex(attacks);
                         // pawn capture promotion
-                        if (sourceSquare >= notToRawPos("a7") && sourceSquare <= notToRawPos("h7")) {
+                        if (sourceSquare >= notToRawPos["a7"] && sourceSquare <= notToRawPos["h7"]) {
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.Q, 1, 0, 0, 0));
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.R, 1, 0, 0, 0));
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.B, 1, 0, 0, 0));
@@ -78,20 +78,20 @@ export const generateMoves = (moves: MoveList) => {
             // castling moves
             if (piece == charPieces.K) {
                 if (castle() & BigInt(pieces.wk)) {
-                    if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos("f1"))
-                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("g1"))) {
-                        if (!isSquareAttacked(notToRawPos("e1"), colors.BLACK) && !isSquareAttacked(notToRawPos("f1"), colors.BLACK)) {
-                            addMove(moves, encodeMove(notToRawPos("e1"), notToRawPos("g1"), piece, 0, 0, 0, 0, 1));
+                    if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos["f1"])
+                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos["g1"])) {
+                        if (!isSquareAttacked(notToRawPos["e1"], colors.BLACK) && !isSquareAttacked(notToRawPos["f1"], colors.BLACK)) {
+                            addMove(moves, encodeMove(notToRawPos["e1"], notToRawPos["g1"], piece, 0, 0, 0, 0, 1));
                         }
                     }
                 }
 
                 // queen side
                 if (castle() & BigInt(pieces.wq)) {
-                    if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos("d1")) && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("c1"))
-                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("b1"))) {
-                        if (!isSquareAttacked(notToRawPos("e1"), colors.BLACK) && !isSquareAttacked(notToRawPos("d1"), colors.BLACK)) {
-                            addMove(moves, encodeMove(notToRawPos("e1"), notToRawPos("c1"), piece, 0, 0, 0, 0, 1));
+                    if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos["d1"]) && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos["c1"])
+                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos["b1"])) {
+                        if (!isSquareAttacked(notToRawPos["e1"], colors.BLACK) && !isSquareAttacked(notToRawPos["d1"], colors.BLACK)) {
+                            addMove(moves, encodeMove(notToRawPos["e1"], notToRawPos["c1"], piece, 0, 0, 0, 0, 1));
                         }
                     }
                 }
@@ -102,16 +102,16 @@ export const generateMoves = (moves: MoveList) => {
                 while (bitboard > 0n) {
                     sourceSquare = getLSFBIndex(bitboard);
                     targetSquare = sourceSquare + 8;
-                    if (!(targetSquare > notToRawPos("h1")) && !getBit(getter(occupancies, colors.BOTH)(), targetSquare)) {
+                    if (!(targetSquare > notToRawPos["h1"]) && !getBit(getter(occupancies, colors.BOTH)(), targetSquare)) {
                         // pawn promotion
-                        if (sourceSquare >= notToRawPos("a2") && sourceSquare <= notToRawPos("h2")) {
+                        if (sourceSquare >= notToRawPos["a2"] && sourceSquare <= notToRawPos["h2"]) {
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.q, 0, 0, 0, 0));
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.r, 0, 0, 0, 0));
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.b, 0, 0, 0, 0));
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.n, 0, 0, 0, 0));
                         } else {
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, 0, 0, 0, 0, 0));
-                            if ((sourceSquare >= notToRawPos("a7") && sourceSquare <= notToRawPos("h7")
+                            if ((sourceSquare >= notToRawPos["a7"] && sourceSquare <= notToRawPos["h7"]
                                 && !getBit(getter(occupancies, colors.BOTH)(), targetSquare + 8))) {
                                     addMove(moves, encodeMove(sourceSquare, targetSquare + 8, piece, 0, 0, 1, 0, 0));
                             }
@@ -123,7 +123,7 @@ export const generateMoves = (moves: MoveList) => {
                     while (attacks > 0n) {
                         targetSquare = getLSFBIndex(attacks);
                         // pawn capture promotion
-                        if (sourceSquare >= notToRawPos("a2") && sourceSquare <= notToRawPos("h2")) {
+                        if (sourceSquare >= notToRawPos["a2"] && sourceSquare <= notToRawPos["h2"]) {
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.q, 1, 0, 0, 0));
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.r, 1, 0, 0, 0));
                             addMove(moves, encodeMove(sourceSquare, targetSquare, piece, charPieces.b, 1, 0, 0, 0));
@@ -149,21 +149,21 @@ export const generateMoves = (moves: MoveList) => {
             // castling moves
             if (piece == charPieces.k) {
                 if (castle() & BigInt(pieces.bk)) {
-                    if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos("f8"))
-                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("g8"))) {
-                        if (!isSquareAttacked(notToRawPos("e8"), colors.WHITE) && !isSquareAttacked(notToRawPos("f8"), colors.WHITE)) {
-                            addMove(moves, encodeMove(notToRawPos("e8"), notToRawPos("g8"), piece, 0, 0, 0, 0, 1));
+                    if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos["f8"])
+                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos["g8"])) {
+                        if (!isSquareAttacked(notToRawPos["e8"], colors.WHITE) && !isSquareAttacked(notToRawPos["f8"], colors.WHITE)) {
+                            addMove(moves, encodeMove(notToRawPos["e8"], notToRawPos["g8"], piece, 0, 0, 0, 0, 1));
                         }
                     }
                 }
 
                 // queen side
                 if (castle() & BigInt(pieces.bq)) {
-                    if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos("d8"))
-                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("c8"))
-                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos("b8"))) {
-                        if (!isSquareAttacked(notToRawPos("e8"), colors.WHITE) && !isSquareAttacked(notToRawPos("d8"), colors.WHITE)) {
-                            addMove(moves, encodeMove(notToRawPos("e8"), notToRawPos("c8"), piece, 0, 0, 0, 0, 1));
+                    if (!getBit(getter(occupancies, colors.BOTH)(), notToRawPos["d8"])
+                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos["c8"])
+                        && !getBit(getter(occupancies, colors.BOTH)(), notToRawPos["b8"])) {
+                        if (!isSquareAttacked(notToRawPos["e8"], colors.WHITE) && !isSquareAttacked(notToRawPos["d8"], colors.WHITE)) {
+                            addMove(moves, encodeMove(notToRawPos["e8"], notToRawPos["c8"], piece, 0, 0, 0, 0, 1));
                         }
                     }
                 }

@@ -126,7 +126,7 @@ export const printBoard = (bitboards: Accessor<BitboardSignal[]>, side: number, 
 
     board += "   a  b  c  d  e  f  g  h\n\n";
     board += `   Side to move: ${side == 0 ? "white" : "black"}\n`;
-    board += `   En passant: ${enpassant >= 0 ? rawPosToNot(enpassant) : "none"}\n`;
+    board += `   En passant: ${enpassant >= 0 ? rawPosToNot[enpassant] : "none"}\n`;
     board += `   Castle: ${getCastling(castle)}`;
     console.log(board);
 }

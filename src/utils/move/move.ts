@@ -85,21 +85,21 @@ export const makeMove = (move: number, moveFlag: number) => {
         // castling moves
         if (castling) {
             switch (targetSquare) {
-                case (notToRawPos("g1")):
-                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos("h1"), false);
-                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos("f1"), true);
+                case (notToRawPos["g1"]):
+                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos["h1"], false);
+                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos["f1"], true);
                     break;
-                case (notToRawPos("c1")):
-                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos("a1"), false);
-                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos("d1"), true);
+                case (notToRawPos["c1"]):
+                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos["a1"], false);
+                    updateBitboard(getter(bitboards, charPieces.R)(), setter(bitboards, charPieces.R), notToRawPos["d1"], true);
                     break;
-                case (notToRawPos("g8")):
-                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos("h8"), false);
-                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos("f8"), true);
+                case (notToRawPos["g8"]):
+                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos["h8"], false);
+                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos["f8"], true);
                     break;
-                case (notToRawPos("c8")):
-                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos("a8"), false);
-                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos("d8"), true);
+                case (notToRawPos["c8"]):
+                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos["a8"], false);
+                    updateBitboard(getter(bitboards, charPieces.r)(), setter(bitboards, charPieces.r), notToRawPos["d8"], true);
                     break;
             }
         }
@@ -166,7 +166,7 @@ export const makeMove = (move: number, moveFlag: number) => {
  */
 export const printMove = (move: number) => {
     let output = "";
-    output += (rawPosToNot(getMoveSource(move)) + rawPosToNot(getMoveTarget(move))
+    output += (rawPosToNot[getMoveSource(move)] + rawPosToNot[getMoveTarget(move)]
         + promotedPieces[getMovePromoted(move)]);
     return output;
 }
@@ -185,7 +185,7 @@ export const printMoveList = (moves: MoveList) => {
     output += ("move   piece  capture  double  enpassant  castling\n");
     for (let moveCount = 0; moveCount < moves.count; moveCount++) {
         const move = moves.moves[moveCount];
-        output += rawPosToNot(getMoveSource(move)) + rawPosToNot(getMoveTarget(move)) + (getMovePromoted(move) ? promotedPieces[getMovePromoted(move)] : ' ') + "  " + unicodePieces[getMovePiece(move)]
+        output += rawPosToNot[getMoveSource(move)] + rawPosToNot[getMoveTarget(move)] + (getMovePromoted(move) ? promotedPieces[getMovePromoted(move)] : ' ') + "  " + unicodePieces[getMovePiece(move)]
             + "     " + (getMoveCapture(move) ? 1 : 0) + "        " + (getMoveDouble(move) ? 1 : 0) + "       " + (getMoveEnpassant(move) ? 1 : 0) + "          " + (getMoveCastle(move) ? 1 : 0) + "\n";
     }
     output += `Total moves: ${moves.count}\n`;

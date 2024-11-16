@@ -1,7 +1,6 @@
 import { Accessor, createSignal, Signal } from "solid-js";
-import { BigIntSignalArray, bitboards, BitboardSignal, castle, enpassant, occupancies, setBitboards, setCastle, setEnpassant, setOccupancies, setSide, side } from "~/consts/board";
-import { getter, setter } from "../bigint";
-import { printBitboard } from "./bitboard";
+import { bitboards, castle, enpassant, occupancies, setBitboards, setCastle, setEnpassant, setOccupancies, setSide, side } from "~/consts/board";
+import { getter } from "../bigint";
 
 /**
  * Copies the current board state.

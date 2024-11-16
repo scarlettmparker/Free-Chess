@@ -14,26 +14,27 @@ export function squareToNot(i: number, j: number) {
  * @param square Square on a Chess board.
  * @returns Position (e.g. a1) on a Chess board.
  */
-export function rawPosToNot(square: number) {
-    const column = String.fromCharCode('a'.charCodeAt(0) + (square % 8));
-    const row = 8 - Math.floor(square / 8);
-    return column + row;
-}
+export const rawPosToNot = Array.from({ length: 64 }, (_, square) => {
+    const column = square % 8;  // Column (0-7)
+    const row = 8 - Math.floor(square / 8);  // Row (1-8)
+    return String.fromCharCode(column + 97) + row;  // Algebraic notation
+});
 
 /**
- * 
- * @param position Position (e.g. a1) on a Chess board.
- * @returns Square number (0 to 63).
+ * Creates a table to convert a Chess square to its index.
  */
-export function notToRawPos(position: string): number {
-    const column = position[0];
-    const row = parseInt(position[1], 10);
+export const notToRawPos: { [key: string]: number } = (() => {
+    const result: { [key: string]: number } = {};
+    for (let row = 1; row <= 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            const position = String.fromCharCode('a'.charCodeAt(0) + col) + row;
+            const index = (8 - row) * 8 + col;
+            result[position] = index;
+        }
+    }
+    return result;
+})();
 
-    const columnIndex = column.charCodeAt(0) - 'a'.charCodeAt(0);
-    const rowIndex = 8 - row;
-
-    return rowIndex * 8 + columnIndex;
-}
 
 /**
  * 
