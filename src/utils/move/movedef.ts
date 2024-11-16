@@ -4,8 +4,8 @@ export interface MoveList {
 }
 
 export const promotedPieces = [
-    'q', 'r', 'b', 'n',
-    'q', 'r', 'b', 'n'
+    '', 'q', 'r', 'b', 'n',
+    '', '', 'q', 'r', 'b', 'n',
 ];
 
 export function encodeMove(source: number, target: number, piece: number, promoted: number, capture: number, double: number, enpassant: number, castling: number): number {

@@ -27,9 +27,6 @@ function setBit(bitboard: bigint, pos: number, push: boolean) {
  */
 export function updateBitboard(bitboard: bigint, setBitboard: (bitboard: bigint) => void, pos: number, push: boolean) {
     let updatedBitboard = setBit(bitboard, pos, push);
-    if (push == false) {
-        console.log(updatedBitboard);
-    }
     setBitboard(updatedBitboard);
 };
 
