@@ -1,10 +1,10 @@
-import { charPieces, colors, gameState, unicodePieces } from "~/consts/board";
+import { charPieces, colors, gameState, unicodePieces } from "../../consts/board";
 import { notToRawPos, rawPosToNot } from "../board/squarehelper"
 import { getMoveCapture, getMoveCastle, getMoveDouble, getMoveEnpassant, getMovePiece, getMovePromoted, getMoveSource, getMoveTarget, MoveList, promotedPieces } from "./movedef"
-import { moveType } from "~/consts/move";
+import { moveType } from "../../consts/move";
 import { copyBoard, takeBack } from "../board/copy";
 import setBit, { getBit, getLSFBIndex } from "../board/bitboard";
-import { castlingRights } from "~/consts/bits";
+import { castlingRights } from "../../consts/bits";
 import { isSquareAttacked } from "../board/attacks";
 
 /**

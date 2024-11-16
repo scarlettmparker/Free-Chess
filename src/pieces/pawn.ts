@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
-import { notAFile, notHFile } from "~/consts/board";
+import { notAFile, notHFile } from "../consts/board";
 import { PawnState } from "./statetype";
-import setBit from "~/utils/board/bitboard";
+import setBit from "../utils/board/bitboard";
 
 export const [pawnState, setPawnState] = createSignal<PawnState>([
     new BigUint64Array(64),

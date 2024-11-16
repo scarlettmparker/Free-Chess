@@ -1,3 +1,8 @@
+/**
+ * Helper function to check which colour a square should be painted.
+ * @param square Square to check.
+ * @returns 1 (dark), 0 (not dark).
+ */
 export function isDarkSquare(square: number) {
     const row = Math.floor(square / 8);
     const col = square % 8;

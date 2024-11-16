@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
-import { notABFile, notAFile, notHFile, notHGFile } from "~/consts/board";
+import { notABFile, notAFile, notHFile, notHGFile } from "../consts/board";
 import { KnightState } from "./statetype";
-import setBit from "~/utils/board/bitboard";
+import setBit from "../utils/board/bitboard";
 
 export const [knightState, setKnightState] = createSignal<KnightState>(new BigUint64Array(64));
 

@@ -1,4 +1,4 @@
-import { BOARD_SIZE, charPieces, unicodePieces, pieces, gameState } from "~/consts/board";
+import { BOARD_SIZE, charPieces, unicodePieces, pieces, gameState } from "../../consts/board";
 import { rawPosToNot } from "./squarehelper";
 
 /**

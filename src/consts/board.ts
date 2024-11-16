@@ -1,5 +1,5 @@
 import { Accessor, Setter, Signal } from "solid-js";
-import { Colors, Sliders } from "~/routes";
+import { Colors, Sliders } from "../App";
 
 // bitboards
 export const gameState = {

@@ -1,5 +1,5 @@
-import { bishopMagicNumbers, rookMagicNumbers } from "~/consts/magic";
-import { bishopBitMask, bishopRelevantBits, rookBitMask, rookRelevantBits } from "~/consts/bits";
+import { bishopMagicNumbers, rookMagicNumbers } from "../consts/magic";
+import { bishopBitMask, bishopRelevantBits, rookBitMask, rookRelevantBits } from "../consts/bits";
 import { bishopMask, bishopState } from "./bishop";
 import { rookMask, rookState } from "./rook";
 

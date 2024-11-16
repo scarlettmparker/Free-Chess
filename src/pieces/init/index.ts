@@ -1,14 +1,14 @@
-import { colors } from "~/consts/board";
+import { colors } from "../../consts/board";
 import { maskPawnAttacks, setPawnState } from "../pawn";
 import { KingState, KnightState, PawnState, RookState } from "../statetype";
 import { maskKnightAttacks, setKnightState } from "../knight";
 import { maskKingAttacks, setKingState } from "../king";
 import { bishopMask, bishopState, maskBishopAttacks, maskBishopAttacksOTF, setBishopMask, setBishopState } from "../bishop";
 import { maskRookAttacks, maskRookAttacksOTF, rookMask, rookState, setRookMask, setRookState } from "../rook";
-import { countBits } from "~/utils/board/bitboard";
-import { setOccupancyBits } from "~/utils/occupancies";
-import { bishopMagicNumbers, rookMagicNumbers } from "~/consts/magic";
-import { bishopBitMask, bishopRelevantBits, rookBitMask, rookRelevantBits } from "~/consts/bits";
+import { countBits } from "../../utils/board/bitboard";
+import { setOccupancyBits } from "../../utils/occupancies";
+import { bishopMagicNumbers, rookMagicNumbers } from "../../consts/magic";
+import { bishopBitMask, bishopRelevantBits, rookBitMask, rookRelevantBits } from "../../consts/bits";
 
 /**
  * Initializes attacks for both sides for leaper pieces.

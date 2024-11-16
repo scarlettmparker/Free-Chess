@@ -1,10 +1,10 @@
-import { BOARD_SIZE, charPieces, colors, gameState } from "~/consts/board";
-import { getpState } from "~/pieces/pawn";
-import { getkState } from "~/pieces/knight";
-import { getkiState } from "~/pieces/king";
-import { getBishopAttacks } from "~/pieces/bishop";
-import { getRookAttacks } from "~/pieces/rook";
-import { getQueenAttacks } from "~/pieces/queen";
+import { BOARD_SIZE, charPieces, colors, gameState } from "../../consts/board";
+import { getpState } from "../../pieces/pawn";
+import { getkState } from "../../pieces/knight";
+import { getkiState } from "../../pieces/king";
+import { getBishopAttacks } from "../../pieces/bishop";
+import { getRookAttacks } from "../../pieces/rook";
+import { getQueenAttacks } from "../../pieces/queen";
 
 /**
  * 

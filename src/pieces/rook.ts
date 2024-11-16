@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { RookState } from "./statetype";
-import { rookMagicNumbers } from "~/consts/magic";
-import { rookBitMask, rookRelevantBits } from "~/consts/bits";
+import { rookMagicNumbers } from "../consts/magic";
+import { rookBitMask, rookRelevantBits } from "../consts/bits";
 
 export const [rookMask, setRookMask] = createSignal(new BigUint64Array(64));
 export const [rookState, setRookState] = createSignal<RookState>(Array.from({ length: 64 }, () => new BigUint64Array(4096)));

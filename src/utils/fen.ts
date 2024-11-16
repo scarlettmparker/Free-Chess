@@ -1,4 +1,4 @@
-import {  BOARD_SIZE, charPieces, colors, gameState, pieces} from "~/consts/board";
+import {  BOARD_SIZE, charPieces, colors, gameState, pieces} from "../consts/board";
 import setBit, { getBit } from "./board/bitboard";
 import { notToRawPos } from "./board/squarehelper";
 

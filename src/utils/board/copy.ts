@@ -1,4 +1,4 @@
-import { gameState } from "~/consts/board";
+import { gameState } from "../../consts/board";
 
 /**
  * Copies the current board state.

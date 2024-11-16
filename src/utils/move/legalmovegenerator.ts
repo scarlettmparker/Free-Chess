@@ -1,15 +1,15 @@
-import { blackPromotions, charPieces, colors, gameState, pieces, whitePromotions } from "~/consts/board";
+import { blackPromotions, charPieces, colors, gameState, pieces, whitePromotions } from "../../consts/board";
 import { getBit, getLSFBIndex } from "../board/bitboard";
 import { notToRawPos } from "../board/squarehelper";
-import { getpState } from "~/pieces/pawn";
+import { getpState } from "../../pieces/pawn";
 import { isSquareAttacked } from "../board/attacks";
-import { getkiState } from "~/pieces/king";
-import { getBishopAttacks } from "~/pieces/bishop";
-import { getRookAttacks } from "~/pieces/rook";
-import { getQueenAttacks } from "~/pieces/queen";
+import { getkiState } from "../../pieces/king";
+import { getBishopAttacks } from "../../pieces/bishop";
+import { getRookAttacks } from "../../pieces/rook";
+import { getQueenAttacks } from "../../pieces/queen";
 import { encodeMove, MoveList } from "./movedef";
 import { addMove } from "./move";
-import { getkState } from "~/pieces/knight";
+import { getkState } from "../../pieces/knight";
 
 /**
  * Generate legal moves.

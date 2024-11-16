@@ -1,4 +1,4 @@
-import { gameState } from "~/consts/board";
+import { gameState } from "../../consts/board";
 
 export function resetGameState() {
     gameState.bitboards = Array.from({ length: 12 }, () => 0n);

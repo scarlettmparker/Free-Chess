@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { BishopState } from "./statetype";
-import { bishopMagicNumbers } from "~/consts/magic";
-import { bishopBitMask, bishopRelevantBits } from "~/consts/bits";
+import { bishopMagicNumbers } from "../consts/magic";
+import { bishopBitMask, bishopRelevantBits } from "../consts/bits";
 
 export const [bishopMask, setBishopMask] = createSignal(new BigUint64Array(64));
 export const [bishopState, setBishopState] = createSignal<BishopState>(Array.from({ length: 64 }, () => new BigUint64Array(512)));

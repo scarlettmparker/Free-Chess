@@ -1,10 +1,9 @@
-import { gameState } from "~/consts/board"
+import { gameState } from "../consts/board"
 import { MoveList } from "./move/movedef";
 import { generateMoves } from "./move/legalmovegenerator";
-import { moveType } from "~/consts/move";
+import { moveType } from "../consts/move";
 import { copyBoard, takeBack } from "./board/copy";
 import { makeMove } from "./move/move";
-import { isSquareAttacked } from "./board/attacks";
 
 /**
  * Performance test & move path enumeration
