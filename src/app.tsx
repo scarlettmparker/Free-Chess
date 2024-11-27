@@ -1,53 +1,126 @@
-import { MetaProvider, Title } from "@solidjs/meta";
-import { Accessor, createMemo, createSignal, JSX, onMount } from "solid-js";
-import initLeaperAttacks, { initSliderAttacks } from "./pieces/init";
-import { sliders, WIDTH, HEIGHT, BOARD_SIZE, charPieces, unicodePieces, colors, DARK_HIGHLIGHTED, LIGHT_HIGHLIGHTED, gameState } from "./consts/board";
-import { getBit } from "./utils/board/bitboard";
-import { parseFEN } from "./utils/fen";
-import { isDarkSquare } from "./utils/board/squarehelper";
-import { getMoveSource, getMoveTarget, MoveList } from "./utils/move/movedef";
-import { generateMoves } from "./utils/move/legalmovegenerator";
-import { moveType } from "./consts/move";
-import { makeMove } from "./utils/move/move";
-import { copyBoard, takeBack } from "./utils/board/copy";
-import { resetGameState } from "./utils/board/game";
+import { Accessor, createMemo, createSignal, JSX, onMount, type Component } from 'solid-js';
+import { Piece } from './game/piece/piece';
+import { BOARD_SIZE, charPieces, colors, DARK_HIGHLIGHTED, gameState, HEIGHT, LIGHT_HIGHLIGHTED, moveType, unicodePieces, WIDTH } from './game/consts/board';
+import { initGame, initGameState, resetGameState } from './game/init/game';
+import { parseFEN } from './game/utils/fen';
+import { getBit } from './game/utils/board/bitboard';
+import { perftDriver } from './game/utils/perft';
+import { isDarkSquare } from './game/utils/board/squarehelper';
+import { getMoveSource, getMoveTarget, MoveList } from './game/utils/move/movedef';
+import { makeMove } from './game/utils/move/move';
+import { generateMoves } from './game/utils/move/legalmovegenerator';
+import { copyBoard, takeBack } from './game/utils/board/copy';
+import { MetaProvider, Title } from '@solidjs/meta';
+import { printAttackedSquares } from './game/utils/board/attacks';
 
-export interface Position {
-  x: number;
-  y: number;
-}
+const startPosition = "[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1";
+const trickyPosition = "[7]3[11]2[7]/[1]1[1][1][9][1][5]1/[5][3]2[1][3][1]1/3[0][2]3/1[1]2[0]3/2[2]2[8]1[1]/[0][0][0][4][4][0][0][0]/[6]3[10]2[6] w KQkq - ";
+const enpassantPosition = "8/2[1]5/3[1]4/[10][0]5[7]/1[6]3[1]1[11]/8/4[0]1[0]1/8 w - -"
 
-export type Colors = {
-  WHITE: number;
-  BLACK: number;
-  BOTH: number;
-};
-
-export type Sliders = {
-  ROOK: number;
-  BISHOP: number;
-}
-
-// FEN board positions
-const emptyBoard = "8/8/8/8/8/8/8/8 b - - ";
-const startPosition = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-const trickyPosition = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ";
-const killerPosition = "rnbqkb1r/pp1p1pPp/8/2p1pP2/1P1P4/3P3P/P1P1P3/RNBQKBNR w KQkq e6 0 1";
-const cmkPosition = "r2q1rk1/ppp2ppp/2n1bn2/2b1p3/3pP3/3P1NPP/PPP1NPB1/R1BQ1RK1 b - - 0 9 ";
-
-export default function Home() {
+const App: Component = () => {
   const [emptyMoves, setEmptyMoves] = createSignal<MoveList>({ moves: [], count: 0 });
   const [pieces, setPieces] = createSignal<JSX.Element[]>([]);
   const [squares, setSquares] = createSignal<JSX.Element[]>([]);
   const [currentMoves, setCurrentMoves] = createSignal<MoveList>({ moves: [], count: 0 });
   const [currentSquare, setCurrentSquare] = createSignal(-1);
   const [side, setSide] = createSignal(0);
-
+  
   onMount(() => {
     resetGameState();
-    initAll();
+
+    // PAWNS
+    const WhitePawn = new Piece(0, 0);
+    WhitePawn.setPawn(true);
+    WhitePawn.setEnpassant(true);
+    WhitePawn.setPromote(true);
+
+    const BlackPawn = new Piece(1, 1);
+    BlackPawn.setPawn(true);
+    BlackPawn.setEnpassant(true);
+    BlackPawn.setPromote(true);
+
+    gameState.pieces.push(WhitePawn);
+    gameState.pieces.push(BlackPawn);
+
+    // KNIGHTS
+    const WhiteKnight = new Piece(2, 0);
+    WhiteKnight.setLeaper(true);
+    WhiteKnight.setLeaperOffsets([[
+      [-2, 1], [-1, 2], [1, 2], [2, 1],
+      [-2, -1], [-1, -2], [1, -2], [2, -1],
+    ]]);
+
+    const BlackKnight = new Piece(3, 1);
+    BlackKnight.setLeaper(true);
+    BlackKnight.setLeaperOffsets([[
+      [-2, 1], [-1, 2], [1, 2], [2, 1],
+      [-2, -1], [-1, -2], [1, -2], [2, -1],
+    ]]);
+
+    gameState.pieces.push(WhiteKnight);
+    gameState.pieces.push(BlackKnight);
+
+    // BISHOPS
+    const WhiteBishop = new Piece(4, 0);
+    WhiteBishop.setSlider(true);
+    WhiteBishop.setDiagonal(true);
+
+    const BlackBishop = new Piece(5, 1);
+    BlackBishop.setSlider(true);
+    BlackBishop.setDiagonal(true);
+
+    gameState.pieces.push(WhiteBishop);
+    gameState.pieces.push(BlackBishop);
+
+    // ROOKS
+    const WhiteRook = new Piece(6, 0);
+    WhiteRook.setSlider(true);
+    WhiteRook.setStraight(true);
+
+    const BlackRook = new Piece(7, 1);
+    BlackRook.setSlider(true);
+    BlackRook.setStraight(true);
+
+    gameState.pieces.push(WhiteRook);
+    gameState.pieces.push(BlackRook);
+
+    // QUEENS
+    const WhiteQueen = new Piece(8, 0);
+    WhiteQueen.setSlider(true);
+    WhiteQueen.setDiagonal(true);
+    WhiteQueen.setStraight(true);
+
+    const BlackQueen = new Piece(9, 1);
+    BlackQueen.setSlider(true);
+    BlackQueen.setDiagonal(true);
+    BlackQueen.setStraight(true);
+
+    gameState.pieces.push(WhiteQueen);
+    gameState.pieces.push(BlackQueen);
+
+    // KINGS
+    const WhiteKing = new Piece(10, 0);
+    WhiteKing.setKing(true);
+    WhiteKing.setLeaper(true);
+    WhiteKing.setLeaperOffsets([[
+      [-1, 1], [0, 1], [1, 1], [-1, 0],
+      [1, 0], [-1, -1], [0, -1], [1, -1]
+    ]]);
+
+    const BlackKing = new Piece(11, 1);
+    BlackKing.setKing(true);
+    BlackKing.setLeaper(true);
+    BlackKing.setLeaperOffsets([[
+      [-1, 1], [0, 1], [1, 1], [-1, 0],
+      [1, 0], [-1, -1], [0, -1], [1, -1]
+    ]]);
+
+    gameState.pieces.push(WhiteKing);
+    gameState.pieces.push(BlackKing);
+
+    initGameState();
     parseFEN(startPosition);
-    setSide(gameState.side);
+    initGame();
     updateBoard();
   })
 
@@ -55,7 +128,8 @@ export default function Home() {
     // cache bitboards and moves for quick access
     const movesBySquare = new Map<number, MoveList>();
     setEmptyMoves({ moves: [], count: 0 });
-    generateMoves(emptyMoves());
+    generateMoves(emptyMoves(), gameState.pieces);
+  
     // precompute moves mapped by source square
     emptyMoves().moves.forEach((move: number) => {
       const source = getMoveSource(move);
@@ -66,15 +140,15 @@ export default function Home() {
       moveList.moves.push(move);
       moveList.count++;
     });
-
+  
     const newPieces: JSX.Element[] = [];
-    const newSquares = squares();
-
+    const newSquares: JSX.Element[] = [];
+  
     for (let square = 0; square < BOARD_SIZE * BOARD_SIZE; square++) {
       const i = Math.floor(square / BOARD_SIZE);
       const j = square % BOARD_SIZE;
       const odd = (i + j) % 2;
-
+  
       let piece = -1;
       for (let bbPiece = charPieces.P; bbPiece <= charPieces.k; bbPiece++) {
         if (getBit(gameState.bitboards[bbPiece], square)) {
@@ -82,33 +156,28 @@ export default function Home() {
           break;
         }
       }
-
+  
       const pieceMoves = movesBySquare.get(square) || { moves: [], count: 0 };
       newPieces.push(
-        <Piece piece={piece} odd={odd} square={square} moves={pieceMoves} currentMoves={currentMoves}
+        <PieceGraphic piece={piece} square={square} moves={pieceMoves} currentMoves={currentMoves}
           setCurrentMoves={setCurrentMoves} currentSquare={currentSquare} setCurrentSquare={setCurrentSquare}
           side={side} setSide={setSide} />
       );
-      if (newSquares.length < 64) {
-        newSquares.push(<Square odd={odd} square={square} />);
-      }
+  
+      // Add the square (empty or with piece) to the newSquares array
+      newSquares.push(<Square odd={odd} square={square} />);
     }
-
+  
     setPieces(newPieces);
     setSquares(newSquares);
   };
 
   const loadBoard = createMemo(() => {
-    updateBoard();
+    if (gameState.pieces.length != 0) {
+      updateBoard();
+    }
     return side();
   })
-
-  // begin the game
-  const initAll = () => {
-    initLeaperAttacks();
-    initSliderAttacks(sliders.BISHOP);
-    initSliderAttacks(sliders.ROOK);
-  }
 
   return (
     <MetaProvider>
@@ -116,12 +185,13 @@ export default function Home() {
       <BuildBoard squares={squares} pieces={pieces} />
     </MetaProvider>
   );
-}
+};
 
 /**
- * 
- * @param param0 
- * @returns 
+ * JSX element of the Chess board containing square and piece child elements.
+ * @param squares JSX element of squares (empty squares) in the board's background.
+ * @param pieces List of pieces currently available on the board.
+ * @returns JSX element of the Chess board & children elements.
  */
 const BuildBoard = ({ squares, pieces }: { squares: Accessor<JSX.Element[]>, pieces: Accessor<JSX.Element[]> }) => {
   const boardSizeWidth = WIDTH * BOARD_SIZE;
@@ -140,6 +210,9 @@ const BuildBoard = ({ squares, pieces }: { squares: Accessor<JSX.Element[]>, pie
 };
 
 /**
+ * JSX Element for an empty square as seen in the background of the board.
+ * @odd Calculated using index of the square to give the board its checkered pattern.
+ * @square Square ID used for moving square divs and pieces.
  * @returns JSX Element of an empty square.
  */
 const Square = ({ odd, square }: { odd: number, square: number }) => {
@@ -153,19 +226,17 @@ const Square = ({ odd, square }: { odd: number, square: number }) => {
 /**
  * @returns JSX Element of a piece.
  */
-const Piece = ({ piece, odd, square, moves, currentMoves, setCurrentMoves, currentSquare, setCurrentSquare, side, setSide }: {
-  piece: number, odd: number, square: number, moves: MoveList, currentMoves: Accessor<MoveList>, setCurrentMoves: (value: MoveList) => void, currentSquare: Accessor<number>,
+const PieceGraphic = ({ piece, square, moves, currentMoves, setCurrentMoves, currentSquare, setCurrentSquare, side, setSide }: {
+  piece: number, square: number, moves: MoveList, currentMoves: Accessor<MoveList>, setCurrentMoves: (value: MoveList) => void, currentSquare: Accessor<number>,
   setCurrentSquare: (value: number) => void, side: Accessor<number>, setSide: (value: number) => void
 }) => {
-  const colour = odd ? 'text-slate-300' : 'text-slate-700';
-  const background = piece > 5 ? 'bg-slate-900' : piece >= 0 && 'bg-slate-100';
   const squareStyle = { width: `${WIDTH}px`, height: `${HEIGHT}px`, marginTop: '16px' };
 
   return (
-    <div data-piece={square} class={`flex justify-center items-center text-3xl ${colour} ${background} bg-opacity-50`} style={squareStyle}
+    <div data-piece={square} class={`flex justify-center items-center text-3xl bg-opacity-50`} style={squareStyle}
       onClick={() => currentSquare() == -1 ? pieceClick(piece, moves, square, setCurrentMoves, setCurrentSquare)
         : movePiece(square, currentSquare(), setCurrentSquare, currentMoves(), setCurrentMoves, side, setSide)}>
-      {piece != -1 ? unicodePieces[piece] : ''}
+      {piece != -1 ? <img src={`/piece/${piece}.png`} width="54" height="54" /> : ''}
     </div>
   )
 }
@@ -174,7 +245,7 @@ const Piece = ({ piece, odd, square, moves, currentMoves, setCurrentMoves, curre
  * Updates graphical interface when clicking on a piece.
  */
 const pieceClick = (piece: number, moves: MoveList, square: number, setCurrentMoves: (value: MoveList) => void, setCurrentSquare: (value: number) => void) => {
-  const isSide = gameState.side == colors.WHITE ? piece < 6 : piece >= 6;
+  const isSide = gameState.side == colors.WHITE ? gameState.whitePieceIDs.includes(piece) : gameState.blackPieceIDs.includes(piece);
 
   // get any currently selected squares
   const selectedDivs: NodeListOf<HTMLElement> = document.querySelectorAll('div[data-selected="true"]');
@@ -183,13 +254,13 @@ const pieceClick = (piece: number, moves: MoveList, square: number, setCurrentMo
   });
 
   if (!isSide) {
-    return
+    return;
   };
 
   // remove illegal moves
   for (let moveCount = 0; moveCount < moves.count; moveCount++) {
     const copies = copyBoard();
-    if (!(makeMove(moves.moves[moveCount], moveType.ALL_MOVES))) {
+    if (!(makeMove(moves.moves[moveCount], moveType.ALL_MOVES, 0))) {
       moves.moves.splice(moveCount, 1);
       moves.count--;
       moveCount--;
@@ -220,7 +291,6 @@ const pieceClick = (piece: number, moves: MoveList, square: number, setCurrentMo
 const movePiece = (square: number, currentSquare: number, setCurrentSquare: (value: number) => void, moves: MoveList, setCurrentMoves: (value: MoveList) => void, side: Accessor<number>, setSide: (value: number) => void) => {
   let canMove = false;
   let nextMove: number = 0;
-  let targetSquare = 0;
 
   // get any currently selected squares
   if (currentSquare != -1) {
@@ -235,13 +305,12 @@ const movePiece = (square: number, currentSquare: number, setCurrentSquare: (val
     if (getMoveTarget(move) == square) {
       canMove = true;
       nextMove = move;
-      targetSquare = square;
     }
   }
 
   // handle stuff with de-selecting
   if (canMove) {
-    makeMove(nextMove, moveType.ALL_MOVES);
+    makeMove(nextMove, moveType.ALL_MOVES, 0);
     setSide(side() ^ 1);
     setCurrentSquare(-1);
   } else {
@@ -249,3 +318,5 @@ const movePiece = (square: number, currentSquare: number, setCurrentSquare: (val
     setCurrentSquare(-1);
   }
 }
+
+export default App;
