@@ -1,7 +1,7 @@
 import { blackPromotions, castlePieces, colors, gameState, getBitboard, whitePromotions } from "../../consts/board";
 import { Piece } from "../../piece/piece";
 import { isSquareAttacked } from "../board/attacks";
-import { getBit, getLSFBIndex } from "../board/bitboard";
+import { getBit, getLSFBIndex, printBitboard } from "../board/bitboard";
 import { notToRawPos } from "../board/squarehelper";
 import { addMove } from "./move";
 import { encodeMove, MoveList } from "./movedef";
@@ -175,7 +175,7 @@ export const generateMoves = (moves: MoveList, pieces: Piece[]) => {
 
                 // get leaper moves
                 if (piece.getLeaper()) {
-                    attacks |= piece.getLeaperPieceStateMove(checkMove)[sourceSquare] & ((gameState.side == colors.WHITE) ? ~gameState.occupancies[colors.WHITE] : ~gameState.occupancies[colors.BLACK]);
+                    attacks |= piece.getLeaperPieceState()[checkMove][sourceSquare] & ((gameState.side == colors.WHITE) ? ~gameState.occupancies[colors.WHITE] : ~gameState.occupancies[colors.BLACK]);
                 }
 
                 // get slider moves

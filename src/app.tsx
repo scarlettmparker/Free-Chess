@@ -84,20 +84,6 @@ const App: Component = () => {
     gameState.pieces.push(WhiteRook);
     gameState.pieces.push(BlackRook);
 
-    // QUEENS
-    const WhiteQueen = new Piece(8, 0);
-    WhiteQueen.setSlider(true);
-    WhiteQueen.setDiagonal(true);
-    WhiteQueen.setStraight(true);
-
-    const BlackQueen = new Piece(9, 1);
-    BlackQueen.setSlider(true);
-    BlackQueen.setDiagonal(true);
-    BlackQueen.setStraight(true);
-
-    gameState.pieces.push(WhiteQueen);
-    gameState.pieces.push(BlackQueen);
-
     // KINGS
     const WhiteKing = new Piece(10, 0);
     WhiteKing.setKing(true);
@@ -123,16 +109,28 @@ const App: Component = () => {
     HalfQueenWhite.setDiagonal(true);
     HalfQueenWhite.setStraight(true);
 
-    HalfQueenWhite.setStraightConstraints([3, 3, 3, 3]);
-    HalfQueenWhite.setDiagonalConstraints([3, 3, 3, 3]);
+    HalfQueenWhite.setLeaper(true);
+    HalfQueenWhite.setLeaperOffsets([[
+      [-2, 1], [-1, 2], [1, 2], [2, 1],
+      [-2, -1], [-1, -2], [1, -2], [2, -1],
+    ]]);
+
+    HalfQueenWhite.setStraightConstraints([2, 2, 2, 2]);
+    HalfQueenWhite.setDiagonalConstraints([2, 2, 2, 2]);
 
     const HalfQueenBlack = new Piece(101, 1);
     HalfQueenBlack.setSlider(true);
     HalfQueenBlack.setDiagonal(true);
     HalfQueenBlack.setStraight(true);
 
-    HalfQueenBlack.setStraightConstraints([3, 3, 3, 3]);
-    HalfQueenBlack.setDiagonalConstraints([3, 3, 3, 3]);
+    HalfQueenBlack.setLeaper(true);
+    HalfQueenBlack.setLeaperOffsets([[
+      [-2, 1], [-1, 2], [1, 2], [2, 1],
+      [-2, -1], [-1, -2], [1, -2], [2, -1],
+    ]]);
+
+    HalfQueenBlack.setStraightConstraints([2, 2, 2, 2]);
+    HalfQueenBlack.setDiagonalConstraints([2, 2, 2, 2]);
 
     gameState.pieces.push(HalfQueenWhite);
     gameState.pieces.push(HalfQueenBlack);

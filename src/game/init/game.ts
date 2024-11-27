@@ -49,9 +49,11 @@ export function initGame() {
             if (piece.getColor() == colors.WHITE) {
                 piece.initSlidingAttacks();
             }
-        } else if (piece.getLeaper()) {
+        } 
+        if (piece.getLeaper()) {
             piece.initLeaperAttacks();
-        } else if (piece.getPawn()) {
+        }
+        if (piece.getPawn()) {
             piece.initPawnAttacks();
         }
     });
