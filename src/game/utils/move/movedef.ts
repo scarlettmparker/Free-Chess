@@ -21,7 +21,7 @@ export function getMoveTarget(move: number): number {
 }
 
 export function getMovePiece(move: number): number {
-    return ((move & 0xf000) >> 12);
+    return (move >> 12) & 0xff;
 }
 
 export function getMovePromoted(move: number): number {

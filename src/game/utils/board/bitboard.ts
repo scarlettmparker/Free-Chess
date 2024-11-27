@@ -133,6 +133,10 @@ export const printBoard = () => {
     console.log(board);
 }
 
+export const getPieceByID = (id: number) => {
+    return gameState.pieces.find(piece => piece.id === id);
+}
+
 /**
  * 
  * @param castle Current castling rights for all players.

@@ -1,4 +1,4 @@
-import { blackPromotions, castlePieces, colors, gameState, whitePromotions } from "../../consts/board";
+import { blackPromotions, castlePieces, colors, gameState, getBitboard, whitePromotions } from "../../consts/board";
 import { Piece } from "../../piece/piece";
 import { isSquareAttacked } from "../board/attacks";
 import { getBit, getLSFBIndex } from "../board/bitboard";
@@ -15,7 +15,7 @@ export const generateMoves = (moves: MoveList, pieces: Piece[]) => {
     for (let piece of pieces) {
         if (piece.getColor() != gameState.side) continue;
 
-        bitboard = gameState.bitboards[piece.getID()];
+        bitboard = getBitboard(piece.getID()).bitboard;
         let sourceSquare = getLSFBIndex(bitboard);
         let currentMove = piece.getMove();
 

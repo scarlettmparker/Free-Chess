@@ -1,8 +1,8 @@
-import { charPieces, colors, gameState, moveType, unicodePieces } from "../../consts/board";
+import { charPieces, colors, gameState, getBitboard, moveType, unicodePieces } from "../../consts/board";
 import { notToRawPos, rawPosToNot } from "../board/squarehelper"
 import { getMoveCapture, getMoveCastle, getMoveDouble, getMoveEnpassant, getMovePiece, getMovePromoted, getMoveSource, getMoveTarget, MoveList, promotedPieces } from "./movedef"
 import { copyBoard, takeBack } from "../board/copy";
-import setBit, { getBit, getLSFBIndex, printBitboard } from "../board/bitboard";
+import setBit, { getBit, getLSFBIndex, getPieceByID, printBitboard } from "../board/bitboard";
 import { castlingRights } from "../../consts/bits";
 import { isSquareAttacked } from "../board/attacks";
 
@@ -25,7 +25,6 @@ export const addMove = (moves: MoveList, move: number) => {
 export const makeMove = (move: number, moveFlag: number, currentMove: number) => {
     if (moveFlag == moveType.ALL_MOVES) {
         const copies = copyBoard();
-
         let tempBitboards = gameState.bitboards;
 
         // parse the move
@@ -39,8 +38,9 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
         const castling = getMoveCastle(move);
 
         // move the piece
-        tempBitboards[piece] = setBit(tempBitboards[piece], sourceSquare, false);
-        tempBitboards[piece] = setBit(tempBitboards[piece], targetSquare, true);
+        let newPieceBitboard = getBitboard(piece, tempBitboards);
+        newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, sourceSquare, false);
+        newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, true);
 
         const opponentPieceIDs = gameState.side == colors.WHITE ? gameState.blackPieceIDs : gameState.whitePieceIDs;
 
@@ -48,23 +48,24 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
         if (capture) {
             // loop over bitboard of opposite side
             for (let bbPiece of opponentPieceIDs) {
-                if (getBit(tempBitboards[bbPiece], targetSquare)) { // piece on target square
-                    tempBitboards[bbPiece] = setBit(tempBitboards[bbPiece], targetSquare, false);
+                let newCaptureBitboard = getBitboard(bbPiece, tempBitboards);
+                if (getBit(newCaptureBitboard.bitboard, targetSquare)) { // piece on target square
+                    newCaptureBitboard.bitboard = setBit(newCaptureBitboard.bitboard, targetSquare, false);
                     break;
                 }
             }
         }
 
         // promotions
-        if (promoted) {
-            tempBitboards[piece] = setBit(tempBitboards[piece], targetSquare, false);
-            tempBitboards[promoted] = setBit(tempBitboards[promoted], targetSquare, true);
+        if (promoted && getPieceByID(piece)!.getPromote()) {
+            newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, false);
+            tempBitboards[promoted].bitboard = setBit(tempBitboards[promoted].bitboard, targetSquare, true);
         }
 
         // en passant
         if (enpassantFlag) {
-            (gameState.side == colors.WHITE) ? tempBitboards[charPieces.p] = setBit(tempBitboards[charPieces.p], targetSquare + 8, false)
-                : tempBitboards[charPieces.P] = setBit(tempBitboards[charPieces.P], targetSquare - 8, false)
+            (gameState.side == colors.WHITE) ? tempBitboards[charPieces.p].bitboard = setBit(tempBitboards[charPieces.p].bitboard, targetSquare + 8, false)
+                : tempBitboards[charPieces.P].bitboard = setBit(tempBitboards[charPieces.P].bitboard, targetSquare - 8, false)
         }
 
         gameState.enpassant = -1;
@@ -78,20 +79,20 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
         if (castling) {
             switch (targetSquare) {
                 case (notToRawPos["g1"]):
-                    tempBitboards[charPieces.R] = setBit(tempBitboards[charPieces.R], notToRawPos["h1"], false);
-                    tempBitboards[charPieces.R] = setBit(tempBitboards[charPieces.R], notToRawPos["f1"], true);
+                    tempBitboards[charPieces.R].bitboard = setBit(tempBitboards[charPieces.R].bitboard, notToRawPos["h1"], false);
+                    tempBitboards[charPieces.R].bitboard = setBit(tempBitboards[charPieces.R].bitboard, notToRawPos["f1"], true);
                     break;
                 case (notToRawPos["c1"]):
-                    tempBitboards[charPieces.R] = setBit(tempBitboards[charPieces.R], notToRawPos["a1"], false);
-                    tempBitboards[charPieces.R] = setBit(tempBitboards[charPieces.R], notToRawPos["d1"], true);
+                    tempBitboards[charPieces.R].bitboard = setBit(tempBitboards[charPieces.R].bitboard, notToRawPos["a1"], false);
+                    tempBitboards[charPieces.R].bitboard = setBit(tempBitboards[charPieces.R].bitboard, notToRawPos["d1"], true);
                     break;
                 case (notToRawPos["g8"]):
-                    tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["h8"], false);
-                    tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["f8"], true);
+                    tempBitboards[charPieces.r].bitboard = setBit(tempBitboards[charPieces.r].bitboard, notToRawPos["h8"], false);
+                    tempBitboards[charPieces.r].bitboard = setBit(tempBitboards[charPieces.r].bitboard, notToRawPos["f8"], true);
                     break;
                 case (notToRawPos["c8"]):
-                    tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["a8"], false);
-                    tempBitboards[charPieces.r] = setBit(tempBitboards[charPieces.r], notToRawPos["d8"], true);
+                    tempBitboards[charPieces.r].bitboard = setBit(tempBitboards[charPieces.r].bitboard, notToRawPos["a8"], false);
+                    tempBitboards[charPieces.r].bitboard = setBit(tempBitboards[charPieces.r].bitboard, notToRawPos["d8"], true);
                     break;
             }
         }
@@ -111,14 +112,16 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
         // update white pieces occupancies
         let whiteOccupancy = gameState.occupancies[colors.WHITE];
         for (let bbPiece of gameState.whitePieceIDs) {
-            whiteOccupancy |= tempBitboards[bbPiece];
+            if (!getBitboard(bbPiece).bitboard) continue;
+            whiteOccupancy |= getBitboard(bbPiece).bitboard;
         }
         gameState.occupancies[colors.WHITE] = whiteOccupancy;
 
         // update black pieces occupancies
         let blackOccupancy = gameState.occupancies[colors.BLACK];
         for (let bbPiece of gameState.blackPieceIDs) {
-            blackOccupancy |= tempBitboards[bbPiece];
+            if (!getBitboard(bbPiece).bitboard) continue;
+            blackOccupancy |= getBitboard(bbPiece).bitboard;
         }
         gameState.occupancies[colors.BLACK] = blackOccupancy;
 
@@ -133,7 +136,7 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
         gameState.bitboards = tempBitboards;
 
         // check if king exposed to check
-        if (isSquareAttacked((gameState.side == colors.WHITE) ? getLSFBIndex(tempBitboards[charPieces.k]) : getLSFBIndex(tempBitboards[charPieces.K]), gameState.side, currentMove)) {
+        if (isSquareAttacked((gameState.side == colors.WHITE) ? getLSFBIndex(getBitboard(charPieces.k).bitboard) : getLSFBIndex(getBitboard(charPieces.K).bitboard), gameState.side, currentMove)) {
             takeBack(copies);
             return 0; // illegal move
         } else {

@@ -1,13 +1,18 @@
 import { Piece } from "../piece/piece";
 import { Colors } from "./type";
 
-export const pieceIDs =  new Set<number>();
+export const pieceIDs = new Set<number>();
+
+type BitboardData = {
+    pieceID: number;
+    bitboard: bigint;
+};
 
 export const gameState = {
     whitePieceIDs: [] as number[],
     blackPieceIDs: [] as number[],
     pieces: [] as Piece[],
-    bitboards: Array.from({ length: 0 }, () => 0n),
+    bitboards: [] as BitboardData[],
     occupancies: Array.from({ length: 3 }, () => 0n),
     globalMove: 0,
     side: 0,
@@ -45,7 +50,7 @@ export const castlePieces = Object.freeze({
     bq: 8
 });
 
-export const charPieces: { [key: string]: number} = {
+export const charPieces: { [key: string]: number } = {
     P: 0, p: 1, N: 2, n: 3, B: 4, b: 5,
     R: 6, r: 7, Q: 8, q: 9, K: 10, k: 11
 }
@@ -63,3 +68,13 @@ export const notAFile: bigint = 18374403900871474942n;
 export const notABFile: bigint = 18229723555195321596n;
 export const notHFile: bigint = 9187201950435737471n;
 export const notHGFile: bigint = 4557430888798830399n;
+
+export const getBitboard = (pieceID: number, bitboards: BitboardData[] = gameState.bitboards): BitboardData => {
+    const foundPiece = bitboards.find(piece => piece.pieceID === pieceID);
+    
+    if (!foundPiece) {
+        return { pieceID: pieceID, bitboard: 0n };
+    }
+
+    return foundPiece;
+};

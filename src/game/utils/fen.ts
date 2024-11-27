@@ -1,5 +1,5 @@
-import { BOARD_SIZE, colors, gameState, castlePieces } from "../consts/board";
-import setBit, { getBit } from "./board/bitboard";
+import { BOARD_SIZE, colors, gameState, castlePieces, getBitboard } from "../consts/board";
+import setBit, { getBit, printBitboard } from "./board/bitboard";
 import { notToRawPos } from "./board/squarehelper";
 
 /**
@@ -16,12 +16,6 @@ export const parseFEN = (fen: string) => {
     gameState.enpassant = -1;
     gameState.castle = 0n;
 
-    const blackStartPiece = gameState.blackPieceIDs[0];
-    const blackEndPiece = gameState.blackPieceIDs[gameState.blackPieceIDs.length - 1];
-
-    const whiteStartPiece = gameState.whitePieceIDs[0];
-    const whiteEndPiece = gameState.whitePieceIDs[gameState.whitePieceIDs.length - 1];
-
     // occupancies
     let fenIndex = 0;
     for (let rank = 0; rank < BOARD_SIZE; rank++) {
@@ -35,24 +29,25 @@ export const parseFEN = (fen: string) => {
                 if (endBracketIndex === -1) {
                     throw new Error("Invalid FEN format: unmatched '['.");
                 }
-
+            
                 const pieceID = parseInt(fen.slice(fenIndex + 1, endBracketIndex), 10);
                 if (isNaN(pieceID)) {
                     throw new Error("Invalid FEN format: invalid piece ID.");
                 }
-
+            
                 const piece = gameState.pieces.find(p => p.getID() === pieceID);
                 if (!piece) {
                     throw new Error(`Piece with ID ${pieceID} not found.`);
                 }
-
-                // ensure the bitboard array is long enough
-                if (pieceID >= gameState.bitboards.length) {
-                    gameState.bitboards.length = pieceID + 1;
-                    gameState.bitboards.fill(0n, gameState.bitboards.length);
+            
+                let bitboardData = gameState.bitboards.find(b => b.pieceID === pieceID);
+                if (!bitboardData) {
+                    gameState.bitboards.push({ pieceID: pieceID, bitboard: 0n });
+                    bitboardData = gameState.bitboards[gameState.bitboards.length - 1];
                 }
-
-                gameState.bitboards[pieceID] = setBit(gameState.bitboards[pieceID], square, true);
+            
+                bitboardData.bitboard = setBit(bitboardData.bitboard, square, true);
+                
                 fenIndex = endBracketIndex + 1;
             } else if (char >= '0' && char <= '9') {
                 const offset = Number(char);
@@ -60,7 +55,7 @@ export const parseFEN = (fen: string) => {
 
                 // loop over all piece bitboards
                 for (let bbPiece = 0; bbPiece < gameState.bitboards.length; bbPiece++) {
-                    if (getBit(gameState.bitboards[bbPiece], square)) {
+                    if (getBit(getBitboard(bbPiece).bitboard, square)) {
                         piece = bbPiece;
                     }
                 }
@@ -113,16 +108,18 @@ export const parseFEN = (fen: string) => {
 
     // loop over white pieces bitboard
     let whiteOccupancies = gameState.occupancies[colors.WHITE];
-    gameState.whitePieceIDs.forEach((piece) => {
-        whiteOccupancies |= gameState.bitboards[piece];
-    })
+    for (let piece of gameState.whitePieceIDs) {
+        if (!gameState.bitboards[piece]) continue;
+        whiteOccupancies |= getBitboard(piece).bitboard;
+    }
     gameState.occupancies[colors.WHITE] = whiteOccupancies;
 
     // loop over black pieces bitboard
     let blackOccupancies = gameState.occupancies[colors.BLACK];
-    gameState.blackPieceIDs.forEach((piece) => {
-        blackOccupancies |= gameState.bitboards[piece];
-    })
+    for (let piece of gameState.blackPieceIDs) {
+        if (!gameState.bitboards[piece]) continue;
+        blackOccupancies |= getBitboard(piece).bitboard;
+    }
     gameState.occupancies[colors.BLACK] = blackOccupancies;
 
     // include all occupancies in both

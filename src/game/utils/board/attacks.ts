@@ -1,4 +1,4 @@
-import { BOARD_SIZE, colors, gameState } from "../../consts/board";
+import { BOARD_SIZE, colors, gameState, getBitboard } from "../../consts/board";
 
 /**
  * 
@@ -18,16 +18,16 @@ export const isSquareAttacked = (pos: number, side: number, currentMove: number)
         const pieceID = piece.getID();
 
         if (piece.getPawn()) {
-            if (piece.getPawnPieceState()[piece.getColor() ^ 1][pos] & gameState.bitboards[pieceID]) return true;
+            if (piece.getPawnPieceState()[piece.getColor() ^ 1][pos] & getBitboard(pieceID).bitboard) return true;
         }
 
         if (piece.getSlider()) {
-            if (piece.getSlidingPieceAttacks(pos, gameState.occupancies[colors.BOTH]) & gameState.bitboards[pieceID]) return true;
+            if (piece.getSlidingPieceAttacks(pos, gameState.occupancies[colors.BOTH]) & getBitboard(pieceID).bitboard) return true;
         }
 
         if (piece.getLeaper()) {
             let checkMove = (currentMove % piece.getLeaperPieceState().length) || 0;
-            if (piece.getLeaperPieceState()[checkMove][pos] & gameState.bitboards[pieceID]) return true;
+            if (piece.getLeaperPieceState()[checkMove][pos] & getBitboard(pieceID).bitboard) return true;
         }
     }
 

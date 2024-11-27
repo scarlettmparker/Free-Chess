@@ -6,7 +6,10 @@ import { Piece } from "../../piece/piece";
  */
 export function copyBoard() {
     const piecesCopy = gameState.pieces;
-    const bitboardsCopy = Array.from({ length: 12 }, (_, i) => gameState.bitboards[i]);
+    const bitboardsCopy = gameState.bitboards.map(bitboardData => ({
+        pieceID: bitboardData.pieceID,
+        bitboard: bitboardData.bitboard
+    }));
     const occupanciesCopy = Array.from({ length: 3 }, (_, i) => gameState.occupancies[i]);
     const globalMoveCopy = gameState.globalMove;
     const sideCopy = gameState.side;
@@ -29,7 +32,7 @@ export function copyBoard() {
  * @param {Object} copies - The copied board states returned by copyBoard.
  */
 export function takeBack(copies: {
-    piecesCopy: Piece[], bitboardsCopy: bigint[]; occupanciesCopy: bigint[]; globalMoveCopy: number, sideCopy: number; enpassantCopy: number; castleCopy: bigint;
+    piecesCopy: Piece[], bitboardsCopy: { pieceID: number, bitboard: bigint }[], occupanciesCopy: bigint[]; globalMoveCopy: number, sideCopy: number; enpassantCopy: number; castleCopy: bigint;
 }) {
     const { piecesCopy, bitboardsCopy, occupanciesCopy, globalMoveCopy, sideCopy, enpassantCopy, castleCopy } = copies;
 

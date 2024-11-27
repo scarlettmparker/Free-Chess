@@ -1,6 +1,6 @@
 import { Accessor, createMemo, createSignal, JSX, onMount, type Component } from 'solid-js';
 import { Piece } from './game/piece/piece';
-import { BOARD_SIZE, charPieces, colors, DARK_HIGHLIGHTED, gameState, HEIGHT, LIGHT_HIGHLIGHTED, moveType, unicodePieces, WIDTH } from './game/consts/board';
+import { BOARD_SIZE, charPieces, colors, DARK_HIGHLIGHTED, gameState, getBitboard, HEIGHT, LIGHT_HIGHLIGHTED, moveType, unicodePieces, WIDTH } from './game/consts/board';
 import { initGame, initGameState, resetGameState } from './game/init/game';
 import { parseFEN } from './game/utils/fen';
 import { getBit } from './game/utils/board/bitboard';
@@ -13,7 +13,7 @@ import { copyBoard, takeBack } from './game/utils/board/copy';
 import { MetaProvider, Title } from '@solidjs/meta';
 import { printAttackedSquares } from './game/utils/board/attacks';
 
-const startPosition = "[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1";
+const startPosition = "[7][3][5][101][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][100][10][4][2][6] w KQkq - 0 1";
 const trickyPosition = "[7]3[11]2[7]/[1]1[1][1][9][1][5]1/[5][3]2[1][3][1]1/3[0][2]3/1[1]2[0]3/2[2]2[8]1[1]/[0][0][0][4][4][0][0][0]/[6]3[10]2[6] w KQkq - ";
 const enpassantPosition = "8/2[1]5/3[1]4/[10][0]5[7]/1[6]3[1]1[11]/8/4[0]1[0]1/8 w - -"
 
@@ -118,6 +118,25 @@ const App: Component = () => {
     gameState.pieces.push(WhiteKing);
     gameState.pieces.push(BlackKing);
 
+    const HalfQueenWhite = new Piece(100, 0);
+    HalfQueenWhite.setSlider(true);
+    HalfQueenWhite.setDiagonal(true);
+    HalfQueenWhite.setStraight(true);
+
+    HalfQueenWhite.setStraightConstraints([3, 3, 3, 3]);
+    HalfQueenWhite.setDiagonalConstraints([3, 3, 3, 3]);
+
+    const HalfQueenBlack = new Piece(101, 1);
+    HalfQueenBlack.setSlider(true);
+    HalfQueenBlack.setDiagonal(true);
+    HalfQueenBlack.setStraight(true);
+
+    HalfQueenBlack.setStraightConstraints([3, 3, 3, 3]);
+    HalfQueenBlack.setDiagonalConstraints([3, 3, 3, 3]);
+
+    gameState.pieces.push(HalfQueenWhite);
+    gameState.pieces.push(HalfQueenBlack);
+
     initGameState();
     parseFEN(startPosition);
     initGame();
@@ -150,8 +169,15 @@ const App: Component = () => {
       const odd = (i + j) % 2;
   
       let piece = -1;
-      for (let bbPiece = charPieces.P; bbPiece <= charPieces.k; bbPiece++) {
-        if (getBit(gameState.bitboards[bbPiece], square)) {
+      for (let bbPiece of gameState.whitePieceIDs) {
+        if (getBit(getBitboard(bbPiece).bitboard, square)) {
+          piece = bbPiece;
+          break;
+        }
+      }
+
+      for (let bbPiece of gameState.blackPieceIDs) {
+        if (getBit(getBitboard(bbPiece).bitboard, square)) {
           piece = bbPiece;
           break;
         }
@@ -253,9 +279,11 @@ const pieceClick = (piece: number, moves: MoveList, square: number, setCurrentMo
     selectedDiv.style.backgroundColor = '';
   });
 
+
   if (!isSide) {
     return;
   };
+
 
   // remove illegal moves
   for (let moveCount = 0; moveCount < moves.count; moveCount++) {

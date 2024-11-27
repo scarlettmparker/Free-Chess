@@ -7,7 +7,7 @@ import { Piece } from "../piece/piece";
  */
 export function resetGameState() {
     gameState.pieces = [];
-    gameState.bitboards = Array.from({ length: 0 }, () => 0n);
+    gameState.bitboards = [];
     gameState.occupancies = Array.from({ length: 3 }, () => 0n);
     gameState.globalMove = 0;
     gameState.side = 0;
@@ -33,7 +33,10 @@ export function initGameState() {
         .filter((piece: Piece) => piece.getColor() === colors.BLACK)
         .map((piece: Piece) => piece.getID())
 
-    gameState.bitboards = Array.from({ length: (gameState.whitePieceIDs.length + gameState.blackPieceIDs.length) }, () => 0n);
+    gameState.bitboards = Array.from({ length: (gameState.whitePieceIDs.length + gameState.blackPieceIDs.length) }, (_, index) => {
+        const pieceID = gameState.pieces[index].getID();
+        return { pieceID, bitboard: 0n };
+    });
 }
 
 /**
@@ -58,7 +61,7 @@ export function initGame() {
         if (piece.getColor() == colors.WHITE) continue;
         if (piece.getSlider()) {
             const whiteEquivalent = getPieceByID(piece.getID() - 1);
-            
+
             // copy white piece's sliding attacks to black piece
             if (whiteEquivalent) {
                 piece.setSlidingStraightPieceState(whiteEquivalent.getSlidingStraightPieceState());
