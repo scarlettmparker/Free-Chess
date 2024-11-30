@@ -1,10 +1,12 @@
-import { charPieces, colors, gameState, getBitboard, moveType, unicodePieces } from "../../consts/board";
+import { charPieces, colors, gameState, getBitboard, moveType, unicodePieces } from "../consts/board";
 import { notToRawPos, rawPosToNot } from "../board/squarehelper"
 import { getMoveCapture, getMoveCastle, getMoveDouble, getMoveEnpassant, getMovePiece, getMovePromoted, getMoveSource, getMoveTarget, MoveList, promotedPieces } from "./movedef"
 import { copyBoard, takeBack } from "../board/copy";
 import setBit, { getBit, getLSFBIndex, getPieceByID, printBitboard } from "../board/bitboard";
-import { castlingRights } from "../../consts/bits";
+import { castlingRights } from "../consts/bits";
 import { isSquareAttacked } from "../board/attacks";
+import { PogoPiece } from "../piece/pogopiece";
+import { Piece } from "../piece/piece";
 
 /**
  * Adds a move to the move list.
@@ -25,7 +27,9 @@ export const addMove = (moves: MoveList, move: number) => {
 export const makeMove = (move: number, moveFlag: number, currentMove: number) => {
     if (moveFlag == moveType.ALL_MOVES) {
         const copies = copyBoard();
+
         let tempBitboards = gameState.bitboards;
+        let tempMoves = gameState.side == colors.WHITE ? new Map(gameState.whiteMoves) : new Map(gameState.blackMoves);
 
         // parse the move
         const sourceSquare = getMoveSource(move);
@@ -42,7 +46,17 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
         newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, sourceSquare, false);
         newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, true);
 
+        // update move number
+        let currentMove = tempMoves.get(Number(`${sourceSquare}${piece}`));
+        if (currentMove) {
+            tempMoves.delete(Number("" + sourceSquare + piece));
+        } else {
+            currentMove = 0;
+        }
+
+        tempMoves.set(Number("" + targetSquare + piece), currentMove + 1);
         const opponentPieceIDs = gameState.side == colors.WHITE ? gameState.blackPieceIDs : gameState.whitePieceIDs;
+        const pieceObj = getPieceByID(piece);
 
         // captures
         if (capture) {
@@ -56,10 +70,12 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
             }
         }
 
-        // promotions
-        if (promoted && getPieceByID(piece)!.getPromote()) {
-            newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, false);
-            tempBitboards[promoted].bitboard = setBit(tempBitboards[promoted].bitboard, targetSquare, true);
+        if (pieceObj) {
+            // promotions
+            if (promoted && pieceObj.getPromote()) {
+                newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, false);
+                tempBitboards[promoted].bitboard = setBit(tempBitboards[promoted].bitboard, targetSquare, true);
+            }
         }
 
         // en passant
@@ -131,12 +147,23 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
         bothOccupancy |= blackOccupancy;
         gameState.occupancies[colors.BOTH] = bothOccupancy;
 
+        if (gameState.side == colors.WHITE) {
+            gameState.whiteMoves = tempMoves;
+        } else {
+            gameState.blackMoves = tempMoves;
+        }
+
         // change side
         gameState.side ^= 1;
         gameState.bitboards = tempBitboards;
 
+        // deal with rotating piece moves
+        if (pieceObj?.rotationalMoveType === "REVERSE_ROTATE") {
+            updateRotatorMoves(pieceObj, tempMoves, sourceSquare, targetSquare);
+        }
+
         // check if king exposed to check
-        if (isSquareAttacked((gameState.side == colors.WHITE) ? getLSFBIndex(getBitboard(charPieces.k).bitboard) : getLSFBIndex(getBitboard(charPieces.K).bitboard), gameState.side, currentMove)) {
+        if (isSquareAttacked((gameState.side == colors.WHITE) ? getLSFBIndex(getBitboard(charPieces.k).bitboard) : getLSFBIndex(getBitboard(charPieces.K).bitboard), gameState.side)) {
             takeBack(copies);
             return 0; // illegal move
         } else {
@@ -149,6 +176,68 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
             return 0; // illegal move
         }
     }
+}
+
+/**
+ * Function to update a piece's rotator move state based on its position on the board.
+ * Once a piece hits the edge of the board, the piece's potential moves flip.
+ * 
+ * @param pieceObj Piece object to update.
+ * @param tempMoves Temp moves denoting the piece's position and its current move. If it hits the edge of the board it resets.
+ * @param sourceSquare The piece's current position.
+ * @param targetSquare The piece's target position after moving.
+ */
+const updateRotatorMoves = (pieceObj: Piece, tempMoves: Map<number, number>, sourceSquare: number, targetSquare: number,) => {
+    let reversePiece = pieceObj as PogoPiece;
+
+    const tempReverse = reversePiece.reverse;
+    const newSquare = tempReverse.get(targetSquare) ?? 0;
+    const oldSquare = tempReverse.get(sourceSquare);
+
+    if (oldSquare !== undefined && oldSquare >= 0) {
+        tempReverse.set(targetSquare, oldSquare);
+    } else if (newSquare >= 0) {
+        tempReverse.set(targetSquare, newSquare);
+    } else {
+        tempReverse.set(targetSquare, 0);
+    }
+
+    tempReverse.delete(sourceSquare);
+    const rank = Math.floor(targetSquare / 8);
+
+    // if a piece has hit the edge of the board
+    if (rank === 7 || rank === 0) {
+        const isWhite = pieceObj.getColor() === colors.WHITE;
+        tempReverse.set(targetSquare, isWhite === (rank === 7) ? 0 : 1);
+        tempMoves.set(Number(`${targetSquare}${pieceObj.getID()}`), 0);
+    }
+
+    reversePiece.setReverse(tempReverse);
+}
+
+/**
+ * Function to check which move to look for in attack tables.
+ * @param piece Piece object to search.
+ * @param sourceSquare The piece's current position.
+ */
+export const getCheckMove = (piece: Piece, sourceSquare: number) => {
+    let pieceMoveLength = piece.leaperOffsets.length;
+    let pieceMoves = piece.getColor() == colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
+    let checkMove = 0;
+
+    if (piece.getRotationalMoveType() == "ROTATE" && piece.getLeaper()) {
+        checkMove = (pieceMoves.get(Number("" + sourceSquare + piece.getID())) || 0) % pieceMoveLength;
+    } else if (piece.getRotationalMoveType() == "REVERSE_ROTATE" && piece.getLeaper()) {
+        let reversePiece = piece as PogoPiece;
+        let pieceDirection = reversePiece.reverse.get(sourceSquare) || 0;
+
+        // calculate where the moves should be searched at
+        const offset = (pieceDirection * (pieceMoveLength / 2));
+        const currentMove = pieceMoves.get(Number(`${sourceSquare}${piece.getID()}`)) || 0;
+        checkMove = offset + ((currentMove % pieceMoveLength) % (pieceMoveLength / 2));
+    }
+
+    return checkMove;
 }
 
 /**

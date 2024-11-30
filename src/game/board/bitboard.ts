@@ -1,4 +1,4 @@
-import { BOARD_SIZE, charPieces, unicodePieces, castlePieces, gameState } from "../../consts/board";
+import { BOARD_SIZE, charPieces, unicodePieces, castlePieces, gameState, getBitboard } from "../consts/board";
 import { rawPosToNot } from "./squarehelper";
 
 /**
@@ -110,13 +110,13 @@ export const printBoard = () => {
 
             // loop over all piece bitboards
             for (let bbPiece of gameState.whitePieceIDs) {
-                if (getBit(gameState.bitboards[bbPiece], square)) {
+                if (getBit(getBitboard(bbPiece).bitboard, square)) {
                     piece = bbPiece;
                 }
             }
 
             for (let bbPiece of gameState.blackPieceIDs) {
-                if (getBit(gameState.bitboards[bbPiece], square)) {
+                if (getBit(getBitboard(bbPiece).bitboard, square)) {
                     piece = bbPiece;
                 }
             }

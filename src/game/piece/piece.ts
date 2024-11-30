@@ -1,9 +1,9 @@
 import { straightRelevantBits, straightBitMask, diagonalRelevantBits, diagonalBitMask } from "../consts/bits";
 import { colors, notAFile, notHFile } from "../consts/board";
 import { straightMagicNumbers, diagonalMagicNumbers } from "../consts/magic";
-import setBit, { countBits, printBitboard } from "../utils/board/bitboard";
-import { getFileConstraint } from "../utils/board/squarehelper";
-import { setOccupancyBits } from "../utils/occupancies";
+import { applyConstraintsToMoves } from "../init/slidingpiece";
+import setBit from "../board/bitboard";
+import { getFileConstraint } from "../board/squarehelper";
 
 export class Piece {
     id: number;
@@ -36,7 +36,7 @@ export class Piece {
     slidingDiagonalPieceState: BigUint64Array[];
     slidingStraightPieceState: BigUint64Array[];
 
-    leaperPieceState: BigUint64Array[];
+    leaperPieceState: BigUint64Array[][];
     pawnPieceState: BigUint64Array[];
 
     constructor(id: number, color: number) {
@@ -70,190 +70,11 @@ export class Piece {
 
         this.slidingDiagonalPieceState = Array.from({ length: 64 }, () => new BigUint64Array(512));
         this.slidingStraightPieceState = Array.from({ length: 64 }, () => new BigUint64Array(4096));
-        this.leaperPieceState = Array.from({ length: this.leaperOffsets.length }, () => new BigUint64Array(64));
+        this.leaperPieceState = Array.from({ length: 2 }, () =>
+            Array.from({ length: this.leaperOffsets.length }, () => new BigUint64Array(64))
+        );
+
         this.pawnPieceState = Array.from({ length: 2 }, () => new BigUint64Array(64));
-    }
-
-    /**
-     * Function to mask a piece's sliding straight attacks.
-     * 
-     * @param pos Position on the bitboard.
-     * @param constraints Constraints on the number of squares the piece can slide diagonally (U, D, L, R).
-     * @returns Piece occupancy bits for magic bitboard.
-     */
-    maskStraightAttacks = (pos: number, constraints: number[] = [8, 8, 8, 8]) => {
-        let currentAttacks = 0n;
-
-        const targetRank = Math.floor(pos / 8);
-        const targetFile = pos % 8;
-
-        const [up, down, left, right] = [
-            constraints[0] ?? 8,
-            constraints[1] ?? 8,
-            constraints[2] ?? 8,
-            constraints[3] ?? 8
-        ];
-
-        // up
-        for (let rank = targetRank - 1, count = 0; rank > 0 && count < up; rank--, count++) {  // Adjusted to stop 1 square before the edge
-            currentAttacks |= (1n << BigInt(rank * 8 + targetFile));
-        }
-
-        // down
-        for (let rank = targetRank + 1, count = 0; rank < 7 && count < down; rank++, count++) {  // Adjusted to stop 1 square before the edge
-            currentAttacks |= (1n << BigInt(rank * 8 + targetFile));
-        }
-
-        // left
-        for (let file = targetFile - 1, count = 0; file > 0 && count < left; file--, count++) {  // Adjusted to stop 1 square before the edge
-            currentAttacks |= (1n << BigInt(targetRank * 8 + file));
-        }
-
-        // right
-        for (let file = targetFile + 1, count = 0; file < 7 && count < right; file++, count++) {  // Adjusted to stop 1 square before the edge
-            currentAttacks |= (1n << BigInt(targetRank * 8 + file));
-        }
-
-        return currentAttacks;
-    }
-
-    maskStraightAttacksOTF = (pos: number, block: bigint, constraints: number[] = [8, 8, 8, 8]) => {
-        let currentAttacks = 0n;
-
-        const targetRank = Math.floor(pos / 8);
-        const targetFile = pos % 8;
-
-        const [up, down, left, right] = [
-            constraints[0] ?? 8,
-            constraints[1] ?? 8,
-            constraints[2] ?? 8,
-            constraints[3] ?? 8,
-        ];
-
-        // up
-        for (let rank = targetRank - 1, count = 0; rank >= 0 && count < up; rank--, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + targetFile));
-            if ((1n << BigInt(rank * 8 + targetFile) & block) != 0n) break;
-        }
-
-        // down
-        for (let rank = targetRank + 1, count = 0; rank < 8 && count < down; rank++, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + targetFile));
-            if ((1n << BigInt(rank * 8 + targetFile) & block) != 0n) break;
-        }
-
-        // left
-        for (let file = targetFile - 1, count = 0; file >= 0 && count < left; file--, count++) {
-            currentAttacks |= (1n << BigInt(targetRank * 8 + file));
-            if ((1n << BigInt(targetRank * 8 + file) & block) != 0n) break;
-        }
-
-        // right
-        for (let file = targetFile + 1, count = 0; file < 8 && count < right; file++, count++) {
-            currentAttacks |= (1n << BigInt(targetRank * 8 + file));
-            if ((1n << BigInt(targetRank * 8 + file) & block) != 0n) break;
-        }
-
-        return currentAttacks;
-    }
-
-    /**
-     * Function to mask a piece's sliding diagonal attacks.
-     * 
-     * @param pos Position on the bitboard.
-     * @param constraints Constraints on the number of squares the piece can slide diagonally (DR, UR, DL, UL).
-     * @returns Piece occupancy bits for magic bitboard.
-     */
-    maskDiagonalAttacks = (pos: number, constraints: number[] = [8, 8, 8, 8]) => {
-        let currentAttacks = 0n;
-
-        const targetRank = Math.floor(pos / 8);
-        const targetFile = pos % 8;
-
-        const [downRight, upRight, downLeft, upLeft] = [
-            constraints[0] ?? 8,
-            constraints[1] ?? 8,
-            constraints[2] ?? 8,
-            constraints[3] ?? 8,
-        ];
-
-        // down right
-        for (let rank = targetRank + 1, file = targetFile + 1, count = 0;
-            rank < 7 && file < 7 && count < downRight;
-            rank++, file++, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + file));
-        }
-
-        // up right
-        for (let rank = targetRank - 1, file = targetFile + 1, count = 0;
-            rank > 0 && file < 7 && count < upRight;
-            rank--, file++, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + file));
-        }
-
-        // down left
-        for (let rank = targetRank + 1, file = targetFile - 1, count = 0;
-            rank < 7 && file > 0 && count < downLeft;
-            rank++, file--, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + file));
-        }
-
-        // up left
-        for (let rank = targetRank - 1, file = targetFile - 1, count = 0;
-            rank > 0 && file > 0 && count < upLeft;
-            rank--, file--, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + file));
-        }
-
-        return currentAttacks;
-    }
-
-    maskDiagonalAttacksOTF = (pos: number, block: bigint, constraints: number[] = [8, 8, 8, 8]) => {
-        let currentAttacks = 0n;
-
-        const targetRank = Math.floor(pos / 8);
-        const targetFile = pos % 8;
-
-        const [downRight, upRight, downLeft, upLeft] = [
-            constraints[0] ?? 8,
-            constraints[1] ?? 8,
-            constraints[2] ?? 8,
-            constraints[3] ?? 8,
-        ];
-
-        // down right
-        for (let rank = targetRank + 1, file = targetFile + 1, count = 0;
-            rank < 8 && file < 8 && count < downRight;
-            rank++, file++, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + file));
-            if ((1n << BigInt(rank * 8 + file) & block) !== 0n) break;
-        }
-
-        // up right
-        for (let rank = targetRank - 1, file = targetFile + 1, count = 0;
-            rank >= 0 && file < 8 && count < upRight;
-            rank--, file++, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + file));
-            if ((1n << BigInt(rank * 8 + file) & block) !== 0n) break;
-        }
-
-        // down left
-        for (let rank = targetRank + 1, file = targetFile - 1, count = 0;
-            rank < 8 && file >= 0 && count < downLeft;
-            rank++, file--, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + file));
-            if ((1n << BigInt(rank * 8 + file) & block) !== 0n) break;
-        }
-
-        // up left
-        for (let rank = targetRank - 1, file = targetFile - 1, count = 0;
-            rank >= 0 && file >= 0 && count < upLeft;
-            rank--, file--, count++) {
-            currentAttacks |= (1n << BigInt(rank * 8 + file));
-            if ((1n << BigInt(rank * 8 + file) & block) !== 0n) break;
-        }
-
-        return currentAttacks;
     }
 
     /**
@@ -263,12 +84,18 @@ export class Piece {
      * @param offsets Offset values from the piece's position to determine leaping moves.
      * @returns Attack bitboard for a leaper piece on a specified square;
      */
-    maskLeaperAttacks = (pos: number, offsets: number[][]) => {
+    maskLeaperAttacks = (pos: number, offsets: number[][], color: number) => {
         let currentAttacks = 0n;
         let currentBitboard = 0n;
         currentBitboard = setBit(currentBitboard, pos, true);
+        const isBlack = color == colors.BLACK;
 
-        for (const [fileOffset, rankOffset] of offsets) {
+        for (let [fileOffset, rankOffset] of offsets) {
+            if (isBlack) {
+                fileOffset = -fileOffset;
+                rankOffset = -rankOffset;
+            }
+
             const shift = BigInt(rankOffset * 8 - fileOffset);
             const fileConstraint = getFileConstraint(fileOffset);
 
@@ -315,100 +142,51 @@ export class Piece {
      * Function to return a sliding piece's attacks.
      * 
      * @param pos Position on the bitboard.
-     * @param occupancy Current occupancy of the board
+     * @param occupancy Current occupancy of the board.
+     * @param straightConstraints Constraints for straight moves.
+     * @param diagonalConstraints Constraints for diagonal moves.
      * @returns A bitboard representing squares attacked by the piece.
      */
-    getSlidingPieceAttacks = (pos: number, occupancy: bigint) => {
+    getSlidingPieceAttacks = (pos: number, occupancy: bigint, straightConstraints: number[], diagonalConstraints: number[]) => {
         let pieceState = 0n;
 
-        let straightOccupancy = occupancy;
-        let diagonalOccupancy = occupancy;
-
-        let maskedStraightOccupancy;
-        let maskedDiagonalOccupancy;
-
-        // rook-like moves
+        // straight constraints (rook-like moves)
         if (this.straight) {
-            straightOccupancy &= this.straightPieceMask[pos];
+            let straightOccupancy = occupancy & this.straightPieceMask[pos];
             straightOccupancy = (straightOccupancy * straightMagicNumbers[pos]) >> (64n - BigInt(straightRelevantBits[pos]));
 
-            // mask occupancies with bit mask due to data types
-            maskedStraightOccupancy = straightOccupancy & straightBitMask;
-            pieceState |= this.getSlidingStraightPieceState()[pos][Number(maskedStraightOccupancy)];
+            let maskedStraightOccupancy = straightOccupancy & straightBitMask;
+            let rawStraightMoves = this.getSlidingStraightPieceState()[pos][Number(maskedStraightOccupancy)];
+
+            pieceState |= applyConstraintsToMoves(rawStraightMoves, straightConstraints, pos, true);
         }
 
-        // bishop-like moves
+        // diagonal constraints (bishop-like moves)
         if (this.diagonal) {
-            diagonalOccupancy &= this.diagonalPieceMask[pos];
+            let diagonalOccupancy = occupancy & this.diagonalPieceMask[pos];
             diagonalOccupancy = (diagonalOccupancy * diagonalMagicNumbers[pos]) >> (64n - BigInt(diagonalRelevantBits[pos]));
 
-            maskedDiagonalOccupancy = diagonalOccupancy & diagonalBitMask;
-            pieceState |= this.getSlidingDiagonalPieceState()[pos][Number(maskedDiagonalOccupancy)];
+            let maskedDiagonalOccupancy = diagonalOccupancy & diagonalBitMask;
+            let rawDiagonalMoves = this.getSlidingDiagonalPieceState()[pos][Number(maskedDiagonalOccupancy)];
+
+            pieceState |= applyConstraintsToMoves(rawDiagonalMoves, diagonalConstraints, pos, false);
         }
 
         return pieceState;
-    }
-
-    /**
-     * Function that initializes piece attacks for sliding pieces.
-     */
-    initSlidingAttacks = () => {
-        const straightPieceMask = this.getStraightPieceMask();
-        const diagonalPieceMask = this.getDiagonalPieceMask();
-
-        const straightPieceState = this.getSlidingStraightPieceState();
-        const diagonalPieceState = this.getSlidingDiagonalPieceState();
-
-        for (let square = 0; square < 64; square++) {
-            let relevantBitsCount;
-            let occupancyIndicies;
-
-            if (this.straight) {
-                straightPieceMask[square] = this.maskStraightAttacks(square, this.straightConstraints);
-                relevantBitsCount = countBits(straightPieceMask[square]);
-
-                occupancyIndicies = 1 << relevantBitsCount;
-                for (let idx = 0; idx < occupancyIndicies; idx++) {
-                    let occupancy = setOccupancyBits(idx, relevantBitsCount, straightPieceMask[square]);
-                    const magicIdx = (occupancy * straightMagicNumbers[square]) >> (64n - BigInt(straightRelevantBits[square]));
-                    const maskedMagicIdx = Number(magicIdx & straightBitMask);
-                    straightPieceState[square][maskedMagicIdx] = this.maskStraightAttacksOTF(square, occupancy, this.straightConstraints);
-                }
-            }
-
-            if (this.diagonal) {
-                diagonalPieceMask[square] = this.maskDiagonalAttacks(square, this.diagonalConstraints);
-                relevantBitsCount = countBits(diagonalPieceMask[square]);
-
-                occupancyIndicies = 1 << relevantBitsCount;
-                for (let idx = 0; idx < occupancyIndicies; idx++) {
-                    let occupancy = setOccupancyBits(idx, relevantBitsCount, diagonalPieceMask[square]);
-                    const magicIdx = (occupancy * diagonalMagicNumbers[square]) >> (64n - BigInt(diagonalRelevantBits[square]));
-                    const maskedMagicIdx = Number(magicIdx & diagonalBitMask);
-                    diagonalPieceState[square][maskedMagicIdx] = this.maskDiagonalAttacksOTF(square, occupancy, this.diagonalConstraints);
-                }
-            }
-        }
-
-        if (this.straight) {
-            this.setSlidingStraightPieceState(straightPieceState);
-            this.setStraightPieceMask(straightPieceMask);
-        }
-        if (this.diagonal) {
-            this.setSlidingDiagonalPieceState(diagonalPieceState);
-            this.setDiagonalPieceMask(diagonalPieceMask);
-        }
-    }
+    };
 
     /**
      * Function that initializes piece attacks for leaper pieces.
      */
     initLeaperAttacks = () => {
-        const pieceState = Array.from({ length: this.leaperOffsets.length }, () => new BigUint64Array(64));
+        const pieceState = Array.from({ length: 2 }, () =>
+            Array.from({ length: this.leaperOffsets.length }, () => new BigUint64Array(64))
+        );
 
         for (let i = 0; i < this.leaperOffsets.length; i++) {
             for (let square = 0; square < 64; square++) {
-                pieceState[i][square] = this.maskLeaperAttacks(square, this.leaperOffsets[i]);
+                pieceState[colors.WHITE][i][square] = this.maskLeaperAttacks(square, this.leaperOffsets[i], colors.WHITE);
+                pieceState[colors.BLACK][i][square] = this.maskLeaperAttacks(square, this.leaperOffsets[i], colors.BLACK);
             }
         }
 
@@ -427,12 +205,6 @@ export class Piece {
         }
 
         this.setPawnPieceState(pieceState);
-    }
-
-    initAttacks = () => {
-        if (this.slider) this.initSlidingAttacks();
-        if (this.leaper) this.initLeaperAttacks();
-        if (this.pawn) this.initPawnAttacks();
     }
 
     // getters
@@ -581,7 +353,7 @@ export class Piece {
         this.slidingDiagonalPieceState = pieceState;
     }
 
-    setLeaperPieceState = (pieceState: BigUint64Array[]) => {
+    setLeaperPieceState = (pieceState: BigUint64Array[][]) => {
         this.leaperPieceState = pieceState;
     }
 

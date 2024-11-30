@@ -1,4 +1,4 @@
-import { gameState, moveType } from "../consts/board"
+import { gameState, moveType } from "./consts/board"
 import { getMoveCapture, MoveList } from "./move/movedef";
 import { generateMoves } from "./move/legalmovegenerator";
 import { copyBoard, takeBack } from "./board/copy";

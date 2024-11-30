@@ -1,6 +1,6 @@
-import { BOARD_SIZE, colors, gameState, castlePieces, getBitboard } from "../consts/board";
 import setBit, { getBit, printBitboard } from "./board/bitboard";
 import { notToRawPos } from "./board/squarehelper";
+import { gameState, BOARD_SIZE, getBitboard, castlePieces, colors } from "./consts/board";
 
 /**
  * Parses a FEN and sets the board's position.
@@ -109,7 +109,6 @@ export const parseFEN = (fen: string) => {
     // loop over white pieces bitboard
     let whiteOccupancies = gameState.occupancies[colors.WHITE];
     for (let piece of gameState.whitePieceIDs) {
-        if (!gameState.bitboards[piece]) continue;
         whiteOccupancies |= getBitboard(piece).bitboard;
     }
     gameState.occupancies[colors.WHITE] = whiteOccupancies;
@@ -117,7 +116,6 @@ export const parseFEN = (fen: string) => {
     // loop over black pieces bitboard
     let blackOccupancies = gameState.occupancies[colors.BLACK];
     for (let piece of gameState.blackPieceIDs) {
-        if (!gameState.bitboards[piece]) continue;
         blackOccupancies |= getBitboard(piece).bitboard;
     }
     gameState.occupancies[colors.BLACK] = blackOccupancies;

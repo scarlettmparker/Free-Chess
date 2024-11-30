@@ -1,11 +1,14 @@
-import { gameState } from "../../consts/board";
-import { Piece } from "../../piece/piece";
+import { gameState } from "../consts/board";
+import { Piece } from "../piece/piece";
 
 /**
  * Copies the current board state.
  */
 export function copyBoard() {
+    const whiteMovesCopy = new Map(gameState.whiteMoves);
+    const blackMovesCopy = new Map(gameState.blackMoves);
     const piecesCopy = gameState.pieces;
+    
     const bitboardsCopy = gameState.bitboards.map(bitboardData => ({
         pieceID: bitboardData.pieceID,
         bitboard: bitboardData.bitboard
@@ -17,6 +20,8 @@ export function copyBoard() {
     const castleCopy = gameState.castle;
 
     return {
+        whiteMovesCopy,
+        blackMovesCopy,
         piecesCopy,
         bitboardsCopy,
         occupanciesCopy,
@@ -32,11 +37,13 @@ export function copyBoard() {
  * @param {Object} copies - The copied board states returned by copyBoard.
  */
 export function takeBack(copies: {
-    piecesCopy: Piece[], bitboardsCopy: { pieceID: number, bitboard: bigint }[], occupanciesCopy: bigint[]; globalMoveCopy: number, sideCopy: number; enpassantCopy: number; castleCopy: bigint;
+    whiteMovesCopy: Map<number, number>, blackMovesCopy: Map<number, number>, piecesCopy: Piece[], bitboardsCopy: { pieceID: number, bitboard: bigint }[], occupanciesCopy: bigint[]; globalMoveCopy: number, sideCopy: number; enpassantCopy: number; castleCopy: bigint;
 }) {
-    const { piecesCopy, bitboardsCopy, occupanciesCopy, globalMoveCopy, sideCopy, enpassantCopy, castleCopy } = copies;
+    const { whiteMovesCopy, blackMovesCopy, piecesCopy, bitboardsCopy, occupanciesCopy, globalMoveCopy, sideCopy, enpassantCopy, castleCopy } = copies;
 
     // restore bitboards
+    gameState.whiteMoves = whiteMovesCopy;
+    gameState.blackMoves = blackMovesCopy;
     gameState.pieces = piecesCopy;
     gameState.bitboards = bitboardsCopy;
     gameState.occupancies = occupanciesCopy;

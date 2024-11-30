@@ -9,6 +9,8 @@ type BitboardData = {
 };
 
 export const gameState = {
+    whiteMoves: new Map<number, number>(),
+    blackMoves: new Map<number, number>(),
     whitePieceIDs: [] as number[],
     blackPieceIDs: [] as number[],
     pieces: [] as Piece[],
@@ -19,18 +21,17 @@ export const gameState = {
     enpassant: -1,
     castle: 0n,
     nodes: 0,
-    captures: 0,
-    promotions: 0,
-    castles: 0,
-    checks: 0
 };
 
 export const WIDTH = 64;
 export const HEIGHT = 64;
 export const BOARD_SIZE = 8;
 
+// css styling stuff
 export const LIGHT_HIGHLIGHTED = 'rgb(252 165 165)';
 export const DARK_HIGHLIGHTED = 'rgb(239 68 68)';
+export const LIGHT_SELECTED = 'rgb(205 205 205)';
+export const DARK_SELECTED = 'rgb(144 144 144)';
 
 export const colors: Colors = Object.freeze({
     WHITE: 0,

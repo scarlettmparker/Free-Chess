@@ -1,5 +1,6 @@
 import { gameState, colors } from "../consts/board";
 import { Piece } from "../piece/piece";
+import { initSlidingPieces } from "./slidingpiece";
 
 /**
  * Helper function to reset the game state, sets everything in
@@ -14,10 +15,6 @@ export function resetGameState() {
     gameState.enpassant = -1;
     gameState.castle = 0n;
     gameState.nodes = 0;
-    gameState.captures = 0;
-    gameState.promotions = 0;
-    gameState.castles = 0;
-    gameState.checks = 0;
 }
 
 /**
@@ -44,12 +41,19 @@ export function initGameState() {
  * their attacks, copying the sliding pieces from white to black.
  */
 export function initGame() {
+    let { straightPieceMask, diagonalPieceMask, straightPieceState, diagonalPieceState } = initSlidingPieces();
+
     gameState.pieces.map((piece) => {
         if (piece.getSlider()) {
-            if (piece.getColor() == colors.WHITE) {
-                piece.initSlidingAttacks();
+            if (piece.straight) {
+                piece.setSlidingStraightPieceState(straightPieceState);
+                piece.setStraightPieceMask(straightPieceMask);
             }
-        } 
+            if (piece.diagonal) {
+                piece.setSlidingDiagonalPieceState(diagonalPieceState);
+                piece.setDiagonalPieceMask(diagonalPieceMask);
+            }
+        }
         if (piece.getLeaper()) {
             piece.initLeaperAttacks();
         }
@@ -57,29 +61,4 @@ export function initGame() {
             piece.initPawnAttacks();
         }
     });
-
-    // since sliding pieces for black are the same as white, attacks are repeated
-    for (let piece of gameState.pieces) {
-        if (piece.getColor() == colors.WHITE) continue;
-        if (piece.getSlider()) {
-            const whiteEquivalent = getPieceByID(piece.getID() - 1);
-
-            // copy white piece's sliding attacks to black piece
-            if (whiteEquivalent) {
-                piece.setSlidingStraightPieceState(whiteEquivalent.getSlidingStraightPieceState());
-                piece.setStraightPieceMask(whiteEquivalent.getStraightPieceMask());
-                piece.setSlidingDiagonalPieceState(whiteEquivalent.getSlidingDiagonalPieceState());
-                piece.setDiagonalPieceMask(whiteEquivalent.getDiagonalPieceMask());
-            }
-        }
-    }
-}
-
-/**
- * Helper function to get a Piece object by its ID.
- * @param pieceID ID of the Piece object to search for.
- * @returns Piece object from the game state.
- */
-const getPieceByID = (pieceID: number) => {
-    return gameState.pieces.find(piece => piece.getID() === pieceID);
 }
