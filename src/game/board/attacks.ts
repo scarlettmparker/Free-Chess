@@ -1,11 +1,11 @@
 import { BOARD_SIZE, colors, gameState, getBitboard } from "../consts/board";
 import { getCheckMove } from "../move/move";
-import { Piece } from "../piece/piece";
-import { PogoPiece } from "../piece/pogopiece";
-import { getLSFBIndex, printBitboard } from "./bitboard";
-import { rawPosToNot } from "./squarehelper";
+import { getLSFBIndex } from "./bitboard";
 
 /**
+ * Function to determine whether a square is attacked by a player.
+ * It does this by going through the piece's attack lookup tables for each piece
+ * based on the current game's occupancies and piece constraints based on move count.
  * 
  * @param pos Square to check if attacked.
  * @param side Chess player (0. white, 1. black).
@@ -14,11 +14,12 @@ import { rawPosToNot } from "./squarehelper";
  */
 export const isSquareAttacked = (pos: number, side: number) => {
     if (pos == -1) return false
-    const filteredPieces = gameState.pieces.filter(piece => {
-        return piece.getColor() === (side === colors.WHITE ? colors.WHITE : colors.BLACK);
-    });
+    const color = side === colors.WHITE ? colors.WHITE : colors.BLACK;
+    const filteredPieces = gameState.pieces.filter(piece => piece.getColor() === color);
 
-    for (let piece of filteredPieces) {
+    let l = filteredPieces.length;
+    for (let i = 0; i < l; i++) {
+        const piece = filteredPieces[i];
         const pieceID = piece.getID();
 
         if (piece.getPawn()) {
@@ -30,22 +31,24 @@ export const isSquareAttacked = (pos: number, side: number) => {
         }
 
         if (piece.getLeaper()) {
-            let bitboard = getBitboard(piece.getID()).bitboard;
+            let bitboard = getBitboard(pieceID).bitboard;
             let checkMove = 0;
+            let checked = false;
 
             while (bitboard > 0n) {
                 let sourceSquare = getLSFBIndex(bitboard);
                 checkMove = getCheckMove(piece, sourceSquare);
 
                 if (checkMove && checkMove > 0) {
-                    if (piece.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] & getBitboard(piece.getID()).bitboard) return true;
+                    checked = true;
+                    if (piece.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] & getBitboard(pieceID).bitboard) return true;
                 }
 
                 bitboard &= ~(1n << BigInt(sourceSquare));
             }
 
-            if (checkMove == 0) {
-                if (piece.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] & getBitboard(piece.getID()).bitboard) return true;
+            if (checkMove == 0 && !checked) {
+                if (piece.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] & getBitboard(pieceID).bitboard) return true;
             }
         }
     }

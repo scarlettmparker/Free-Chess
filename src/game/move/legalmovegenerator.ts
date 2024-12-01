@@ -8,12 +8,13 @@ import { encodeMove, MoveList } from "./movedef";
 import { PogoPiece } from "../piece/pogopiece";
 
 export const generateMoves = (moves: MoveList, pieces: Piece[]) => {
-    let movesCopy = moves;
-    movesCopy.count = 0;
-
-    for (let piece of pieces) {
+    let l = pieces.length;
+    let piece: Piece;
+    
+    for (let i = 0; i < l; i++) {
+        piece = pieces[i];
         if (piece.getColor() != gameState.side) continue;
-        generateMove(movesCopy, piece);
+        generateMove(moves, piece);
     }
 }
 

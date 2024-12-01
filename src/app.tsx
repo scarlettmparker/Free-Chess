@@ -1,20 +1,23 @@
 import { Accessor, createEffect, createMemo, createSignal, JSX, onCleanup, onMount, type Component } from 'solid-js';
-import { BOARD_SIZE, colors, DARK_HIGHLIGHTED, DARK_SELECTED, gameState, getBitboard, HEIGHT, LIGHT_HIGHLIGHTED, LIGHT_SELECTED, moveType, unicodePieces, WIDTH } from './game/consts/board';
+import { BOARD_SIZE, colors, DARK_HIGHLIGHTED, DARK_SELECTED, gameState, getBitboard, HEIGHT, LIGHT_HIGHLIGHTED, LIGHT_SELECTED, moveType, WIDTH } from './game/consts/board';
 import { initGame, initGameState, resetGameState } from './game/init/game';
-import { addBishop, addKing, addKnight, addPawn, addPogoPiece, addQueen, addRook } from './game/init/addpiece';
+import { addBalloonPiece, addBishop, addKing, addKnight, addPawn, addPogoPiece, addQueen, addRook } from './game/init/addpiece';
 import { parseFEN } from './game/fen';
 import { getBit, getPieceByID } from './game/board/bitboard';
-import { isDarkSquare, rawPosToNot } from './game/board/squarehelper';
+import { isDarkSquare } from './game/board/squarehelper';
 import { getMovePiece, getMoveSource, getMoveTarget, MoveList } from './game/move/movedef';
 import { makeMove } from './game/move/move';
 import { generateMove, generateMoves } from './game/move/legalmovegenerator';
 import { copyBoard, takeBack } from './game/board/copy';
 import { MetaProvider, Title } from '@solidjs/meta';
+import { perftDriver } from './game/perft';
 
 const startPosition = "[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1"
-const pogoPosition = "[7][3][5][9][11][5][3][7]/[1][1][13][13][13][1][1][1]/8/8/8/8/[0][0][0][12][12][12][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1";
-const trickyPosition = "[7]3[11]2[7]/[1]1[1][1][9][1][5]1/[5][3]2[1][3][1]1/3[0][2]3/1[1]2[0]3/2[2]2[8]1[1]/[0][0][0][4][4][0][0][0]/[6]3[10]2[6] w KQkq - ";
+const pogoPosition = "[7][3][5][15][11][5][3][7]/[1][1][13][13][13][1][1][1]/8/8/8/8/[0][0][0][12][12][12][0][0]/[6][2][4][14][10][4][2][6] w KQkq - 0 1";
+const trickyPosition = "[7]3[11]2[7]/[1]1[11][1][15][1][5]1/[5][3]2[1][3][1]1/3[0][2]3/1[1]2[0]3/2[2]2[14]1[1]/[0][0][0][4][4][12][12][0]/[6]3[10]2[6] w KQkq - ";
 const enpassantPosition = "8/2[1]5/3[1]4/[10][0]5[7]/1[6]3[1]1[11]/8/4[0]1[0]1/8 w - -"
+
+const API_BASE_URL = "http://localhost:4000";
 
 const App: Component = () => {
   const [emptyMoves, setEmptyMoves] = createSignal<MoveList>({ moves: [], count: 0 });
@@ -33,15 +36,10 @@ const App: Component = () => {
   };
 
   createEffect(() => {
-    if (currentSquare() == -1) {
-      const selectedDivs: NodeListOf<HTMLElement> = document.querySelectorAll('div[data-selected="true"]');
-      selectedDivs.forEach((selectedDiv: HTMLElement) => {
-        selectedDiv.style.backgroundColor = '';
-      });
-    }
+    deselectPieces(currentSquare);
   })
 
-  onMount(() => {
+  onMount(async () => {
     resetGameState();
     document.addEventListener("mousedown", handleDeselect);
 
@@ -50,79 +48,35 @@ const App: Component = () => {
     addKnight();
     addBishop();
     addRook();
-    addQueen();
+    // addQueen();
     addKing();
     addPogoPiece();
+    addBalloonPiece();
 
     initGameState();
     parseFEN(pogoPosition);
     initGame();
-    updateBoard();
+    updateBoardState();
   })
 
   onCleanup(() => {
     document.removeEventListener("mousedown", handleDeselect);
   });
 
-  const updateBoard = () => {
-    // cache bitboards and moves for quick access
-    const movesBySquare = new Map<number, MoveList>();
-    generateMoves(emptyMoves(), gameState.pieces);
-
-    // precompute moves mapped by source square
-    emptyMoves().moves.forEach((move: number) => {
-      const source = getMoveSource(move);
-      if (!movesBySquare.has(source)) {
-        movesBySquare.set(source, { moves: [], count: 0 });
-      }
-      const moveList = movesBySquare.get(source)!;
-      moveList.moves.push(move);
-      moveList.count++;
-    });
-
-    const newPieces: JSX.Element[] = [];
-    const newSquares: JSX.Element[] = [];
-
-    for (let square = 0; square < BOARD_SIZE * BOARD_SIZE; square++) {
-      const i = Math.floor(square / BOARD_SIZE);
-      const j = square % BOARD_SIZE;
-      const odd = (i + j) % 2;
-      let piece = -1;
-
-      for (let bbPiece of gameState.whitePieceIDs) {
-        if (getBit(getBitboard(bbPiece).bitboard, square)) {
-          piece = bbPiece;
-          break;
-        }
-      }
-
-      for (let bbPiece of gameState.blackPieceIDs) {
-        if (getBit(getBitboard(bbPiece).bitboard, square)) {
-          piece = bbPiece;
-          break;
-        }
-      }
-
-      const pieceMoves = movesBySquare.get(square) || { moves: [], count: 0 };
-      newPieces.push(
-        <PieceGraphic piece={piece} square={square} moves={pieceMoves} currentMoves={currentMoves} setCurrentMoves={setCurrentMoves}
-          emptyMoves={emptyMoves} setEmptyMoves={setEmptyMoves} currentSquare={currentSquare} setCurrentSquare={setCurrentSquare} side={side} setSide={setSide} />
-      );
-
-      // Add the square (empty or with piece) to the newSquares array
-      newSquares.push(<Square odd={odd} square={square} />);
-    }
-
-    setPieces(newPieces);
-    setSquares(newSquares);
-  };
-
   const loadBoard = createMemo(() => {
     if (gameState.pieces.length != 0) {
-      updateBoard();
+      updateBoardState();
     }
     return side();
   })
+
+  function updateBoardState() {
+    const { newPieces, newSquares } = updateBoard(emptyMoves, currentMoves,
+      setCurrentMoves, setEmptyMoves, currentSquare, setCurrentSquare, side, setSide);
+    setPieces(newPieces);
+    setSquares(newSquares);
+  }
+
 
   return (
     <MetaProvider>
@@ -130,6 +84,74 @@ const App: Component = () => {
       <BuildBoard ref={boardRef} squares={squares} pieces={pieces} />
     </MetaProvider>
   );
+};
+
+/**
+ * 
+ */
+const deselectPieces = (currentSquare: Accessor<number>) => {
+  if (currentSquare() == -1) {
+    const selectedDivs: NodeListOf<HTMLElement> = document.querySelectorAll('div[data-selected="true"]');
+    selectedDivs.forEach((selectedDiv: HTMLElement) => {
+      selectedDiv.style.backgroundColor = '';
+    });
+  }
+}
+
+/**
+ * Update the display of the board when moving a piece.
+ */
+const updateBoard = (emptyMoves: Accessor<MoveList>, currentMoves: Accessor<MoveList>, setCurrentMoves: (value: MoveList) => void, setEmptyMoves: (value: MoveList) => void,
+  currentSquare: Accessor<number>, setCurrentSquare: (value: number) => void, side: Accessor<number>, setSide: (value: number) => void) => {
+  // cache bitboards and moves for quick access
+  const movesBySquare = new Map<number, MoveList>();
+  generateMoves(emptyMoves(), gameState.pieces);
+
+  // precompute moves mapped by source square
+  emptyMoves().moves.forEach((move: number) => {
+    const source = getMoveSource(move);
+    if (!movesBySquare.has(source)) {
+      movesBySquare.set(source, { moves: [], count: 0 });
+    }
+    const moveList = movesBySquare.get(source)!;
+    moveList.moves.push(move);
+    moveList.count++;
+  });
+
+  const newPieces: JSX.Element[] = [];
+  const newSquares: JSX.Element[] = [];
+
+  for (let square = 0; square < BOARD_SIZE * BOARD_SIZE; square++) {
+    const i = Math.floor(square / BOARD_SIZE);
+    const j = square % BOARD_SIZE;
+    const odd = (i + j) % 2;
+    let piece = -1;
+
+    for (let bbPiece of gameState.whitePieceIDs) {
+      if (getBit(getBitboard(bbPiece).bitboard, square)) {
+        piece = bbPiece;
+        break;
+      }
+    }
+
+    for (let bbPiece of gameState.blackPieceIDs) {
+      if (getBit(getBitboard(bbPiece).bitboard, square)) {
+        piece = bbPiece;
+        break;
+      }
+    }
+
+    const pieceMoves = movesBySquare.get(square) || { moves: [], count: 0 };
+    newPieces.push(
+      <PieceGraphic piece={piece} square={square} moves={pieceMoves} currentMoves={currentMoves} setCurrentMoves={setCurrentMoves}
+        emptyMoves={emptyMoves} setEmptyMoves={setEmptyMoves} currentSquare={currentSquare} setCurrentSquare={setCurrentSquare} side={side} setSide={setSide} />
+    );
+
+    // Add the square (empty or with piece) to the newSquares array
+    newSquares.push(<Square odd={odd} square={square} />);
+  }
+
+  return { newPieces, newSquares };
 };
 
 /**
@@ -185,7 +207,7 @@ const PieceGraphic = ({ piece, square, moves, currentMoves, setCurrentMoves, emp
         if (currentSquare() === -1) {
           pieceClick(piece, moves, square, setCurrentMoves, setCurrentSquare);
         } else {
-          (piece !== -1 && isSide) ? pieceClick(piece, moves, square, setCurrentMoves, setCurrentSquare) :
+          (piece !== -1 && isSide && square != currentSquare()) ? pieceClick(piece, moves, square, setCurrentMoves, setCurrentSquare) :
             movePiece(square, setCurrentSquare, currentMoves(), setCurrentMoves, emptyMoves, setEmptyMoves, side, setSide);
         }
       }}>

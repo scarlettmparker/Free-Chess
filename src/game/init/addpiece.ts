@@ -1,4 +1,5 @@
 import { gameState } from "../consts/board";
+import { BalloonPiece } from "../piece/balloonpiece";
 import { Bishop } from "../piece/bishop";
 import { King } from "../piece/king";
 import { Knight } from "../piece/knight";
@@ -61,6 +62,14 @@ export const addKing = () => {
 export const addPogoPiece = () => {
     const whitePiece = new PogoPiece(12, 0);
     const blackPiece = new PogoPiece(13, 1);
+
+    gameState.pieces.push(whitePiece);
+    gameState.pieces.push(blackPiece);
+}
+
+export const addBalloonPiece = () => {
+    const whitePiece = new BalloonPiece(14, 0);
+    const blackPiece = new BalloonPiece(15, 1);
 
     gameState.pieces.push(whitePiece);
     gameState.pieces.push(blackPiece);

@@ -12,7 +12,7 @@ export const parseFEN = (fen: string) => {
     gameState.occupancies.map(() => 0n);
 
     // reset player data
-    gameState.side = -0;
+    gameState.side = 0;
     gameState.enpassant = -1;
     gameState.castle = 0n;
 

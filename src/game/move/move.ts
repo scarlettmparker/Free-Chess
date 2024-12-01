@@ -121,7 +121,8 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
         gameState.castle = BigInt(newCastle);
 
         // update occupancies
-        for (let i = 0; i < 3; i++) {
+        let l = 3;
+        for (let i = 0; i < l; i++) {
             gameState.occupancies[i] = 0n;
         }
 

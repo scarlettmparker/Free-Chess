@@ -9,7 +9,6 @@ import { printBoard } from "./board/bitboard";
  * Performance test & move path enumeration
  * @param depth Number of moves from root
  */
-export let attacks = 0;
 export const perftDriver = (depth: number) => {
     if (depth === 0) {
         gameState.nodes += 1;
