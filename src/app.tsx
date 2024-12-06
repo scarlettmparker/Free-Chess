@@ -48,15 +48,19 @@ const App: Component = () => {
     addKnight();
     addBishop();
     addRook();
-    // addQueen();
+    addQueen();
     addKing();
     addPogoPiece();
     addBalloonPiece();
 
     initGameState();
-    parseFEN(pogoPosition);
+    parseFEN(startPosition);
     initGame();
     updateBoardState();
+
+    console.time("perft");
+    perftDriver(3);
+    console.timeEnd("perft");
   })
 
   onCleanup(() => {

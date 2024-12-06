@@ -2,10 +2,6 @@
 #include <math.h>
 #include "generator.hpp"
 
-#define set_bit(bitboard, square) ((bitboard) |= (1ULL << (square)))
-#define get_bit(bitboard, square) ((bitboard) & (1ULL << (square)))
-#define pop_bit(bitboard, square) ((bitboard) &= ~(1ULL << (square)))
-
 namespace mask_state {
   uint64_t * straight_piece_mask = nullptr;
   uint64_t * diagonal_piece_mask = nullptr;
@@ -188,6 +184,10 @@ namespace mask_state {
 }
 
 namespace generator {
+  uint64_t set_bit(uint64_t bitboard, int square) { return bitboard | (1ULL << square); }
+  uint64_t get_bit(uint64_t bitboard, int square) { return bitboard & (1ULL << square); }
+  uint64_t pop_bit(uint64_t bitboard, int square) { return bitboard & ~(1ULL << square); }
+
   /**
    * Function to mask sliding straight attacks.
    *
@@ -340,6 +340,39 @@ namespace generator {
     return current_attacks;
   }
 
+  int get_direction_offset(int dir, int straight) {
+    int straight_offsets[4] = {-8, 8, -1, 1};
+    int diagonal_offsets[4] = {9, -7, 7, -9};
+    return straight ? straight_offsets[dir] : diagonal_offsets[dir];
+  }
+
+  uint64_t limit_moves(uint64_t moves, int max_steps, int pos, int dir, int straight) {
+    uint64_t limited_moves = 0ULL;
+    int direction_offset = get_direction_offset(dir, straight);
+
+    for (int step = 1; step < max_steps; step++) {
+      int target_pos = pos + step * direction_offset;
+
+      if (target_pos >= 0 && target_pos < 64) {
+        uint64_t bit = 1 << target_pos;
+        if (moves & bit) limited_moves |= bit;
+        else break;
+      }
+    }
+
+    return limited_moves;
+  }
+
+  uint64_t apply_constraints(uint64_t moves, int * constraints, int pos, int straight) {
+    uint64_t constrained_moves = 0ULL;
+    if (!constraints) return constrained_moves;
+
+    for (int dir = 0; dir < 4; dir++) {
+      constrained_moves |= limit_moves(moves, constraints[dir], pos, dir, straight);
+    }
+
+    return constrained_moves;
+  }
 
   /**
    * Retrieves the index of the least significant 1 bit in a bitboard.
@@ -400,6 +433,21 @@ namespace generator {
       bitboard >>= 8;
     }
     return count;
+  }
+
+  uint64_t get_file_constraint(int file_offset) {
+    switch(file_offset) {
+      case -2:
+        return 4557430888798830399ULL; // not hg file
+      case -1:
+        return 9187201950435737471ULL; // not h file
+      case 1:
+        return 18374403900871474942ULL; // not a file
+      case 2:
+        return 18229723555195321596ULL; // not ab file
+      default:
+        return 0;
+    }
   }
 
   /**

@@ -60,8 +60,7 @@ export function countBits(bitboard: bigint): number {
  */
 export function getLSFBIndex(bitboard: bigint) {
     if (bitboard > 0n) {
-        const lsb = bitboard & -bitboard;
-        return Math.floor(Math.log2(Number(lsb)));
+        return countBits((bitboard & -bitboard) - 1n);
     } else {
         return -1; // illegal index
     }
