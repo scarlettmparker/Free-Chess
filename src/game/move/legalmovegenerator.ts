@@ -62,7 +62,6 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
                 }
                 attacks &= ~(1n << BigInt(targetSquare));
             }
-            bitboard &= ~(1n << BigInt(sourceSquare));
 
             if (gameState.enpassant != -1) {
                 const enpassantAttacks = piece.getPawnPieceState()[gameState.side][sourceSquare] & (1n << BigInt(gameState.enpassant));

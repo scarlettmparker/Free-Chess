@@ -21,7 +21,7 @@ namespace piece {
     this->straight = 0, this->diagonal = 0;
 
     this->rotational_move_type = 0;
-    this->leaper_offsets = nullptr;
+    this->leaper_offsets = LeaperOffsets();
     this->straight_constraints = nullptr;
     this->diagonal_constraints = nullptr;
 
@@ -34,13 +34,181 @@ namespace piece {
     this->leaper_piece_state = nullptr;
     this->pawn_piece_state = nullptr;
   }
+
+  Piece::~Piece() {
+    delete[] this->straight_constraints;
+    delete[] this->diagonal_constraints;
+    delete[] this->piece_mask;
+    delete[] this->straight_piece_mask;
+    delete[] this->diagonal_piece_mask;
+    delete[] this->sliding_diagonal_piece_state;
+    delete[] this->sliding_straight_piece_state;
+    delete[] this->leaper_piece_state;
+    delete[] this->pawn_piece_state;
+  }
+
+  Pawn::Pawn(int id, int color) : Piece(id, color) {
+    this->pawn = 1;
+    this->enpassant = 1;
+    this->promote = 1;
+  }
+
+  Knight::Knight(int id, int color) : Piece(id, color) {
+    this->leaper = 1;
+    this->leaper_offsets.offsets = new int**[1];
+
+    this->leaper_offsets.offsets[0] = new int*[8];
+    for (int i = 0; i < 8; ++i) {
+      this->leaper_offsets.offsets[0][i] = new int[2];
+    }
+
+    /* KNIGHT MOVES */
+    this->leaper_offsets.offsets[0][0][0] = -2; this->leaper_offsets.offsets[0][0][1] = 1;
+    this->leaper_offsets.offsets[0][1][0] = -1; this->leaper_offsets.offsets[0][1][1] = 2;
+    this->leaper_offsets.offsets[0][2][0] = 1; this->leaper_offsets.offsets[0][2][1] = 2;
+    this->leaper_offsets.offsets[0][3][0] = 2; this->leaper_offsets.offsets[0][3][1] = 1;
+    this->leaper_offsets.offsets[0][4][0] = -2; this->leaper_offsets.offsets[0][4][1] = -1;
+    this->leaper_offsets.offsets[0][5][0] = -1; this->leaper_offsets.offsets[0][5][1] = -2;
+    this->leaper_offsets.offsets[0][6][0] = 1; this->leaper_offsets.offsets[0][6][1] = -2;
+    this->leaper_offsets.offsets[0][7][0] = 2; this->leaper_offsets.offsets[0][7][1] = -1;
+
+    this->leaper_offsets.size = 1;
+  }
+
+  Knight::~Knight() {
+    for (int i = 0; i < 8; ++i) {
+      delete[] this->leaper_offsets.offsets[0][i];
+    }
+    delete[] this->leaper_offsets.offsets[0];
+  }
+
+  Bishop::Bishop(int id, int color) : Piece(id, color) {
+    this->slider = 1;
+    this->diagonal = 1;
+    this->diagonal_constraints = new int[4]{8, 8, 8, 8};
+  }
+
+  Bishop::~Bishop() {
+    delete[] this->diagonal_constraints;
+  }
+
+  Rook::Rook(int id, int color) : Piece(id, color) {
+    this->slider = 1;
+    this->straight = 1;
+    this->straight_constraints = new int[4]{8, 8, 8, 8};
+  }
+
+  Rook::~Rook() {
+    delete[] this->straight_constraints;
+  }
+
+  Queen::Queen(int id, int color) : Piece(id, color) {
+    this->slider = 1;
+    this->straight = 1;
+    this->diagonal = 1;
+
+    this->straight_constraints = new int[4]{8, 8, 8, 8};
+    this->diagonal_constraints = new int[4]{8, 8, 8, 8};
+  }
+
+  Queen::~Queen() {
+    delete[] this->straight_constraints;
+    delete[] this->diagonal_constraints;
+  }
+
+  King::King(int id, int color) : Piece(id, color) {
+    this->leaper = 1;
+    this->leaper_offsets.offsets = new int**[1];
+
+    this->leaper_offsets.offsets[0] = new int*[8];
+    for (int i = 0; i < 8; ++i) {
+      this->leaper_offsets.offsets[0][i] = new int[2];
+    }
+
+    /* KING MOVES */
+    this->leaper_offsets.offsets[0][0][0] = -1; this->leaper_offsets.offsets[0][0][1] = 1;
+    this->leaper_offsets.offsets[0][1][0] = 0; this->leaper_offsets.offsets[0][1][1] = 1;
+    this->leaper_offsets.offsets[0][2][0] = 1; this->leaper_offsets.offsets[0][2][1] = 1;
+    this->leaper_offsets.offsets[0][3][0] = -1; this->leaper_offsets.offsets[0][3][1] = 0;
+    this->leaper_offsets.offsets[0][4][0] = 1; this->leaper_offsets.offsets[0][4][1] = 0;
+    this->leaper_offsets.offsets[0][5][0] = -1; this->leaper_offsets.offsets[0][5][1] = -1;
+    this->leaper_offsets.offsets[0][6][0] = 0; this->leaper_offsets.offsets[0][6][1] = -1;
+    this->leaper_offsets.offsets[0][7][0] = 1; this->leaper_offsets.offsets[0][7][1] = -1;
+
+    this->leaper_offsets.size = 1;
+  }
+
+  King::~King() {
+    for (int i = 0; i < 8; ++i) {
+      delete[] this->leaper_offsets.offsets[0][i];
+    }
+    delete[] this->leaper_offsets.offsets[0];
+    delete[] this->leaper_offsets.offsets;
+  }
+
+  PogoPiece::PogoPiece(int id, int color) : Piece(id, color) {
+    // reverse is map<number, number>
+    this->leaper = 1;
+    this->rotational_move_type = 2; // REVERSE ROTATE
+
+    this->leaper_offsets.offsets = new int**[4];
+    for (int i = 0; i < 4; ++i) {
+      this->leaper_offsets.offsets[i] = new int*[2];
+    }
+
+    /* POGO PIECE MOVES */
+    this->leaper_offsets.offsets[0][0][0] = 0;
+    this->leaper_offsets.offsets[0][0][1] = 2;
+
+    this->leaper_offsets.offsets[1][0][0] = 0;
+    this->leaper_offsets.offsets[1][0][1] = -1;
+
+    this->leaper_offsets.offsets[2][0][0] = 0;
+    this->leaper_offsets.offsets[2][0][1] = -2;
+
+    this->leaper_offsets.offsets[3][0][0] = 0;
+    this->leaper_offsets.offsets[3][0][1] = 1;
+    
+    this->leaper_offsets.size = 4;
+  }
+
+  PogoPiece::~PogoPiece() {
+    for (int i = 0; i < 4; ++i) {
+      delete[] this->leaper_offsets.offsets[i];
+    }
+    delete[] this->leaper_offsets.offsets;
+  }
+
+  int Piece::get_id() {
+    return this->id;
+  }
+
+  int Piece::get_king() {
+    return this->king;
+  }
   
   int Piece::get_pawn() {
     return this->pawn;
   }
 
+  int Piece::get_enpassant() {
+    return this->enpassant;
+  }
+
+  int Piece::get_promote() {
+    return this->promote;
+  }
+
   int Piece::get_color() {
     return this->color;
+  }
+
+  int Piece::get_leaper() {
+    return this->leaper;
+  }
+
+  int Piece::get_slider() {
+    return this->slider;
   }
 
   int Piece::get_straight() {
@@ -51,8 +219,20 @@ namespace piece {
     return this->diagonal;
   }
 
-  int *** Piece::get_leaper_offsets() {
+  int Piece::get_rotational_move_type() {
+    return this->rotational_move_type;
+  }
+
+  LeaperOffsets Piece::get_leaper_offsets() {
     return this->leaper_offsets;
+  }
+
+  int * Piece::get_straight_constraints() {
+    return this->straight_constraints;
+  }
+
+  int * Piece::get_diagonal_constraints() {
+    return this->diagonal_constraints;
   }
 
   uint64_t * Piece::get_diagonal_piece_mask() {
@@ -61,6 +241,10 @@ namespace piece {
 
   uint64_t * Piece::get_straight_piece_mask() {
     return this->straight_piece_mask;
+  }
+
+  uint64_t *** Piece::get_leaper_piece_state() {
+    return this->leaper_piece_state;
   }
 
   uint64_t ** Piece::get_sliding_diagonal_piece_state() {
@@ -75,7 +259,7 @@ namespace piece {
     return this->pawn_piece_state;
   }
 
-  uint64_t Piece::init_sliding_piece_attacks(int pos, uint64_t occupancy,
+  uint64_t Piece::get_sliding_piece_attacks(int pos, uint64_t occupancy,
     int * straight_constraints, int * diagonal_constraints) {
     uint64_t piece_state = 0ULL;
 
@@ -158,8 +342,8 @@ namespace piece {
   }
 
   uint64_t *** Piece::init_leaper_attacks() {
-    int ***leaper_offsets = get_leaper_offsets();
-    size_t first_dim = sizeof(leaper_offsets) / sizeof(leaper_offsets[0]);
+    LeaperOffsets leaper_offsets = get_leaper_offsets();
+    size_t first_dim = leaper_offsets.size;
     uint64_t ***piece_state = new uint64_t**[first_dim];
     
     for (size_t i = 0; i < first_dim; i++) {
@@ -171,8 +355,8 @@ namespace piece {
 
     for (size_t i = 0; i < first_dim; i++) {
         for (int square = 0; square < 64; square++) {
-          piece_state[i][0][square] = mask_leaper_attacks(square, reinterpret_cast<int**>(leaper_offsets[i]), 0);
-          piece_state[i][1][square] = mask_leaper_attacks(square, reinterpret_cast<int**>(leaper_offsets[i]), 1);
+          piece_state[i][0][square] = mask_leaper_attacks(square, reinterpret_cast<int**>(leaper_offsets.offsets[i]), 0);
+          piece_state[i][1][square] = mask_leaper_attacks(square, reinterpret_cast<int**>(leaper_offsets.offsets[i]), 1);
         }
     }
 

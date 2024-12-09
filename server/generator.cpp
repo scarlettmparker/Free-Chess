@@ -188,6 +188,14 @@ namespace generator {
   uint64_t get_bit(uint64_t bitboard, int square) { return bitboard & (1ULL << square); }
   uint64_t pop_bit(uint64_t bitboard, int square) { return bitboard & ~(1ULL << square); }
 
+  GameState gamestate;
+  GameStateCount gamestate_count;
+  std::array<int, 4> white_promotions = {Q, R, B, N};
+  std::array<int, 4> black_promotions = {q, r, b, n};
+
+  void init_generator() {
+  }
+
   /**
    * Function to mask sliding straight attacks.
    *
@@ -374,6 +382,20 @@ namespace generator {
     return constrained_moves;
   }
 
+  struct BitboardData get_bitboard(int piece_id) {
+    BitboardData * bitboards = gamestate.bitboards;
+    int count = gamestate_count.bitboards_count;
+
+    for (int i = 0; i < count; i++) {
+      if (bitboards[i].piece_id == piece_id) {
+        return bitboards[i];
+      }
+    }
+
+    BitboardData not_found = { -1, 0ULL };
+    return not_found;
+  }
+
   /**
    * Retrieves the index of the least significant 1 bit in a bitboard.
    *
@@ -382,7 +404,7 @@ namespace generator {
    *
    * @param bitboard 64-bit integer to find least significant 1 bit.
    */
-  inline int get_lsfb_index(uint64_t bitboard) {
+  int get_lsfb_index(uint64_t bitboard) {
     if (bitboard) {
       return count_bits((bitboard & -bitboard) - 1);
     } else {
@@ -425,7 +447,7 @@ namespace generator {
    * @param bitboard 64-bit integer for counting the bits.
    * @return Number of bits set to 1 in a given bitboard.
    */
-  inline int count_bits(uint64_t bitboard) {
+  int count_bits(uint64_t bitboard) {
     int count = 0;
     while (bitboard) {
       int chunk = bitboard & 0xFF;
