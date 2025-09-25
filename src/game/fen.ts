@@ -1,12 +1,6 @@
-import setBit, { getBit, printBitboard } from "./board/bitboard";
-import { notToRawPos } from "./board/squarehelper";
-import {
-  gameState,
-  BOARD_SIZE,
-  getBitboard,
-  castlePieces,
-  colors,
-} from "./consts/board";
+import setBit, { getBit, printBitboard } from './board/bitboard';
+import { notToRawPos } from './board/squarehelper';
+import { gameState, BOARD_SIZE, getBitboard, castlePieces, colors } from './consts/board';
 
 /**
  * Parses a FEN and sets the board's position.
@@ -30,15 +24,15 @@ export const parseFEN = (fen: string) => {
       const char = fen[fenIndex];
 
       // match pieces based on square brackets containing IDs
-      if (char === "[") {
-        let endBracketIndex = fen.indexOf("]", fenIndex);
+      if (char === '[') {
+        let endBracketIndex = fen.indexOf(']', fenIndex);
         if (endBracketIndex === -1) {
           throw new Error("Invalid FEN format: unmatched '['.");
         }
 
         const pieceID = parseInt(fen.slice(fenIndex + 1, endBracketIndex), 10);
         if (isNaN(pieceID)) {
-          throw new Error("Invalid FEN format: invalid piece ID.");
+          throw new Error('Invalid FEN format: invalid piece ID.');
         }
 
         const piece = gameState.pieces.find((p) => p.getID() === pieceID);
@@ -46,9 +40,7 @@ export const parseFEN = (fen: string) => {
           throw new Error(`Piece with ID ${pieceID} not found.`);
         }
 
-        let bitboardData = gameState.bitboards.find(
-          (b) => b.pieceID === pieceID
-        );
+        let bitboardData = gameState.bitboards.find((b) => b.pieceID === pieceID);
         if (!bitboardData) {
           gameState.bitboards.push({ pieceID: pieceID, bitboard: 0n });
           bitboardData = gameState.bitboards[gameState.bitboards.length - 1];
@@ -57,7 +49,7 @@ export const parseFEN = (fen: string) => {
         bitboardData.bitboard = setBit(bitboardData.bitboard, square, true);
 
         fenIndex = endBracketIndex + 1;
-      } else if (char >= "0" && char <= "9") {
+      } else if (char >= '0' && char <= '9') {
         const offset = Number(char);
         let piece = -1;
 
@@ -71,7 +63,7 @@ export const parseFEN = (fen: string) => {
         if (piece === -1) file--;
         file += offset;
         fenIndex++;
-      } else if (char === "/") {
+      } else if (char === '/') {
         fenIndex++;
       }
     }
@@ -80,26 +72,26 @@ export const parseFEN = (fen: string) => {
   }
 
   // parse side to move
-  fen[fenIndex] == "w" ? (gameState.side = 0) : (gameState.side = 1);
+  fen[fenIndex] == 'w' ? (gameState.side = 0) : (gameState.side = 1);
   fenIndex += 2;
 
   // parse castling rights
-  while (fen[fenIndex] != " ") {
+  while (fen[fenIndex] != ' ') {
     let currCastle = gameState.castle;
     switch (fen[fenIndex]) {
-      case "K":
+      case 'K':
         currCastle |= BigInt(castlePieces.wk);
         break;
-      case "Q":
+      case 'Q':
         currCastle |= BigInt(castlePieces.wq);
         break;
-      case "k":
+      case 'k':
         currCastle |= BigInt(castlePieces.bk);
         break;
-      case "q":
+      case 'q':
         currCastle |= BigInt(castlePieces.bq);
         break;
-      case "-":
+      case '-':
         break;
     }
     gameState.castle = currCastle;
@@ -109,7 +101,7 @@ export const parseFEN = (fen: string) => {
   fenIndex++;
 
   // parse en passant square
-  if (fen[fenIndex] != "-") {
+  if (fen[fenIndex] != '-') {
     const file = fen[fenIndex];
     const rank = fen[fenIndex + 1];
     const square = notToRawPos[file + rank];

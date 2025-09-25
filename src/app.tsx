@@ -1,19 +1,14 @@
-import { MetaProvider, Title } from "@solidjs/meta";
-import { createSignal, type Component } from "solid-js";
-import {
-  BOARD_SIZE,
-  colors,
-  gameState,
-  getBitboard,
-} from "./game/consts/board";
+import { MetaProvider, Title } from '@solidjs/meta';
+import { createSignal, type Component } from 'solid-js';
+import { BOARD_SIZE, colors, gameState, getBitboard } from './game/consts/board';
 
-import { getBit } from "./game/board/bitboard";
-import { getMovePiece, getMoveSource, MoveList } from "./game/move/movedef";
-import { generateMoves } from "./game/move/legalmovegenerator";
-import { mountGame } from "./utils";
-import Board from "./_components/board";
-import Piece from "./_components/piece";
-import Square from "./_components/square";
+import { getBit } from './game/board/bitboard';
+import { getMovePiece, getMoveSource, MoveList } from './game/move/movedef';
+import { generateMoves } from './game/move/legalmovegenerator';
+import { mountGame } from './utils';
+import Board from './_components/board';
+import Piece from './_components/piece';
+import Square from './_components/square';
 
 // const startPosition =
 // "[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1";
@@ -123,12 +118,7 @@ const App: Component = () => {
           const pieceId = entry?.pieceId;
 
           return (
-            <Square
-              key={i}
-              moves={moves}
-              setMoves={setMoves}
-              onClick={() => setSelectedSquare(i)}
-            >
+            <Square key={i} moves={moves} setMoves={setMoves} onClick={() => setSelectedSquare(i)}>
               {pieceId !== undefined && pieceId !== null ? (
                 <Piece
                   pieceId={pieceId}

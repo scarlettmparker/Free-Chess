@@ -5,8 +5,8 @@ import {
   getBitboard,
   moveType,
   unicodePieces,
-} from "../consts/board";
-import { notToRawPos, rawPosToNot } from "../board/squarehelper";
+} from '../consts/board';
+import { notToRawPos, rawPosToNot } from '../board/squarehelper';
 import {
   getMoveCapture,
   getMoveCastle,
@@ -18,18 +18,13 @@ import {
   getMoveTarget,
   MoveList,
   promotedPieces,
-} from "./movedef";
-import { copyBoard, takeBack } from "../board/copy";
-import setBit, {
-  getBit,
-  getLSFBIndex,
-  getPieceByID,
-  printBitboard,
-} from "../board/bitboard";
-import { castlingRights } from "../consts/bits";
-import { isSquareAttacked } from "../board/attacks";
-import { PogoPiece } from "../piece/pogopiece";
-import { Piece } from "../piece/piece";
+} from './movedef';
+import { copyBoard, takeBack } from '../board/copy';
+import setBit, { getBit, getLSFBIndex, getPieceByID, printBitboard } from '../board/bitboard';
+import { castlingRights } from '../consts/bits';
+import { isSquareAttacked } from '../board/attacks';
+import { PogoPiece } from '../piece/pogopiece';
+import { Piece } from '../piece/piece';
 
 /**
  * Adds a move to the move list.
@@ -47,11 +42,7 @@ export const addMove = (moves: MoveList, move: number) => {
  * @param moveFlag Move type.
  * @returns 1 (legal move), 0 (illegal move).
  */
-export const makeMove = (
-  move: number,
-  moveFlag: number,
-  currentMove: number
-) => {
+export const makeMove = (move: number, moveFlag: number, currentMove: number) => {
   if (moveFlag == moveType.ALL_MOVES) {
     const copies = copyBoard();
 
@@ -73,30 +64,20 @@ export const makeMove = (
 
     // move the piece
     let newPieceBitboard = getBitboard(piece, tempBitboards);
-    newPieceBitboard.bitboard = setBit(
-      newPieceBitboard.bitboard,
-      sourceSquare,
-      false
-    );
-    newPieceBitboard.bitboard = setBit(
-      newPieceBitboard.bitboard,
-      targetSquare,
-      true
-    );
+    newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, sourceSquare, false);
+    newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, true);
 
     // update move number
     let currentMove = tempMoves.get(Number(`${sourceSquare}${piece}`));
     if (currentMove) {
-      tempMoves.delete(Number("" + sourceSquare + piece));
+      tempMoves.delete(Number('' + sourceSquare + piece));
     } else {
       currentMove = 0;
     }
 
-    tempMoves.set(Number("" + targetSquare + piece), currentMove + 1);
+    tempMoves.set(Number('' + targetSquare + piece), currentMove + 1);
     const opponentPieceIDs =
-      gameState.side == colors.WHITE
-        ? gameState.blackPieceIds
-        : gameState.whitePieceIds;
+      gameState.side == colors.WHITE ? gameState.blackPieceIds : gameState.whitePieceIds;
     const pieceObj = getPieceByID(piece);
 
     // captures
@@ -106,11 +87,7 @@ export const makeMove = (
         let newCaptureBitboard = getBitboard(bbPiece, tempBitboards);
         if (getBit(newCaptureBitboard.bitboard, targetSquare)) {
           // piece on target square
-          newCaptureBitboard.bitboard = setBit(
-            newCaptureBitboard.bitboard,
-            targetSquare,
-            false
-          );
+          newCaptureBitboard.bitboard = setBit(newCaptureBitboard.bitboard, targetSquare, false);
           break;
         }
       }
@@ -119,15 +96,11 @@ export const makeMove = (
     if (pieceObj) {
       // promotions
       if (promoted && pieceObj.getPromote()) {
-        newPieceBitboard.bitboard = setBit(
-          newPieceBitboard.bitboard,
-          targetSquare,
-          false
-        );
+        newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, false);
         tempBitboards[promoted].bitboard = setBit(
           tempBitboards[promoted].bitboard,
           targetSquare,
-          true
+          true,
         );
       }
     }
@@ -138,12 +111,12 @@ export const makeMove = (
         ? (tempBitboards[charPieces.p].bitboard = setBit(
             tempBitboards[charPieces.p].bitboard,
             targetSquare + 8,
-            false
+            false,
           ))
         : (tempBitboards[charPieces.P].bitboard = setBit(
             tempBitboards[charPieces.P].bitboard,
             targetSquare - 8,
-            false
+            false,
           ));
     }
 
@@ -159,52 +132,52 @@ export const makeMove = (
     // castling moves
     if (castling) {
       switch (targetSquare) {
-        case notToRawPos["g1"]:
+        case notToRawPos['g1']:
           tempBitboards[charPieces.R].bitboard = setBit(
             tempBitboards[charPieces.R].bitboard,
-            notToRawPos["h1"],
-            false
+            notToRawPos['h1'],
+            false,
           );
           tempBitboards[charPieces.R].bitboard = setBit(
             tempBitboards[charPieces.R].bitboard,
-            notToRawPos["f1"],
-            true
+            notToRawPos['f1'],
+            true,
           );
           break;
-        case notToRawPos["c1"]:
+        case notToRawPos['c1']:
           tempBitboards[charPieces.R].bitboard = setBit(
             tempBitboards[charPieces.R].bitboard,
-            notToRawPos["a1"],
-            false
+            notToRawPos['a1'],
+            false,
           );
           tempBitboards[charPieces.R].bitboard = setBit(
             tempBitboards[charPieces.R].bitboard,
-            notToRawPos["d1"],
-            true
+            notToRawPos['d1'],
+            true,
           );
           break;
-        case notToRawPos["g8"]:
+        case notToRawPos['g8']:
           tempBitboards[charPieces.r].bitboard = setBit(
             tempBitboards[charPieces.r].bitboard,
-            notToRawPos["h8"],
-            false
+            notToRawPos['h8'],
+            false,
           );
           tempBitboards[charPieces.r].bitboard = setBit(
             tempBitboards[charPieces.r].bitboard,
-            notToRawPos["f8"],
-            true
+            notToRawPos['f8'],
+            true,
           );
           break;
-        case notToRawPos["c8"]:
+        case notToRawPos['c8']:
           tempBitboards[charPieces.r].bitboard = setBit(
             tempBitboards[charPieces.r].bitboard,
-            notToRawPos["a8"],
-            false
+            notToRawPos['a8'],
+            false,
           );
           tempBitboards[charPieces.r].bitboard = setBit(
             tempBitboards[charPieces.r].bitboard,
-            notToRawPos["d8"],
-            true
+            notToRawPos['d8'],
+            true,
           );
           break;
       }
@@ -255,7 +228,7 @@ export const makeMove = (
     gameState.bitboards = tempBitboards;
 
     // deal with rotating piece moves
-    if (pieceObj?.rotationalMoveType === "REVERSE_ROTATE") {
+    if (pieceObj?.rotationalMoveType === 'REVERSE_ROTATE') {
       updateRotatorMoves(pieceObj, tempMoves, sourceSquare, targetSquare);
     }
 
@@ -265,7 +238,7 @@ export const makeMove = (
         gameState.side == colors.WHITE
           ? getLSFBIndex(getBitboard(charPieces.k).bitboard)
           : getLSFBIndex(getBitboard(charPieces.K).bitboard),
-        gameState.side
+        gameState.side,
       )
     ) {
       takeBack(copies);
@@ -295,7 +268,7 @@ const updateRotatorMoves = (
   pieceObj: Piece,
   tempMoves: Map<number, number>,
   sourceSquare: number,
-  targetSquare: number
+  targetSquare: number,
 ) => {
   let reversePiece = pieceObj as PogoPiece;
 
@@ -331,29 +304,19 @@ const updateRotatorMoves = (
  */
 export const getCheckMove = (piece: Piece, sourceSquare: number) => {
   let pieceMoveLength = piece.leaperOffsets.length;
-  let pieceMoves =
-    piece.getColor() == colors.WHITE
-      ? gameState.whiteMoves
-      : gameState.blackMoves;
+  let pieceMoves = piece.getColor() == colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
   let checkMove = 0;
 
-  if (piece.getRotationalMoveType() == "ROTATE" && piece.getLeaper()) {
-    checkMove =
-      (pieceMoves.get(Number("" + sourceSquare + piece.getID())) || 0) %
-      pieceMoveLength;
-  } else if (
-    piece.getRotationalMoveType() == "REVERSE_ROTATE" &&
-    piece.getLeaper()
-  ) {
+  if (piece.getRotationalMoveType() == 'ROTATE' && piece.getLeaper()) {
+    checkMove = (pieceMoves.get(Number('' + sourceSquare + piece.getID())) || 0) % pieceMoveLength;
+  } else if (piece.getRotationalMoveType() == 'REVERSE_ROTATE' && piece.getLeaper()) {
     let reversePiece = piece as PogoPiece;
     let pieceDirection = reversePiece.reverse.get(sourceSquare) || 0;
 
     // calculate where the moves should be searched at
     const offset = pieceDirection * (pieceMoveLength / 2);
-    const currentMove =
-      pieceMoves.get(Number(`${sourceSquare}${piece.getID()}`)) || 0;
-    checkMove =
-      offset + ((currentMove % pieceMoveLength) % (pieceMoveLength / 2));
+    const currentMove = pieceMoves.get(Number(`${sourceSquare}${piece.getID()}`)) || 0;
+    checkMove = offset + ((currentMove % pieceMoveLength) % (pieceMoveLength / 2));
   }
 
   return checkMove;
@@ -365,7 +328,7 @@ export const getCheckMove = (piece: Piece, sourceSquare: number) => {
  * @returns Printed list.
  */
 export const printMove = (move: number) => {
-  let output = "";
+  let output = '';
   output +=
     rawPosToNot[getMoveSource(move)] +
     rawPosToNot[getMoveTarget(move)] +
@@ -379,29 +342,29 @@ export const printMove = (move: number) => {
  */
 export const printMoveList = (moves: MoveList) => {
   if (moves.count == 0) {
-    console.log("Move list is empty.");
+    console.log('Move list is empty.');
     return;
   }
 
-  let output = "";
-  output += "move   piece  capture  double  enpassant  castling\n";
+  let output = '';
+  output += 'move   piece  capture  double  enpassant  castling\n';
   for (let moveCount = 0; moveCount < moves.count; moveCount++) {
     const move = moves.moves[moveCount];
     output +=
       rawPosToNot[getMoveSource(move)] +
       rawPosToNot[getMoveTarget(move)] +
-      (getMovePromoted(move) ? promotedPieces[getMovePromoted(move)] : " ") +
-      "  " +
+      (getMovePromoted(move) ? promotedPieces[getMovePromoted(move)] : ' ') +
+      '  ' +
       unicodePieces[getMovePiece(move)] +
-      "     " +
+      '     ' +
       (getMoveCapture(move) ? 1 : 0) +
-      "        " +
+      '        ' +
       (getMoveDouble(move) ? 1 : 0) +
-      "       " +
+      '       ' +
       (getMoveEnpassant(move) ? 1 : 0) +
-      "          " +
+      '          ' +
       (getMoveCastle(move) ? 1 : 0) +
-      "\n";
+      '\n';
   }
   output += `Total moves: ${moves.count}\n`;
   console.log(output);

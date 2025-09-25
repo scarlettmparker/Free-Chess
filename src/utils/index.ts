@@ -1,4 +1,4 @@
-import { parseFEN } from "../game/fen";
+import { parseFEN } from '../game/fen';
 import {
   addPawn,
   addKnight,
@@ -8,9 +8,9 @@ import {
   addKing,
   addPogoPiece,
   addBalloonPiece,
-} from "../game/init/addpiece";
-import { resetGameState, initGameState, initGame } from "../game/init/game";
-import { MoveList, getMoveSource, getMoveTarget } from "../game/move/movedef";
+} from '../game/init/addpiece';
+import { resetGameState, initGameState, initGame } from '../game/init/game';
+import { MoveList, getMoveSource, getMoveTarget } from '../game/move/movedef';
 
 type SquareMove = {
   source: number;
@@ -28,7 +28,7 @@ export function movesToSquares(moveList: MoveList): SquareMove[] {
 }
 
 const pogoPosition =
-  "[7][3][5][15][11][5][3][7]/[1][1][13][13][13][1][1][1]/8/8/8/8/[0][0][0][12][12][12][0][0]/[6][2][4][14][10][4][2][6] w KQkq - 0 1";
+  '[7][3][5][15][11][5][3][7]/[1][1][13][13][13][1][1][1]/8/8/8/8/[0][0][0][12][12][12][0][0]/[6][2][4][14][10][4][2][6] w KQkq - 0 1';
 
 /**
  * Helper function to mount the game state

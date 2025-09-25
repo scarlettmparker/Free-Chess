@@ -5,8 +5,8 @@ import {
   castlePieces,
   gameState,
   getBitboard,
-} from "../consts/board";
-import { rawPosToNot } from "./squarehelper";
+} from '../consts/board';
+import { rawPosToNot } from './squarehelper';
 
 /**
  *
@@ -83,13 +83,13 @@ export function printBitboard(bitboard: bigint) {
   let grid: string[] = [];
 
   for (let i = 0; i < 8; i++) {
-    let row = " ";
+    let row = ' ';
     for (let j = 7; j >= 0; j--) {
       const index = i * 8 + (7 - j);
       if ((bitboard & (1n << BigInt(index))) !== 0n) {
-        row += "1 ";
+        row += '1 ';
       } else {
-        row += "0 ";
+        row += '0 ';
       }
     }
     grid.push(row.trim());
@@ -107,7 +107,7 @@ export function printBitboard(bitboard: bigint) {
  * @param castle Castling rights per player.
  */
 export const printBoard = () => {
-  let board = "";
+  let board = '';
   for (let rank = 0; rank < BOARD_SIZE; rank++) {
     board += `${8 - rank}  `;
 
@@ -128,15 +128,15 @@ export const printBoard = () => {
         }
       }
 
-      board += `${piece == -1 ? ". " : unicodePieces[piece]} `;
+      board += `${piece == -1 ? '. ' : unicodePieces[piece]} `;
     }
-    board += "\n";
+    board += '\n';
   }
 
-  board += "   a  b  c  d  e  f  g  h\n\n";
-  board += `   Side to move: ${gameState.side == 0 ? "white" : "black"}\n`;
+  board += '   a  b  c  d  e  f  g  h\n\n';
+  board += `   Side to move: ${gameState.side == 0 ? 'white' : 'black'}\n`;
   board += `   En passant: ${
-    gameState.enpassant >= 0 ? rawPosToNot[gameState.enpassant] : "none"
+    gameState.enpassant >= 0 ? rawPosToNot[gameState.enpassant] : 'none'
   }\n`;
   board += `   Castle: ${getCastling(gameState.castle)}`;
   console.log(board);
@@ -154,12 +154,12 @@ export const getPieceByID = (id: number) => {
 function getCastling(castle: bigint) {
   const rights = [];
 
-  if (castle & BigInt(castlePieces.wk)) rights.push("K");
-  if (castle & BigInt(castlePieces.wq)) rights.push("Q");
-  if (castle & BigInt(castlePieces.bk)) rights.push("k");
-  if (castle & BigInt(castlePieces.bq)) rights.push("q");
+  if (castle & BigInt(castlePieces.wk)) rights.push('K');
+  if (castle & BigInt(castlePieces.wq)) rights.push('Q');
+  if (castle & BigInt(castlePieces.bk)) rights.push('k');
+  if (castle & BigInt(castlePieces.bq)) rights.push('q');
 
-  return rights.join("");
+  return rights.join('');
 }
 
 export default setBit;

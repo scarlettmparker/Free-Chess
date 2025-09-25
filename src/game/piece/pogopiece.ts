@@ -1,27 +1,24 @@
-import { Piece } from "./piece";
+import { Piece } from './piece';
 
 export class PogoPiece extends Piece {
-    id: number;
-    color: number;
-    reverse: Map<number, number>;
+  id: number;
+  color: number;
+  reverse: Map<number, number>;
 
-    constructor(id: number, color: number) {
-        super(id, color);
+  constructor(id: number, color: number) {
+    super(id, color);
 
-        this.id = id;
-        this.color = color;
+    this.id = id;
+    this.color = color;
 
-        this.reverse = new Map<number, number>();
-        this.leaper = true;
-        this.rotationalMoveType = "REVERSE_ROTATE";
+    this.reverse = new Map<number, number>();
+    this.leaper = true;
+    this.rotationalMoveType = 'REVERSE_ROTATE';
 
-        this.leaperOffsets = [
-            [[0, 2]], [[0, -1]],
-            [[0, -2]], [[0, 1]]
-        ];
-    }
+    this.leaperOffsets = [[[0, 2]], [[0, -1]], [[0, -2]], [[0, 1]]];
+  }
 
-    setReverse = (reverse: Map<number, number>) => {
-        this.reverse = reverse;
-    }
+  setReverse = (reverse: Map<number, number>) => {
+    this.reverse = reverse;
+  };
 }

@@ -1,6 +1,6 @@
-import { gameState, colors } from "../consts/board";
-import { Piece } from "../piece/piece";
-import { initSlidingPieces } from "./slidingpiece";
+import { gameState, colors } from '../consts/board';
+import { Piece } from '../piece/piece';
+import { initSlidingPieces } from './slidingpiece';
 
 /**
  * Helper function to reset the game state, sets everything in
@@ -35,7 +35,7 @@ export function initGameState() {
     (_, index) => {
       const pieceID = gameState.pieces[index].getID();
       return { pieceID, bitboard: 0n };
-    }
+    },
   );
 }
 
@@ -44,12 +44,8 @@ export function initGameState() {
  * their attacks, copying the sliding pieces from white to black.
  */
 export function initGame() {
-  let {
-    straightPieceMask,
-    diagonalPieceMask,
-    straightPieceState,
-    diagonalPieceState,
-  } = initSlidingPieces();
+  let { straightPieceMask, diagonalPieceMask, straightPieceState, diagonalPieceState } =
+    initSlidingPieces();
 
   gameState.pieces.map((piece) => {
     if (piece.getSlider()) {

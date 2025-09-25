@@ -1,5 +1,5 @@
-import { Accessor, createSignal, createMemo, createEffect } from "solid-js";
-import { JSX } from "solid-js/jsx-runtime";
+import { Accessor, createSignal, createMemo, createEffect } from 'solid-js';
+import { JSX } from 'solid-js/jsx-runtime';
 import {
   WIDTH,
   HEIGHT,
@@ -12,11 +12,11 @@ import {
   LIGHT_HIGHLIGHTED,
   DARK_SELECTED,
   LIGHT_SELECTED,
-} from "../game/consts/board";
-import { MoveList } from "../game/move/movedef";
-import { movesToSquares } from "../utils";
+} from '../game/consts/board';
+import { MoveList } from '../game/move/movedef';
+import { movesToSquares } from '../utils';
 
-type SquareProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, "key"> & {
+type SquareProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'key'> & {
   /**
    * Key (used for styling).
    */
@@ -55,9 +55,7 @@ const Square = (props: SquareProps) => {
 
   // default background styles
   const defaultBgStyle = isDark ? DARK : LIGHT;
-  const defaultHoverStyle = isDark
-    ? DARK_HOVER_HIGHLIGHTED
-    : LIGHT_HOVER_HIGHLIGHTED;
+  const defaultHoverStyle = isDark ? DARK_HOVER_HIGHLIGHTED : LIGHT_HOVER_HIGHLIGHTED;
 
   // Convert moves to {source, target} squares
   const squareMoves = createMemo(() => movesToSquares(moves()));
@@ -75,7 +73,7 @@ const Square = (props: SquareProps) => {
 
   return (
     <div
-      class={`${bgStyle()} ${rest.class ?? ""}`}
+      class={`${bgStyle()} ${rest.class ?? ''}`}
       style={{ width: squareWidth, height: squareHeight }}
       {...rest}
     >
