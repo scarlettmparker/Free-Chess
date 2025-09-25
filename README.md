@@ -32,3 +32,17 @@ Your app is ready to be deployed!
 ## Deployment
 
 You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+
+## Linting & Formatting
+
+Run the code formatter across the project:
+
+```
+npm run pretty
+```
+
+Run ESLint (TypeScript + Solid) across source files:
+
+```
+npm run lint
+```
