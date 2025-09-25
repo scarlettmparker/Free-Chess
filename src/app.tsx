@@ -54,13 +54,14 @@ const App: Component = () => {
     addBalloonPiece();
 
     initGameState();
-    parseFEN(startPosition);
+    parseFEN(pogoPosition);
     initGame();
     updateBoardState();
 
     console.time("perft");
     perftDriver(3);
     console.timeEnd("perft");
+    console.log(gameState.nodes);
   })
 
   onCleanup(() => {
