@@ -10,6 +10,7 @@ export class King extends Piece {
     this.id = id;
     this.color = color;
 
+    this.king = true;
     this.leaper = true;
     this.leaperOffsets = [
       [

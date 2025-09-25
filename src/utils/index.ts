@@ -1,3 +1,5 @@
+import { printBoard } from '../game/board/bitboard';
+import { gameState } from '../game/consts/board';
 import { parseFEN } from '../game/fen';
 import {
   addPawn,
@@ -11,6 +13,7 @@ import {
 } from '../game/init/add-piece';
 import { resetGameState, initGameState, initGame } from '../game/init/game';
 import { MoveList, getMoveSource, getMoveTarget } from '../game/move/move-def';
+import { perftDriver } from '../game/perft';
 
 type SquareMove = {
   source: number;
@@ -27,8 +30,8 @@ export function movesToSquares(moveList: MoveList): SquareMove[] {
   }));
 }
 
-const pogoPosition =
-  '[7][3][5][15][11][5][3][7]/[1][1][13][13][13][1][1][1]/8/8/8/8/[0][0][0][12][12][12][0][0]/[6][2][4][14][10][4][2][6] w KQkq - 0 1';
+const startPosition =
+  '[7]3[11]2[7]/[1]1[1][1][9][1][5]1/[5][3]2[1][3][1]1/3[0][2]3/1[1]2[0]3/2[2]2[8]1[1]/[0][0][0][4][4][0][0][0]/[6]3[10]2[6] w KQkq -';
 
 /**
  * Helper function to mount the game state
@@ -48,6 +51,10 @@ export function mountGame() {
   addBalloonPiece();
 
   initGameState();
-  parseFEN(pogoPosition);
+  parseFEN(startPosition);
   initGame();
+
+  console.log('printBoard', printBoard());
+  perftDriver(3);
+  console.log('moves', gameState.nodes);
 }
