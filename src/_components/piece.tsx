@@ -1,3 +1,4 @@
+import { createMemo } from 'solid-js';
 import { gameState, colors } from '../game/consts/board';
 import { MoveList } from '../game/move/movedef';
 
@@ -22,20 +23,22 @@ type PieceProps = {
  * An individual piece.
  */
 const Piece = (props: PieceProps) => {
-  const { pieceId, moves, setMoves } = props;
-  const isSide =
-    gameState.side == colors.WHITE
-      ? gameState.whitePieceIds.includes(pieceId)
-      : gameState.blackPieceIds.includes(pieceId);
+  const isSide = createMemo(() =>
+    gameState.side === colors.WHITE
+      ? gameState.whitePieceIds.includes(props.pieceId)
+      : gameState.blackPieceIds.includes(props.pieceId),
+  );
 
   return (
     <div
       onClick={(e) => {
         e.stopPropagation();
-        isSide && setMoves(moves);
+        if (isSide()) {
+          props.setMoves(props.moves);
+        }
       }}
     >
-      <img src={`/piece/${pieceId}.png`} draggable={false} />
+      <img src={`/piece/${props.pieceId}.png`} draggable={false} />
     </div>
   );
 };

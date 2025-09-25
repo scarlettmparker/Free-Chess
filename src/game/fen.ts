@@ -1,4 +1,4 @@
-import setBit, { getBit, printBitboard } from './board/bitboard';
+import setBit, { getBit } from './board/bitboard';
 import { notToRawPos } from './board/squarehelper';
 import { gameState, BOARD_SIZE, getBitboard, castlePieces, colors } from './consts/board';
 
@@ -25,7 +25,7 @@ export const parseFEN = (fen: string) => {
 
       // match pieces based on square brackets containing IDs
       if (char === '[') {
-        let endBracketIndex = fen.indexOf(']', fenIndex);
+        const endBracketIndex = fen.indexOf(']', fenIndex);
         if (endBracketIndex === -1) {
           throw new Error("Invalid FEN format: unmatched '['.");
         }
@@ -112,14 +112,14 @@ export const parseFEN = (fen: string) => {
 
   // loop over white pieces bitboard
   let whiteOccupancies = gameState.occupancies[colors.WHITE];
-  for (let piece of gameState.whitePieceIds) {
+  for (const piece of gameState.whitePieceIds) {
     whiteOccupancies |= getBitboard(piece).bitboard;
   }
   gameState.occupancies[colors.WHITE] = whiteOccupancies;
 
   // loop over black pieces bitboard
   let blackOccupancies = gameState.occupancies[colors.BLACK];
-  for (let piece of gameState.blackPieceIds) {
+  for (const piece of gameState.blackPieceIds) {
     blackOccupancies |= getBitboard(piece).bitboard;
   }
   gameState.occupancies[colors.BLACK] = blackOccupancies;

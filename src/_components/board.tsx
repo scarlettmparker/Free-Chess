@@ -1,5 +1,6 @@
 import { JSX } from 'solid-js/jsx-runtime';
 import { WIDTH, BOARD_SIZE, HEIGHT } from '../game/consts/board';
+import { splitProps } from 'solid-js';
 
 type BoardProps = {
   /**
@@ -11,8 +12,8 @@ type BoardProps = {
 /**
  * Chess board component.
  */
-const Board = (props: BoardProps) => {
-  const { children, ...rest } = props;
+const Board = (_props: BoardProps) => {
+  const [props, rest] = splitProps(_props, ['children']);
   const boardSizeWidth = `${WIDTH * BOARD_SIZE}px`;
   const boardSizeHeight = `${HEIGHT * BOARD_SIZE}px`;
 
@@ -22,7 +23,7 @@ const Board = (props: BoardProps) => {
       class={`flex flex-wrap bg-white ${rest.class}`}
       style={{ width: boardSizeWidth, height: boardSizeHeight }}
     >
-      {children}
+      {props.children}
     </div>
   );
 };

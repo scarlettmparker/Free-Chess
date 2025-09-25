@@ -44,7 +44,7 @@ export function initGameState() {
  * their attacks, copying the sliding pieces from white to black.
  */
 export function initGame() {
-  let { straightPieceMask, diagonalPieceMask, straightPieceState, diagonalPieceState } =
+  const { straightPieceMask, diagonalPieceMask, straightPieceState, diagonalPieceState } =
     initSlidingPieces();
 
   gameState.pieces.map((piece) => {

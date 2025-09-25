@@ -7,15 +7,14 @@ import {
   whitePromotions,
 } from '../consts/board';
 import { Piece } from '../piece/piece';
-import { isSquareAttacked, printAttackedSquares } from '../board/attacks';
-import { getBit, getLSFBIndex, printBitboard } from '../board/bitboard';
+import { isSquareAttacked } from '../board/attacks';
+import { getBit, getLSFBIndex } from '../board/bitboard';
 import { notToRawPos } from '../board/squarehelper';
 import { addMove, getCheckMove } from './move';
 import { encodeMove, MoveList } from './movedef';
-import { PogoPiece } from '../piece/pogopiece';
 
 export const generateMoves = (moves: MoveList, pieces: Piece[]) => {
-  let l = pieces.length;
+  const l = pieces.length;
   let piece: Piece;
 
   for (let i = 0; i < l; i++) {
@@ -92,7 +91,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
           piece.getPawnPieceState()[gameState.side][sourceSquare] &
           (1n << BigInt(gameState.enpassant));
         if (enpassantAttacks) {
-          let targetEnpassant = getLSFBIndex(enpassantAttacks);
+          const targetEnpassant = getLSFBIndex(enpassantAttacks);
           addMove(
             movesCopy,
             encodeMove(sourceSquare, targetEnpassant, piece.getID(), 0, 1, 0, 1, 0),
@@ -202,7 +201,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
           piece.getPawnPieceState()[gameState.side][sourceSquare] &
           (1n << BigInt(gameState.enpassant));
         if (enpassantAttacks) {
-          let targetEnpassant = getLSFBIndex(enpassantAttacks);
+          const targetEnpassant = getLSFBIndex(enpassantAttacks);
           addMove(
             movesCopy,
             encodeMove(sourceSquare, targetEnpassant, piece.getID(), 0, 1, 0, 1, 0),

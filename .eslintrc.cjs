@@ -4,28 +4,28 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 2022,
     sourceType: 'module',
-    extraFileExtensions: ['.tsx']
+    extraFileExtensions: ['.tsx'],
   },
   plugins: ['solid', '@typescript-eslint'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
     'plugin:solid/recommended',
-    'prettier'
+    'prettier',
   ],
   rules: {
     // You can tweak rules here
-    'solid/reactivity': 'warn'
+    'solid/reactivity': 'warn',
   },
   settings: {
-    'solid': {
-      'type': 'module'
-    }
+    solid: {
+      type: 'module',
+    },
   },
   overrides: [
     {
       files: ['*.ts', '*.tsx'],
-      rules: {}
-    }
-  ]
+      rules: {},
+    },
+  ],
 };

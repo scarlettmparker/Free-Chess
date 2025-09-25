@@ -167,8 +167,8 @@ export class Piece {
         (straightOccupancy * straightMagicNumbers[pos]) >>
         (64n - BigInt(straightRelevantBits[pos]));
 
-      let maskedStraightOccupancy = straightOccupancy & straightBitMask;
-      let rawStraightMoves =
+      const maskedStraightOccupancy = straightOccupancy & straightBitMask;
+      const rawStraightMoves =
         this.getSlidingStraightPieceState()[pos][Number(maskedStraightOccupancy)];
 
       pieceState |= applyConstraintsToMoves(rawStraightMoves, straightConstraints, pos, true);
@@ -181,8 +181,8 @@ export class Piece {
         (diagonalOccupancy * diagonalMagicNumbers[pos]) >>
         (64n - BigInt(diagonalRelevantBits[pos]));
 
-      let maskedDiagonalOccupancy = diagonalOccupancy & diagonalBitMask;
-      let rawDiagonalMoves =
+      const maskedDiagonalOccupancy = diagonalOccupancy & diagonalBitMask;
+      const rawDiagonalMoves =
         this.getSlidingDiagonalPieceState()[pos][Number(maskedDiagonalOccupancy)];
 
       pieceState |= applyConstraintsToMoves(rawDiagonalMoves, diagonalConstraints, pos, false);

@@ -20,7 +20,7 @@ import {
   promotedPieces,
 } from './movedef';
 import { copyBoard, takeBack } from '../board/copy';
-import setBit, { getBit, getLSFBIndex, getPieceByID, printBitboard } from '../board/bitboard';
+import setBit, { getBit, getLSFBIndex, getPieceByID } from '../board/bitboard';
 import { castlingRights } from '../consts/bits';
 import { isSquareAttacked } from '../board/attacks';
 import { PogoPiece } from '../piece/pogopiece';
@@ -46,8 +46,8 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
   if (moveFlag == moveType.ALL_MOVES) {
     const copies = copyBoard();
 
-    let tempBitboards = gameState.bitboards;
-    let tempMoves =
+    const tempBitboards = gameState.bitboards;
+    const tempMoves =
       gameState.side == colors.WHITE
         ? new Map(gameState.whiteMoves)
         : new Map(gameState.blackMoves);
@@ -63,7 +63,7 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
     const castling = getMoveCastle(move);
 
     // move the piece
-    let newPieceBitboard = getBitboard(piece, tempBitboards);
+    const newPieceBitboard = getBitboard(piece, tempBitboards);
     newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, sourceSquare, false);
     newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, true);
 
@@ -83,8 +83,8 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
     // captures
     if (capture) {
       // loop over bitboard of opposite side
-      for (let bbPiece of opponentPieceIDs) {
-        let newCaptureBitboard = getBitboard(bbPiece, tempBitboards);
+      for (const bbPiece of opponentPieceIDs) {
+        const newCaptureBitboard = getBitboard(bbPiece, tempBitboards);
         if (getBit(newCaptureBitboard.bitboard, targetSquare)) {
           // piece on target square
           newCaptureBitboard.bitboard = setBit(newCaptureBitboard.bitboard, targetSquare, false);
@@ -190,14 +190,14 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
     gameState.castle = BigInt(newCastle);
 
     // update occupancies
-    let l = 3;
+    const l = 3;
     for (let i = 0; i < l; i++) {
       gameState.occupancies[i] = 0n;
     }
 
     // update white pieces occupancies
     let whiteOccupancy = gameState.occupancies[colors.WHITE];
-    for (let bbPiece of gameState.whitePieceIds) {
+    for (const bbPiece of gameState.whitePieceIds) {
       if (!getBitboard(bbPiece).bitboard) continue;
       whiteOccupancy |= getBitboard(bbPiece).bitboard;
     }
@@ -205,7 +205,7 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
 
     // update black pieces occupancies
     let blackOccupancy = gameState.occupancies[colors.BLACK];
-    for (let bbPiece of gameState.blackPieceIds) {
+    for (const bbPiece of gameState.blackPieceIds) {
       if (!getBitboard(bbPiece).bitboard) continue;
       blackOccupancy |= getBitboard(bbPiece).bitboard;
     }
@@ -270,7 +270,7 @@ const updateRotatorMoves = (
   sourceSquare: number,
   targetSquare: number,
 ) => {
-  let reversePiece = pieceObj as PogoPiece;
+  const reversePiece = pieceObj as PogoPiece;
 
   const tempReverse = reversePiece.reverse;
   const newSquare = tempReverse.get(targetSquare) ?? 0;
@@ -303,15 +303,15 @@ const updateRotatorMoves = (
  * @param sourceSquare The piece's current position.
  */
 export const getCheckMove = (piece: Piece, sourceSquare: number) => {
-  let pieceMoveLength = piece.leaperOffsets.length;
-  let pieceMoves = piece.getColor() == colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
+  const pieceMoveLength = piece.leaperOffsets.length;
+  const pieceMoves = piece.getColor() == colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
   let checkMove = 0;
 
   if (piece.getRotationalMoveType() == 'ROTATE' && piece.getLeaper()) {
     checkMove = (pieceMoves.get(Number('' + sourceSquare + piece.getID())) || 0) % pieceMoveLength;
   } else if (piece.getRotationalMoveType() == 'REVERSE_ROTATE' && piece.getLeaper()) {
-    let reversePiece = piece as PogoPiece;
-    let pieceDirection = reversePiece.reverse.get(sourceSquare) || 0;
+    const reversePiece = piece as PogoPiece;
+    const pieceDirection = reversePiece.reverse.get(sourceSquare) || 0;
 
     // calculate where the moves should be searched at
     const offset = pieceDirection * (pieceMoveLength / 2);

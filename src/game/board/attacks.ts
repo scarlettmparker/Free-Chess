@@ -17,7 +17,7 @@ export const isSquareAttacked = (pos: number, side: number) => {
   const color = side === colors.WHITE ? colors.WHITE : colors.BLACK;
   const filteredPieces = gameState.pieces.filter((piece) => piece.getColor() === color);
 
-  let l = filteredPieces.length;
+  const l = filteredPieces.length;
   for (let i = 0; i < l; i++) {
     const piece = filteredPieces[i];
     const pieceID = piece.getID();
@@ -45,7 +45,7 @@ export const isSquareAttacked = (pos: number, side: number) => {
       let checked = false;
 
       while (bitboard > 0n) {
-        let sourceSquare = getLSFBIndex(bitboard);
+        const sourceSquare = getLSFBIndex(bitboard);
         checkMove = getCheckMove(piece, sourceSquare);
 
         if (checkMove && checkMove > 0) {
@@ -77,7 +77,7 @@ export const isSquareAttacked = (pos: number, side: number) => {
  * Prints attacked squares for a given player.
  * @param side Chess player (0. white, 1. black).
  */
-export const printAttackedSquares = (side: number, currentMove: number) => {
+export const printAttackedSquares = (side: number) => {
   let out = '';
   for (let rank = 0; rank < BOARD_SIZE; rank++) {
     for (let file = 0; file < BOARD_SIZE; file++) {

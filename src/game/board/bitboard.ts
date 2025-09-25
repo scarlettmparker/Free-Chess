@@ -1,11 +1,4 @@
-import {
-  BOARD_SIZE,
-  charPieces,
-  unicodePieces,
-  castlePieces,
-  gameState,
-  getBitboard,
-} from '../consts/board';
+import { BOARD_SIZE, unicodePieces, castlePieces, gameState, getBitboard } from '../consts/board';
 import { rawPosToNot } from './squarehelper';
 
 /**
@@ -80,7 +73,7 @@ export function getLSFBIndex(bitboard: bigint) {
  * @param bitboard Bitboard to print.
  */
 export function printBitboard(bitboard: bigint) {
-  let grid: string[] = [];
+  const grid: string[] = [];
 
   for (let i = 0; i < 8; i++) {
     let row = ' ';
@@ -116,13 +109,13 @@ export const printBoard = () => {
       let piece = -1;
 
       // loop over all piece bitboards
-      for (let bbPiece of gameState.whitePieceIds) {
+      for (const bbPiece of gameState.whitePieceIds) {
         if (getBit(getBitboard(bbPiece).bitboard, square)) {
           piece = bbPiece;
         }
       }
 
-      for (let bbPiece of gameState.blackPieceIds) {
+      for (const bbPiece of gameState.blackPieceIds) {
         if (getBit(getBitboard(bbPiece).bitboard, square)) {
           piece = bbPiece;
         }

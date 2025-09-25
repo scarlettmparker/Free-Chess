@@ -12,10 +12,10 @@ import { setOccupancyBits } from '../occupancies';
  * Function that initializes piece attacks for sliding pieces.
  */
 export const initSlidingPieces = () => {
-  let straightPieceMask = new BigUint64Array(64);
-  let diagonalPieceMask = new BigUint64Array(64);
-  let straightPieceState = Array.from({ length: 64 }, () => new BigUint64Array(4096));
-  let diagonalPieceState = Array.from({ length: 64 }, () => new BigUint64Array(512));
+  const straightPieceMask = new BigUint64Array(64);
+  const diagonalPieceMask = new BigUint64Array(64);
+  const straightPieceState = Array.from({ length: 64 }, () => new BigUint64Array(4096));
+  const diagonalPieceState = Array.from({ length: 64 }, () => new BigUint64Array(512));
 
   for (let square = 0; square < 64; square++) {
     let relevantBitsCount;
@@ -26,7 +26,7 @@ export const initSlidingPieces = () => {
 
     occupancyIndicies = 1 << relevantBitsCount;
     for (let idx = 0; idx < occupancyIndicies; idx++) {
-      let occupancy = setOccupancyBits(idx, relevantBitsCount, straightPieceMask[square]);
+      const occupancy = setOccupancyBits(idx, relevantBitsCount, straightPieceMask[square]);
       const magicIdx =
         (occupancy * straightMagicNumbers[square]) >> (64n - BigInt(straightRelevantBits[square]));
       const maskedMagicIdx = Number(magicIdx & straightBitMask);
@@ -38,7 +38,7 @@ export const initSlidingPieces = () => {
 
     occupancyIndicies = 1 << relevantBitsCount;
     for (let idx = 0; idx < occupancyIndicies; idx++) {
-      let occupancy = setOccupancyBits(idx, relevantBitsCount, diagonalPieceMask[square]);
+      const occupancy = setOccupancyBits(idx, relevantBitsCount, diagonalPieceMask[square]);
       const magicIdx =
         (occupancy * diagonalMagicNumbers[square]) >> (64n - BigInt(diagonalRelevantBits[square]));
       const maskedMagicIdx = Number(magicIdx & diagonalBitMask);
@@ -230,13 +230,13 @@ const limitDirectionMoves = (
   isStraight: boolean,
 ): bigint => {
   let limitedMoves = 0n;
-  let directionOffset = getDirectionOffset(dir, isStraight);
+  const directionOffset = getDirectionOffset(dir, isStraight);
 
   for (let step = 1; step <= maxSteps; step++) {
-    let targetPos = pos + step * directionOffset;
+    const targetPos = pos + step * directionOffset;
 
     if (targetPos >= 0 && targetPos < 64) {
-      let bit = 1n << BigInt(targetPos);
+      const bit = 1n << BigInt(targetPos);
       if (moves & bit) limitedMoves |= bit;
       else break;
     }

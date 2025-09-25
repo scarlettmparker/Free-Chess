@@ -1,6 +1,6 @@
 import { MetaProvider, Title } from '@solidjs/meta';
-import { createSignal, type Component } from 'solid-js';
-import { BOARD_SIZE, colors, gameState, getBitboard } from './game/consts/board';
+import { createSignal, For, type Component, Show } from 'solid-js';
+import { BOARD_SIZE, gameState, getBitboard } from './game/consts/board';
 
 import { getBit } from './game/board/bitboard';
 import { getMovePiece, getMoveSource, MoveList } from './game/move/movedef';
@@ -33,9 +33,11 @@ type PieceMoveKey = {
 
 const App: Component = () => {
   const [moves, setMoves] = createSignal<MoveList>(EMPTY_MOVE_LIST);
-  const [side, setSide] = createSignal(colors.WHITE);
   const [pieceMoveKey, setPieceMoveKey] = createSignal<PieceMoveKey[]>([]);
-  const [selectedSquare, setSelectedSquare] = createSignal<number | null>(null);
+
+  // TODO: use states
+  // const [side, setSide] = createSignal(colors.WHITE);
+  // const [selectedSquare, setSelectedSquare] = createSignal<number | null>(null);
 
   /**
    * Generate moves (client side) after a piece has moved.
@@ -70,7 +72,7 @@ const App: Component = () => {
     for (square = 0; square < BOARD_SIZE * BOARD_SIZE; square++) {
       // TODO: want to move this to a helper function and check if it's used elsewhere
       let piece: number | undefined;
-      for (let bbPiece of gameState.whitePieceIds) {
+      for (const bbPiece of gameState.whitePieceIds) {
         if (getBit(getBitboard(bbPiece).bitboard, square)) {
           piece = bbPiece;
           break;
@@ -79,7 +81,7 @@ const App: Component = () => {
 
       // only check black if piece is still undefined/null (handle pieceId === 0)
       if (piece === undefined || piece === null) {
-        for (let bbPiece of gameState.blackPieceIds) {
+        for (const bbPiece of gameState.blackPieceIds) {
           if (getBit(getBitboard(bbPiece).bitboard, square)) {
             piece = bbPiece;
             break;
@@ -104,33 +106,36 @@ const App: Component = () => {
   // Draw the pieces
   updateBoard();
 
-  const pieceKeysBySquare = pieceMoveKey().reduce((arr, p) => {
-    arr[p.key] = p;
-    return arr;
-  }, [] as PieceMoveKey[]);
-
   return (
     <MetaProvider>
       <Title>Free Chess</Title>
       <Board class="absolute left-1/2 transform -translate-x-1/2 my-16">
-        {Array.from({ length: BOARD_SIZE * BOARD_SIZE }).map((_, i) => {
-          const entry = pieceKeysBySquare[i];
-          const pieceId = entry?.pieceId;
+        <For each={Array(BOARD_SIZE * BOARD_SIZE).fill(0)}>
+          {(_, i) => {
+            return (
+              <Square key={i()} moves={moves}>
+                {(() => {
+                  const pieceKeysBySquare = pieceMoveKey().reduce((arr, p) => {
+                    arr[p.key] = p;
+                    return arr;
+                  }, [] as PieceMoveKey[]);
+                  const entry = pieceKeysBySquare[i()];
+                  const pieceId = entry?.pieceId;
 
-          return (
-            <Square key={i} moves={moves} setMoves={setMoves} onClick={() => setSelectedSquare(i)}>
-              {pieceId !== undefined && pieceId !== null ? (
-                <Piece
-                  pieceId={pieceId}
-                  moves={entry.moves ?? EMPTY_MOVE_LIST}
-                  setMoves={setMoves}
-                />
-              ) : (
-                <></>
-              )}
-            </Square>
-          );
-        })}
+                  return (
+                    <Show when={pieceId != null}>
+                      <Piece
+                        pieceId={pieceId!}
+                        moves={entry.moves ?? EMPTY_MOVE_LIST}
+                        setMoves={setMoves}
+                      />
+                    </Show>
+                  );
+                })()}
+              </Square>
+            );
+          }}
+        </For>
       </Board>
     </MetaProvider>
   );

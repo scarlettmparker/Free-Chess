@@ -1,9 +1,8 @@
 import { gameState, moveType } from './consts/board';
-import { getMoveCapture, MoveList } from './move/movedef';
+import { MoveList } from './move/movedef';
 import { generateMoves } from './move/legalmovegenerator';
 import { copyBoard, takeBack } from './board/copy';
 import { makeMove } from './move/move';
-import { printBoard } from './board/bitboard';
 
 /**
  * Performance test & move path enumeration
@@ -15,7 +14,7 @@ export const perftDriver = (depth: number) => {
     return;
   }
 
-  let moves: MoveList = { moves: [], count: 0 };
+  const moves: MoveList = { moves: [], count: 0 };
   generateMoves(moves, gameState.pieces);
 
   // go through generated moves
