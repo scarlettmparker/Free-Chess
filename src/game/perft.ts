@@ -1,6 +1,6 @@
 import { gameState, moveType } from './consts/board';
-import { MoveList } from './move/movedef';
-import { generateMoves } from './move/legalmovegenerator';
+import { MoveList } from './move/move-def';
+import { generateMoves } from './move/legal-move-generator';
 import { copyBoard, takeBack } from './board/copy';
 import { makeMove } from './move/move';
 

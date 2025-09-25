@@ -3,8 +3,8 @@ import { createSignal, For, type Component, Show } from 'solid-js';
 import { BOARD_SIZE, gameState, getBitboard } from './game/consts/board';
 
 import { getBit } from './game/board/bitboard';
-import { getMovePiece, getMoveSource, MoveList } from './game/move/movedef';
-import { generateMoves } from './game/move/legalmovegenerator';
+import { getMovePiece, getMoveSource, MoveList } from './game/move/move-def';
+import { generateMoves } from './game/move/legal-move-generator';
 import { mountGame } from './utils';
 import Board from './_components/board';
 import Piece from './_components/piece';

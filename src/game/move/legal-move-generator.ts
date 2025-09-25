@@ -9,9 +9,9 @@ import {
 import { Piece } from '../piece/piece';
 import { isSquareAttacked } from '../board/attacks';
 import { getBit, getLSFBIndex } from '../board/bitboard';
-import { notToRawPos } from '../board/squarehelper';
+import { notToRawPos } from '../board/square-helper';
 import { addMove, getCheckMove } from './move';
-import { encodeMove, MoveList } from './movedef';
+import { encodeMove, MoveList } from './move-def';
 
 export const generateMoves = (moves: MoveList, pieces: Piece[]) => {
   const l = pieces.length;

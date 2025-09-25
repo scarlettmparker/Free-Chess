@@ -8,9 +8,9 @@ import {
   addKing,
   addPogoPiece,
   addBalloonPiece,
-} from '../game/init/addpiece';
+} from '../game/init/add-piece';
 import { resetGameState, initGameState, initGame } from '../game/init/game';
-import { MoveList, getMoveSource, getMoveTarget } from '../game/move/movedef';
+import { MoveList, getMoveSource, getMoveTarget } from '../game/move/move-def';
 
 type SquareMove = {
   source: number;

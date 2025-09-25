@@ -1,6 +1,6 @@
 import { createMemo } from 'solid-js';
 import { gameState, colors } from '../game/consts/board';
-import { MoveList } from '../game/move/movedef';
+import { MoveList } from '../game/move/move-def';
 
 type PieceProps = {
   /**

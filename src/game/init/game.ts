@@ -1,6 +1,6 @@
 import { gameState, colors } from '../consts/board';
 import { Piece } from '../piece/piece';
-import { initSlidingPieces } from './slidingpiece';
+import { initSlidingPieces } from './sliding-piece';
 
 /**
  * Helper function to reset the game state, sets everything in

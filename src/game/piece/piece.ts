@@ -6,9 +6,9 @@ import {
 } from '../consts/bits';
 import { colors, notAFile, notHFile } from '../consts/board';
 import { straightMagicNumbers, diagonalMagicNumbers } from '../consts/magic';
-import { applyConstraintsToMoves } from '../init/slidingpiece';
+import { applyConstraintsToMoves } from '../init/sliding-piece';
 import setBit from '../board/bitboard';
-import { getFileConstraint } from '../board/squarehelper';
+import { getFileConstraint } from '../board/square-helper';
 
 export class Piece {
   id: number;

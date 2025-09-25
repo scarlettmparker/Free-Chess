@@ -1,10 +1,10 @@
 import { gameState } from '../consts/board';
-import { BalloonPiece } from '../piece/balloonpiece';
+import { BalloonPiece } from '../piece/balloon-piece';
 import { Bishop } from '../piece/bishop';
 import { King } from '../piece/king';
 import { Knight } from '../piece/knight';
 import { Pawn } from '../piece/pawn';
-import { PogoPiece } from '../piece/pogopiece';
+import { PogoPiece } from '../piece/pogo-piece';
 import { Queen } from '../piece/queen';
 import { Rook } from '../piece/rook';
 

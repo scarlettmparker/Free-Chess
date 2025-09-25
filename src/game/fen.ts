@@ -1,5 +1,5 @@
 import setBit, { getBit } from './board/bitboard';
-import { notToRawPos } from './board/squarehelper';
+import { notToRawPos } from './board/square-helper';
 import { gameState, BOARD_SIZE, getBitboard, castlePieces, colors } from './consts/board';
 
 /**

@@ -6,7 +6,7 @@ import {
   moveType,
   unicodePieces,
 } from '../consts/board';
-import { notToRawPos, rawPosToNot } from '../board/squarehelper';
+import { notToRawPos, rawPosToNot } from '../board/square-helper';
 import {
   getMoveCapture,
   getMoveCastle,
@@ -18,12 +18,12 @@ import {
   getMoveTarget,
   MoveList,
   promotedPieces,
-} from './movedef';
+} from './move-def';
 import { copyBoard, takeBack } from '../board/copy';
 import setBit, { getBit, getLSFBIndex, getPieceByID } from '../board/bitboard';
 import { castlingRights } from '../consts/bits';
 import { isSquareAttacked } from '../board/attacks';
-import { PogoPiece } from '../piece/pogopiece';
+import { PogoPiece } from '../piece/pogo-piece';
 import { Piece } from '../piece/piece';
 
 /**

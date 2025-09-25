@@ -13,7 +13,7 @@ import {
   DARK_SELECTED,
   LIGHT_SELECTED,
 } from '../game/consts/board';
-import { MoveList } from '../game/move/movedef';
+import { MoveList } from '../game/move/move-def';
 import { movesToSquares } from '../utils';
 
 type SquareProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'key'> & {
