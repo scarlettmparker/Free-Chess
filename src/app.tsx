@@ -139,7 +139,6 @@ const App: Component = () => {
    * @param squareKey Square clicked.
    */
   const handleSquareClick = (squareKey: number) => {
-    console.log('handling square click');
     const moveList = moves();
     if (!moveList || moveList.count === 0) {
       setMoves(EMPTY_MOVE_LIST);
