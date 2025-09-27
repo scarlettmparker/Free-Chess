@@ -1,17 +1,17 @@
 require('dotenv').config();
-import express from 'express';
-import { createServer } from 'http';
-import { Server } from 'ws';
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
 
 const app = express();
 const port = process.env.PORT || 4000;
 
 app.get('/', (_, res) => {
-  res.send('Free Chess WebSocket server is running.');
+  res.send('Free-Chess WebSocket server is running.');
 });
 
-const server = createServer(app);
-const wss = new Server({ server });
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
 // simple in-memory session store
 // sessionId -> { color, ws }
@@ -41,10 +41,73 @@ wss.on('connection', function connection(ws, req) {
   if (sessionId && sessions.has(sessionId)) {
     const sess = sessions.get(sessionId);
     sess.ws = ws; // reassign live socket
-    ws._clientColor = sess.color;
     ws._sessionId = sessionId;
+    // Decide which color this reattached session should have.
+    // Priority:
+    // 1) requestedColor if provided and free (or already assigned to this session)
+    // 2) existing session color if set
+    // 3) prefer white if free, then black
+    let desiredColor = null;
+    if (requestedColor) desiredColor = requestedColor;
+    else if (sess.color) desiredColor = sess.color;
+    else if (!colorMap.has('white')) desiredColor = 'white';
+    else if (!colorMap.has('black')) desiredColor = 'black';
+
+    // If desiredColor is taken by another session, reject.
+    if (desiredColor) {
+      const takenBy = colorMap.get(desiredColor);
+      if (takenBy && takenBy !== sessionId) {
+        console.log('Rejecting reattach: desired color already taken', desiredColor);
+        send({ type: 'reject', reason: 'color-taken' });
+        try {
+          ws.close(4000, 'color-taken');
+        } catch (e) {}
+        return;
+      }
+
+      // Assign or reassign color mapping for this session
+      if (sess.color && sess.color !== desiredColor) {
+        colorMap.delete(sess.color);
+      }
+      sess.color = desiredColor;
+      colorMap.set(desiredColor, sessionId);
+    }
+
+    ws._clientColor = sess.color;
     console.log('Session reattached:', sessionId, 'color:', sess.color);
     send({ type: 'session', sessionId, color: sess.color, status: 'restored' });
+    return;
+  }
+
+  // if client provides a sessionId but server doesn't know it, create a new session
+  // and assign whichever player is available (prefer white, then black, then spectator/null).
+  if (sessionId && !sessions.has(sessionId)) {
+    let chosenColor = null;
+    if (requestedColor && !colorMap.has(requestedColor)) {
+      chosenColor = requestedColor;
+    } else if (!colorMap.has('white')) {
+      chosenColor = 'white';
+    } else if (!colorMap.has('black')) {
+      chosenColor = 'black';
+    } else {
+      chosenColor = null;
+    }
+
+    // create a new session id
+    const newSessionId = makeId();
+    sessions.set(newSessionId, { color: chosenColor, ws });
+    if (chosenColor) colorMap.set(chosenColor, newSessionId);
+
+    ws._clientColor = chosenColor;
+    ws._sessionId = newSessionId;
+
+    console.log(
+      'Unknown session requested, created new session:',
+      newSessionId,
+      'assigned color:',
+      chosenColor,
+    );
+    send({ type: 'session', sessionId: newSessionId, color: chosenColor, status: 'accepted' });
     return;
   }
 
@@ -128,6 +191,50 @@ wss.on('connection', function connection(ws, req) {
     // we intentionally do not delete the session on disconnect so a reconnect can reclaim it.
     // this is lightweight enough where ts doesn't even matter
   });
+});
+
+/**
+ * cli helper, allow clearing sessions for a color so a new client can join.
+ */
+function clearColor(color) {
+  const sid = colorMap.get(color);
+  if (!sid) {
+    console.log(`No session for color ${color}`);
+    return false;
+  }
+  const sess = sessions.get(sid);
+  // close socket if connected
+  try {
+    sess.ws && sess.ws.close && sess.ws.close(1000, 'cleared-by-cli');
+  } catch (e) {}
+  colorMap.delete(color);
+  // remove color assignment but keep session so reconnection with sessionId will not reassign color
+  if (sess) sess.color = null;
+  console.log(`Cleared color ${color} (session ${sid})`);
+  return true;
+}
+
+function listSessions() {
+  console.log('Sessions:');
+  for (const [sid, s] of sessions.entries()) {
+    console.log(' ', sid, 'color:', s.color ? s.color : '<none>', 'connected:', !!s.ws);
+  }
+}
+
+// Read simple commands from stdin
+process.stdin.setEncoding('utf8');
+process.stdin.on('data', (data) => {
+  const cmd = String(data || '').trim();
+  if (!cmd) return;
+  if (cmd === 'cb') {
+    clearColor('black');
+  } else if (cmd === 'cw') {
+    clearColor('white');
+  } else if (cmd === 'list') {
+    listSessions();
+  } else {
+    console.log('Unknown command. Supported: cb (clear black), cw (clear white), list');
+  }
 });
 
 server.listen(port, () => {
