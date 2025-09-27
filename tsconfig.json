@@ -12,9 +12,11 @@
     "strict": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node", "jest"],
-    "allowSyntheticDefaultImports": true
+    "types": ["node", "jest", "vite/client"],
+    "allowSyntheticDefaultImports": true,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
   },
-  "include": ["server/**/*"],
+  "include": ["server/**/*", "src/**/*"],
   "exclude": ["node_modules"]
 }

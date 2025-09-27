@@ -58,7 +58,9 @@ const App: Component = () => {
     if (socket) {
       try {
         socket.close();
-      } catch (e) {}
+      } catch (e) {
+        // do nothing
+      }
     }
   });
 

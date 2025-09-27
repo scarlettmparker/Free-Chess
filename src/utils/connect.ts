@@ -40,7 +40,9 @@ export const connectWith = (
           settled = true;
           try {
             ws.close();
-          } catch (e) {}
+          } catch (e) {
+            // do nothing
+          }
           reject(new Error('timeout'));
         }
       }, 3000);
@@ -63,7 +65,9 @@ export const connectWith = (
               settled = true;
               try {
                 ws.close();
-              } catch (e) {}
+              } catch (e) {
+                // do nothing
+              }
               reject(new Error(msg.reason || 'rejected'));
             }
             return;
