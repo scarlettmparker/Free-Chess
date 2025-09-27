@@ -1,5 +1,3 @@
-import { printBoard } from '../game/board/bitboard';
-import { gameState } from '../game/consts/board';
 import { parseFEN } from '../game/fen';
 import {
   addPawn,
@@ -13,7 +11,6 @@ import {
 } from '../game/init/add-piece';
 import { resetGameState, initGameState, initGame } from '../game/init/game';
 import { MoveList, getMoveSource, getMoveTarget } from '../game/move/move-def';
-import { perftDriver } from '../game/perft';
 
 type SquareMove = {
   source: number;
