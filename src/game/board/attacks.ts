@@ -1,6 +1,7 @@
 import { BOARD_SIZE, colors, gameState, getBitboard } from '../consts/board';
 import { getCheckMove } from '../move/move';
 import { getLSFBIndex } from './bitboard';
+import { SlidingMoveBehavior, LeaperMoveBehavior, PawnMoveBehavior } from '../piece/piece';
 
 /**
  * Function to determine whether a square is attacked by a player.
@@ -20,27 +21,26 @@ export const isSquareAttacked = (pos: number, side: number) => {
   const l = filteredPieces.length;
   for (let i = 0; i < l; i++) {
     const piece = filteredPieces[i];
-    const pieceID = piece.getID();
+    const pieceId = piece.getId();
+    const moveBehavior = piece.getMoveBehavior();
 
-    if (piece.getPawn()) {
-      if (piece.getPawnPieceState()[piece.getColor() ^ 1][pos] & getBitboard(pieceID).bitboard)
-        return true;
-    }
-
-    if (piece.getSlider()) {
+    if (moveBehavior instanceof PawnMoveBehavior) {
       if (
-        piece.getSlidingPieceAttacks(
-          pos,
-          gameState.occupancies[colors.BOTH],
-          piece.straightConstraints,
-          piece.diagonalConstraints,
-        ) & getBitboard(pieceID).bitboard
+        moveBehavior.getPawnPieceState()[piece.getColor() ^ 1][pos] & getBitboard(pieceId).bitboard
       )
         return true;
     }
 
-    if (piece.getLeaper()) {
-      let bitboard = getBitboard(pieceID).bitboard;
+    if (moveBehavior instanceof SlidingMoveBehavior) {
+      if (
+        moveBehavior.getAttacks(pos, gameState.occupancies[colors.BOTH], piece.getColor(), 0) &
+        getBitboard(pieceId).bitboard
+      )
+        return true;
+    }
+
+    if (moveBehavior instanceof LeaperMoveBehavior) {
+      let bitboard = getBitboard(pieceId).bitboard;
       let checkMove = 0;
       let checked = false;
 
@@ -51,8 +51,8 @@ export const isSquareAttacked = (pos: number, side: number) => {
         if (checkMove && checkMove > 0) {
           checked = true;
           if (
-            piece.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] &
-            getBitboard(pieceID).bitboard
+            moveBehavior.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] &
+            getBitboard(pieceId).bitboard
           )
             return true;
         }
@@ -62,8 +62,8 @@ export const isSquareAttacked = (pos: number, side: number) => {
 
       if (checkMove == 0 && !checked) {
         if (
-          piece.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] &
-          getBitboard(pieceID).bitboard
+          moveBehavior.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] &
+          getBitboard(pieceId).bitboard
         )
           return true;
       }

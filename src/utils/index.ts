@@ -53,8 +53,4 @@ export function mountGame() {
   initGameState();
   parseFEN(startPosition);
   initGame();
-
-  console.log('printBoard', printBoard());
-  perftDriver(3);
-  console.log('moves', gameState.nodes);
 }

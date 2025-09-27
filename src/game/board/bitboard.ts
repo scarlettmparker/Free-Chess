@@ -135,8 +135,8 @@ export const printBoard = () => {
   console.log(board);
 };
 
-export const getPieceByID = (id: number) => {
-  return gameState.pieces.find((piece) => piece.id === id);
+export const getPieceById = (id: number) => {
+  return gameState.pieces.find((piece) => piece.getId() === id);
 };
 
 /**

@@ -1,5 +1,11 @@
 import { gameState, colors } from '../consts/board';
-import { Piece } from '../piece/piece';
+import {
+  LeaperMoveBehavior,
+  MoveBehavior,
+  PawnMoveBehavior,
+  Piece,
+  SlidingMoveBehavior,
+} from '../piece/piece';
 import { initSlidingPieces } from './sliding-piece';
 
 /**
@@ -24,17 +30,17 @@ export function resetGameState() {
 export function initGameState() {
   gameState.whitePieceIds = gameState.pieces
     .filter((piece: Piece) => piece.getColor() === colors.WHITE)
-    .map((piece: Piece) => piece.getID());
+    .map((piece: Piece) => piece.getId());
 
   gameState.blackPieceIds = gameState.pieces
     .filter((piece: Piece) => piece.getColor() === colors.BLACK)
-    .map((piece: Piece) => piece.getID());
+    .map((piece: Piece) => piece.getId());
 
   gameState.bitboards = Array.from(
     { length: gameState.whitePieceIds.length + gameState.blackPieceIds.length },
     (_, index) => {
-      const pieceID = gameState.pieces[index].getID();
-      return { pieceID, bitboard: 0n };
+      const pieceId = gameState.pieces[index].getId();
+      return { pieceId, bitboard: 0n };
     },
   );
 }
@@ -47,22 +53,23 @@ export function initGame() {
   const { straightPieceMask, diagonalPieceMask, straightPieceState, diagonalPieceState } =
     initSlidingPieces();
 
-  gameState.pieces.map((piece) => {
-    if (piece.getSlider()) {
-      if (piece.straight) {
-        piece.setSlidingStraightPieceState(straightPieceState);
-        piece.setStraightPieceMask(straightPieceMask);
+  gameState.pieces.forEach((piece: Piece) => {
+    const moveBehavior: MoveBehavior = piece.getMoveBehavior();
+
+    if (moveBehavior instanceof SlidingMoveBehavior) {
+      if (moveBehavior.getStraight()) {
+        moveBehavior.setSlidingStraightPieceState(straightPieceState);
+        moveBehavior.setStraightPieceMask(straightPieceMask);
       }
-      if (piece.diagonal) {
-        piece.setSlidingDiagonalPieceState(diagonalPieceState);
-        piece.setDiagonalPieceMask(diagonalPieceMask);
+      if (moveBehavior.getDiagonal()) {
+        moveBehavior.setSlidingDiagonalPieceState(diagonalPieceState);
+        moveBehavior.setDiagonalPieceMask(diagonalPieceMask);
       }
     }
-    if (piece.getLeaper()) {
-      piece.initLeaperAttacks();
-    }
-    if (piece.getPawn()) {
-      piece.initPawnAttacks();
+
+    // Initialize attacks for leaper or pawn pieces
+    if (moveBehavior instanceof LeaperMoveBehavior || moveBehavior instanceof PawnMoveBehavior) {
+      moveBehavior.initializeAttacks();
     }
   });
 }

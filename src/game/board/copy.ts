@@ -10,7 +10,7 @@ export function copyBoard() {
   const piecesCopy = gameState.pieces;
 
   const bitboardsCopy = gameState.bitboards.map((bitboardData) => ({
-    pieceID: bitboardData.pieceID,
+    pieceId: bitboardData.pieceId,
     bitboard: bitboardData.bitboard,
   }));
   const occupanciesCopy = Array.from({ length: 3 }, (_, i) => gameState.occupancies[i]);
@@ -40,7 +40,7 @@ export function takeBack(copies: {
   whiteMovesCopy: Map<number, number>;
   blackMovesCopy: Map<number, number>;
   piecesCopy: Piece[];
-  bitboardsCopy: { pieceID: number; bitboard: bigint }[];
+  bitboardsCopy: { pieceId: number; bitboard: bigint }[];
   occupanciesCopy: bigint[];
   globalMoveCopy: number;
   sideCopy: number;

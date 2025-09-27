@@ -20,11 +20,10 @@ import {
   promotedPieces,
 } from './move-def';
 import { copyBoard, takeBack } from '../board/copy';
-import setBit, { getBit, getLSFBIndex, getPieceByID } from '../board/bitboard';
+import setBit, { getBit, getLSFBIndex, getPieceById } from '../board/bitboard';
 import { castlingRights } from '../consts/bits';
 import { isSquareAttacked } from '../board/attacks';
-import { PogoPiece } from '../piece/pogo-piece';
-import { Piece } from '../piece/piece';
+import { Piece, LeaperMoveBehavior } from '../piece/piece';
 
 /**
  * Adds a move to the move list.
@@ -76,14 +75,14 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
     }
 
     tempMoves.set(Number('' + targetSquare + piece), currentMove + 1);
-    const opponentPieceIDs =
+    const opponentPieceIds =
       gameState.side == colors.WHITE ? gameState.blackPieceIds : gameState.whitePieceIds;
-    const pieceObj = getPieceByID(piece);
+    const pieceObj = getPieceById(piece);
 
     // captures
     if (capture) {
       // loop over bitboard of opposite side
-      for (const bbPiece of opponentPieceIDs) {
+      for (const bbPiece of opponentPieceIds) {
         const newCaptureBitboard = getBitboard(bbPiece, tempBitboards);
         if (getBit(newCaptureBitboard.bitboard, targetSquare)) {
           // piece on target square
@@ -228,7 +227,7 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
     gameState.bitboards = tempBitboards;
 
     // deal with rotating piece moves
-    if (pieceObj?.rotationalMoveType === 'REVERSE_ROTATE') {
+    if (pieceObj?.getRotationalMoveType() === 'REVERSE_ROTATE') {
       updateRotatorMoves(pieceObj, tempMoves, sourceSquare, targetSquare);
     }
 
@@ -270,9 +269,7 @@ const updateRotatorMoves = (
   sourceSquare: number,
   targetSquare: number,
 ) => {
-  const reversePiece = pieceObj as PogoPiece;
-
-  const tempReverse = reversePiece.reverse;
+  const tempReverse = pieceObj.getReverse();
   const newSquare = tempReverse.get(targetSquare) ?? 0;
   const oldSquare = tempReverse.get(sourceSquare);
 
@@ -291,10 +288,10 @@ const updateRotatorMoves = (
   if (rank === 7 || rank === 0) {
     const isWhite = pieceObj.getColor() === colors.WHITE;
     tempReverse.set(targetSquare, isWhite === (rank === 7) ? 0 : 1);
-    tempMoves.set(Number(`${targetSquare}${pieceObj.getID()}`), 0);
+    tempMoves.set(Number(`${targetSquare}${pieceObj.getId()}`), 0);
   }
 
-  reversePiece.setReverse(tempReverse);
+  pieceObj.setReverse(tempReverse);
 };
 
 /**
@@ -303,19 +300,25 @@ const updateRotatorMoves = (
  * @param sourceSquare The piece's current position.
  */
 export const getCheckMove = (piece: Piece, sourceSquare: number) => {
-  const pieceMoveLength = piece.leaperOffsets.length;
+  const pieceMoveLength =
+    piece.getMoveBehavior() instanceof LeaperMoveBehavior
+      ? (piece.getMoveBehavior() as LeaperMoveBehavior).getLeaperOffsets().length
+      : 1;
   const pieceMoves = piece.getColor() == colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
   let checkMove = 0;
 
-  if (piece.getRotationalMoveType() == 'ROTATE' && piece.getLeaper()) {
-    checkMove = (pieceMoves.get(Number('' + sourceSquare + piece.getID())) || 0) % pieceMoveLength;
-  } else if (piece.getRotationalMoveType() == 'REVERSE_ROTATE' && piece.getLeaper()) {
-    const reversePiece = piece as PogoPiece;
-    const pieceDirection = reversePiece.reverse.get(sourceSquare) || 0;
-
-    // calculate where the moves should be searched at
+  if (
+    piece.getRotationalMoveType() == 'ROTATE' &&
+    piece.getMoveBehavior() instanceof LeaperMoveBehavior
+  ) {
+    checkMove = (pieceMoves.get(Number('' + sourceSquare + piece.getId())) || 0) % pieceMoveLength;
+  } else if (
+    piece.getRotationalMoveType() == 'REVERSE_ROTATE' &&
+    piece.getMoveBehavior() instanceof LeaperMoveBehavior
+  ) {
+    const pieceDirection = piece.getReverse().get(sourceSquare) || 0;
     const offset = pieceDirection * (pieceMoveLength / 2);
-    const currentMove = pieceMoves.get(Number(`${sourceSquare}${piece.getID()}`)) || 0;
+    const currentMove = pieceMoves.get(Number(`${sourceSquare}${piece.getId()}`)) || 0;
     checkMove = offset + ((currentMove % pieceMoveLength) % (pieceMoveLength / 2));
   }
 

@@ -21,7 +21,7 @@ type PieceMoveKey = {
   key: number;
 
   /**
-   * ID of the piece at that square.
+   * Idof the piece at that square.
    */
   pieceId?: number;
 

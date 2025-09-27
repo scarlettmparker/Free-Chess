@@ -23,26 +23,26 @@ export const parseFEN = (fen: string) => {
       const square = rank * 8 + file;
       const char = fen[fenIndex];
 
-      // match pieces based on square brackets containing IDs
+      // match pieces based on square brackets containing Ids
       if (char === '[') {
         const endBracketIndex = fen.indexOf(']', fenIndex);
         if (endBracketIndex === -1) {
           throw new Error("Invalid FEN format: unmatched '['.");
         }
 
-        const pieceID = parseInt(fen.slice(fenIndex + 1, endBracketIndex), 10);
-        if (isNaN(pieceID)) {
-          throw new Error('Invalid FEN format: invalid piece ID.');
+        const pieceId = parseInt(fen.slice(fenIndex + 1, endBracketIndex), 10);
+        if (isNaN(pieceId)) {
+          throw new Error('Invalid FEN format: invalid piece id.');
         }
 
-        const piece = gameState.pieces.find((p) => p.getID() === pieceID);
+        const piece = gameState.pieces.find((p) => p.getId() === pieceId);
         if (!piece) {
-          throw new Error(`Piece with ID ${pieceID} not found.`);
+          throw new Error(`Piece with id ${pieceId} not found.`);
         }
 
-        let bitboardData = gameState.bitboards.find((b) => b.pieceID === pieceID);
+        let bitboardData = gameState.bitboards.find((b) => b.pieceId === pieceId);
         if (!bitboardData) {
-          gameState.bitboards.push({ pieceID: pieceID, bitboard: 0n });
+          gameState.bitboards.push({ pieceId: pieceId, bitboard: 0n });
           bitboardData = gameState.bitboards[gameState.bitboards.length - 1];
         }
 

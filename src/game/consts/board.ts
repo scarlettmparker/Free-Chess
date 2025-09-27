@@ -1,10 +1,10 @@
 import { Piece } from '../piece/piece';
 import { Colors } from './type';
 
-export const pieceIDs = new Set<number>();
+export const pieceIds = new Set<number>();
 
 type BitboardData = {
-  pieceID: number;
+  pieceId: number;
   bitboard: bigint;
 };
 
@@ -94,13 +94,13 @@ export const notHFile: bigint = 9187201950435737471n;
 export const notHGFile: bigint = 4557430888798830399n;
 
 export const getBitboard = (
-  pieceID: number,
+  pieceId: number,
   bitboards: BitboardData[] = gameState.bitboards,
 ): BitboardData => {
-  const foundPiece = bitboards.find((piece) => piece.pieceID === pieceID);
+  const foundPiece = bitboards.find((piece) => piece.pieceId === pieceId);
 
   if (!foundPiece) {
-    return { pieceID: pieceID, bitboard: 0n };
+    return { pieceId: pieceId, bitboard: 0n };
   }
 
   return foundPiece;
