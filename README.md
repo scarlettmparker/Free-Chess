@@ -46,3 +46,23 @@ Run ESLint (TypeScript + Solid) across source files:
 ```
 npm run lint
 ```
+
+## Server (Express + WebSocket)
+
+A lightweight Express + WebSocket server is provided under `server/index.js` for pairing two clients.
+
+Install dependencies and run the server:
+
+```bash
+npm install
+npm run start:server
+```
+
+By default the server reads `PORT` from the project `.env` file. The front-end can use the Vite environment variable `import.meta.env.VITE_PUBLIC_API_URL` to obtain the WebSocket URL (the project includes a `.env` with `VITE_PUBLIC_API_URL=ws://localhost:4000`).
+
+Client behaviour:
+
+- Clients may connect with a query parameter to declare their colour: `ws://localhost:4000/?color=white`.
+- Or clients may send a JSON hello message after connecting: `{ type: 'hello', color: 'black' }`.
+
+The server logs client connections and announced colours to the console.
