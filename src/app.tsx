@@ -12,8 +12,6 @@ import Piece from './_components/piece';
 import Square from './_components/square';
 import { makeMove } from './game/move/move';
 
-// const startPosition =
-// "[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1";
 const EMPTY_MOVE_LIST: MoveList = { moves: [], count: 0 };
 
 type PieceMoveKey = {
