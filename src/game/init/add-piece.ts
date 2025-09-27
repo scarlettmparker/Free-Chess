@@ -1,5 +1,5 @@
-import { gameState } from '../consts/board';
-import { PieceFactory } from '../piece/piece';
+import { gameState } from '~/game/consts/board';
+import { PieceFactory } from '~/game/piece/piece';
 
 /**
  * Helper functions to add pieces to the current game state (assumes black and white have same rules).

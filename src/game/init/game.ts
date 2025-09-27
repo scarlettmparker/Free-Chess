@@ -1,12 +1,12 @@
-import { gameState, colors } from '../consts/board';
+import { gameState, colors } from '~/game/consts/board';
 import {
   LeaperMoveBehavior,
   MoveBehavior,
   PawnMoveBehavior,
   Piece,
   SlidingMoveBehavior,
-} from '../piece/piece';
-import { initSlidingPieces } from './sliding-piece';
+} from '~/game/piece/piece';
+import { initSlidingPieces } from '~/game/init/sliding-piece';
 
 /**
  * Helper function to reset the game state, sets everything in

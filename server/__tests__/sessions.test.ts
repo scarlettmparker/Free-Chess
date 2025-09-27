@@ -5,7 +5,7 @@ import {
   chooseColorForReattach,
   assignColor,
   clearColor,
-} from '../src/sessions';
+} from '~server/sessions';
 
 describe('sessions module', () => {
   beforeEach(() => {

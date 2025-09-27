@@ -1,4 +1,4 @@
-import { parseFEN } from '../game/fen';
+import { parseFEN } from '~/game/fen';
 import {
   addPawn,
   addKnight,
@@ -8,9 +8,9 @@ import {
   addKing,
   addPogoPiece,
   addBalloonPiece,
-} from '../game/init/add-piece';
-import { resetGameState, initGameState, initGame } from '../game/init/game';
-import { MoveList, getMoveSource, getMoveTarget } from '../game/move/move-def';
+} from '~/game/init/add-piece';
+import { resetGameState, initGameState, initGame } from '~/game/init/game';
+import { MoveList, getMoveSource, getMoveTarget } from '~/game/move/move-def';
 
 type SquareMove = {
   source: number;

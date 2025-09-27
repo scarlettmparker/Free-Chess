@@ -15,7 +15,13 @@
     "types": ["node", "jest", "vite/client"],
     "allowSyntheticDefaultImports": true,
     "jsx": "preserve",
-    "jsxImportSource": "solid-js"
+    "jsxImportSource": "solid-js",
+    "baseUrl": ".",
+    "paths": {
+      "~/": ["src"],
+      "~/*": ["src/*", "server/src/*"],
+      "~server/*": ["server/src/*"]
+    }
   },
   "include": ["server/**/*", "src/**/*"],
   "exclude": ["node_modules"]

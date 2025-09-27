@@ -3,12 +3,12 @@ import {
   straightBitMask,
   diagonalRelevantBits,
   diagonalBitMask,
-} from '../consts/bits';
-import { colors, notAFile, notHFile } from '../consts/board';
-import { straightMagicNumbers, diagonalMagicNumbers } from '../consts/magic';
-import { applyConstraintsToMoves } from '../init/sliding-piece';
-import setBit from '../board/bitboard';
-import { getFileConstraint } from '../board/square-helper';
+} from '~/game/consts/bits';
+import { colors, notAFile, notHFile } from '~/game/consts/board';
+import { straightMagicNumbers, diagonalMagicNumbers } from '~/game/consts/magic';
+import { applyConstraintsToMoves } from '~/game/init/sliding-piece';
+import setBit from '~/game/board/bitboard';
+import { getFileConstraint } from '~/game/board/square-helper';
 
 // Interface for move behavior
 export interface MoveBehavior {

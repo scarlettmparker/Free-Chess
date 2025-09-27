@@ -1,5 +1,5 @@
 import { JSX } from 'solid-js/jsx-runtime';
-import { WIDTH, BOARD_SIZE, HEIGHT } from '../game/consts/board';
+import { WIDTH, BOARD_SIZE, HEIGHT } from '~/game/consts/board';
 import { splitProps } from 'solid-js';
 
 type BoardProps = {

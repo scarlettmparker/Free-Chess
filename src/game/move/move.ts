@@ -5,8 +5,8 @@ import {
   getBitboard,
   moveType,
   unicodePieces,
-} from '../consts/board';
-import { notToRawPos, rawPosToNot } from '../board/square-helper';
+} from '~/game/consts/board';
+import { notToRawPos, rawPosToNot } from '~/game/board/square-helper';
 import {
   getMoveCapture,
   getMoveCastle,
@@ -18,12 +18,12 @@ import {
   getMoveTarget,
   MoveList,
   promotedPieces,
-} from './move-def';
-import { copyBoard, takeBack } from '../board/copy';
-import setBit, { getBit, getLSFBIndex, getPieceById } from '../board/bitboard';
-import { castlingRights } from '../consts/bits';
-import { isSquareAttacked } from '../board/attacks';
-import { Piece, LeaperMoveBehavior } from '../piece/piece';
+} from '~/game/move/move-def';
+import { copyBoard, takeBack } from '~/game/board/copy';
+import setBit, { getBit, getLSFBIndex, getPieceById } from '~/game/board/bitboard';
+import { castlingRights } from '~/game/consts/bits';
+import { isSquareAttacked } from '~/game/board/attacks';
+import { Piece, LeaperMoveBehavior } from '~/game/piece/piece';
 
 /**
  * Adds a move to the move list.

@@ -1,8 +1,8 @@
 import { createMemo, splitProps, JSX } from 'solid-js';
-import { gameState, colors, moveType } from '../game/consts/board';
-import { MoveList } from '../game/move/move-def';
-import { copyBoard, takeBack } from '../game/board/copy';
-import { makeMove } from '../game/move/move';
+import { gameState, colors, moveType } from '~/game/consts/board';
+import { MoveList } from '~/game/move/move-def';
+import { copyBoard, takeBack } from '~/game/board/copy';
+import { makeMove } from '~/game/move/move';
 
 type PieceProps = JSX.HTMLAttributes<HTMLDivElement> & {
   /**

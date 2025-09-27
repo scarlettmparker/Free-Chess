@@ -1,5 +1,5 @@
-import { gameState } from '../consts/board';
-import { Piece } from '../piece/piece';
+import { gameState } from '~/game/consts/board';
+import { Piece } from '~/game/piece/piece';
 
 /**
  * Copies the current board state.

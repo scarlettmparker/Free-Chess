@@ -1,4 +1,10 @@
-import { BOARD_SIZE, unicodePieces, castlePieces, gameState, getBitboard } from '../consts/board';
+import {
+  BOARD_SIZE,
+  unicodePieces,
+  castlePieces,
+  gameState,
+  getBitboard,
+} from '~/game/consts/board';
 import { rawPosToNot } from './square-helper';
 
 /**

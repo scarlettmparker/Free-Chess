@@ -1,7 +1,7 @@
-import { BOARD_SIZE, colors, gameState, getBitboard } from '../consts/board';
-import { getCheckMove } from '../move/move';
-import { getLSFBIndex } from './bitboard';
-import { SlidingMoveBehavior, LeaperMoveBehavior, PawnMoveBehavior } from '../piece/piece';
+import { BOARD_SIZE, colors, gameState, getBitboard } from '~/game/consts/board';
+import { getCheckMove } from '~/game/move/move';
+import { getLSFBIndex } from '~/game/board/bitboard';
+import { SlidingMoveBehavior, LeaperMoveBehavior, PawnMoveBehavior } from '~/game/piece/piece';
 
 /**
  * Function to determine whether a square is attacked by a player.

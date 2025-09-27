@@ -3,10 +3,10 @@ import {
   straightBitMask,
   diagonalRelevantBits,
   diagonalBitMask,
-} from '../consts/bits';
-import { straightMagicNumbers, diagonalMagicNumbers } from '../consts/magic';
-import { countBits } from '../board/bitboard';
-import { setOccupancyBits } from '../occupancies';
+} from '~/game/consts/bits';
+import { straightMagicNumbers, diagonalMagicNumbers } from '~/game/consts/magic';
+import { countBits } from '~/game/board/bitboard';
+import { setOccupancyBits } from '~/game/occupancies';
 
 /**
  * Function that initializes piece attacks for sliding pieces.

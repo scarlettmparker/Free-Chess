@@ -5,11 +5,16 @@ import {
   gameState,
   getBitboard,
   whitePromotions,
-} from '../consts/board';
-import { Piece, SlidingMoveBehavior, LeaperMoveBehavior, PawnMoveBehavior } from '../piece/piece';
-import { isSquareAttacked } from '../board/attacks';
-import { getBit, getLSFBIndex } from '../board/bitboard';
-import { notToRawPos } from '../board/square-helper';
+} from '~/game/consts/board';
+import {
+  Piece,
+  SlidingMoveBehavior,
+  LeaperMoveBehavior,
+  PawnMoveBehavior,
+} from '~/game/piece/piece';
+import { isSquareAttacked } from '~/game/board/attacks';
+import { getBit, getLSFBIndex } from '~/game/board/bitboard';
+import { notToRawPos } from '~/game/board/square-helper';
 import { addMove, getCheckMove } from './move';
 import { encodeMove, MoveList } from './move-def';
 

@@ -1,4 +1,4 @@
-import { notHGFile, notHFile, notAFile, notABFile } from '../consts/board';
+import { notHGFile, notHFile, notAFile, notABFile } from '~/game/consts/board';
 
 /**
  * Helper function to check which colour a square should be painted.

@@ -1,4 +1,4 @@
-import { Piece } from '../piece/piece';
+import { Piece } from '~/game/piece/piece';
 import { Colors } from './type';
 
 export const pieceIds = new Set<number>();
