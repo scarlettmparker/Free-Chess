@@ -1,15 +1,20 @@
 {
   "compilerOptions": {
-    "strict": true,
-    "target": "ESNext",
-    "module": "ESNext",
+    "target": "ES2020",
+    "module": "ES2020",
     "moduleResolution": "node",
-    "allowSyntheticDefaultImports": true,
+    "outDir": "server/dist",
+    "rootDir": ".",
     "esModuleInterop": true,
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
-    "types": ["vite/client"],
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
     "noEmit": true,
-    "isolatedModules": true
-  }
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node", "jest"],
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["server/**/*"],
+  "exclude": ["node_modules"]
 }

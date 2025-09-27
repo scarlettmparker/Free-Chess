@@ -47,6 +47,26 @@ Run ESLint (TypeScript + Solid) across source files:
 npm run lint
 ```
 
+## Server (TypeScript)
+
+---
+
+The server now lives in `server/` as TypeScript sources. Quick commands:
+
+```bash
+# install deps
+npm install
+
+# run tests
+npx jest
+
+# build server (emit to server/dist)
+npx tsc -p tsconfig.json
+
+# start built server
+node server/dist/index.js
+```
+
 ## Server (Express + WebSocket)
 
 A lightweight Express + WebSocket server is provided under `server/index.js` for pairing two clients.
