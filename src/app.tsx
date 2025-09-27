@@ -1,14 +1,15 @@
 import { MetaProvider, Title } from '@solidjs/meta';
 import { createSignal, For, type Component, Show } from 'solid-js';
-import { BOARD_SIZE, gameState, getBitboard } from './game/consts/board';
+import { BOARD_SIZE, gameState, getBitboard, moveType } from './game/consts/board';
 
 import { getBit } from './game/board/bitboard';
-import { getMovePiece, getMoveSource, MoveList } from './game/move/move-def';
+import { getMovePiece, getMoveSource, getMoveTarget, MoveList } from './game/move/move-def';
 import { generateMoves } from './game/move/legal-move-generator';
 import { mountGame } from './utils';
 import Board from './_components/board';
 import Piece from './_components/piece';
 import Square from './_components/square';
+import { makeMove } from './game/move/move';
 
 // const startPosition =
 // "[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1";
@@ -35,23 +36,19 @@ const App: Component = () => {
   const [moves, setMoves] = createSignal<MoveList>(EMPTY_MOVE_LIST);
   const [pieceMoveKey, setPieceMoveKey] = createSignal<PieceMoveKey[]>([]);
 
-  // TODO: use states
-  // const [side, setSide] = createSignal(colors.WHITE);
-  // const [selectedSquare, setSelectedSquare] = createSignal<number | null>(null);
-
   /**
    * Generate moves (client side) after a piece has moved.
    * We know how this will be done server side.
    */
   const updateBoard = () => {
     // Store bitboards and moves
-    const newMoves: MoveList = { moves: [], count: 0 };
-    generateMoves(newMoves, gameState.pieces);
+    const moves: MoveList = { moves: [], count: 0 };
+    generateMoves(moves, gameState.pieces);
 
     // Precompute moves mapped by piece id (source piece)
     const movesByPieceAndSquare = new Map<string, MoveList>();
 
-    newMoves.moves.forEach((move: number) => {
+    moves.moves.forEach((move: number) => {
       const pieceId = getMovePiece(move);
       const sourceSquare = getMoveSource(move);
       const key = `${pieceId}-${sourceSquare}`;
@@ -99,7 +96,30 @@ const App: Component = () => {
             : EMPTY_MOVE_LIST,
       });
     }
+
     setPieceMoveKey(updatedKeys);
+    setMoves(EMPTY_MOVE_LIST);
+  };
+
+  const handleSquareClick = (squareKey: number) => {
+    const moveList = moves();
+    if (!moveList || moveList.count === 0) {
+      setMoves(EMPTY_MOVE_LIST);
+      return;
+    }
+
+    const found = moveList.moves.find((m) => getMoveTarget(m) === squareKey);
+    if (found !== undefined) {
+      const ok = makeMove(found, moveType.ALL_MOVES, 0);
+      if (ok) {
+        updateBoard();
+      } else {
+        setMoves(EMPTY_MOVE_LIST);
+      }
+    } else {
+      console.log('bad');
+      setMoves(EMPTY_MOVE_LIST);
+    }
   };
 
   mountGame();
@@ -113,7 +133,7 @@ const App: Component = () => {
         <For each={Array(BOARD_SIZE * BOARD_SIZE).fill(0)}>
           {(_, i) => {
             return (
-              <Square key={i()} moves={moves}>
+              <Square key={i()} moves={moves} onClick={() => handleSquareClick(i())}>
                 {(() => {
                   const pieceKeysBySquare = pieceMoveKey().reduce((arr, p) => {
                     arr[p.key] = p;
