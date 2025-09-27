@@ -5,6 +5,7 @@ import {
   gameState,
   getBitboard,
   moveType,
+  colors,
   type PlayerColor,
 } from './game/consts/board';
 import { tryConnectFlow, setStoredSession } from './utils/connect';
@@ -109,14 +110,14 @@ const App: Component = () => {
       }
 
       // only check black if piece is still undefined/null (handle pieceId === 0)
-      // if (piece === undefined || piece === null) {
-      for (const bbPiece of gameState.blackPieceIds) {
-        if (getBit(getBitboard(bbPiece).bitboard, square)) {
-          piece = bbPiece;
-          break;
+      if (piece === undefined || piece === null) {
+        for (const bbPiece of gameState.blackPieceIds) {
+          if (getBit(getBitboard(bbPiece).bitboard, square)) {
+            piece = bbPiece;
+            break;
+          }
         }
       }
-      // }
 
       // Push key-move-square values
       updatedKeys.push({
@@ -209,7 +210,9 @@ const App: Component = () => {
             }}
           </For>
         </Board>
-        <span class="text-white ml-auto">Player: {playerColor()}</span>
+        <span class="text-white ml-auto">
+          Player: {playerColor() == colors.WHITE ? 'White' : 'Black'}
+        </span>
       </div>
     </MetaProvider>
   );

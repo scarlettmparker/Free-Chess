@@ -1,5 +1,5 @@
-import { Accessor, createMemo, splitProps, JSX } from 'solid-js';
-import { gameState, moveType, colors, type PlayerColor } from '~/game/consts/board';
+import { createMemo, splitProps, JSX } from 'solid-js';
+import { gameState, moveType, colors } from '~/game/consts/board';
 import { MoveList } from '~/game/move/move-def';
 import { copyBoard, takeBack } from '~/game/board/copy';
 import { makeMove } from '~/game/move/move';
