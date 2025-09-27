@@ -1,5 +1,5 @@
-import { createMemo, splitProps, JSX } from 'solid-js';
-import { gameState, colors, moveType } from '~/game/consts/board';
+import { Accessor, createMemo, splitProps, JSX } from 'solid-js';
+import { gameState, moveType, colors, type PlayerColor } from '~/game/consts/board';
 import { MoveList } from '~/game/move/move-def';
 import { copyBoard, takeBack } from '~/game/board/copy';
 import { makeMove } from '~/game/move/move';
@@ -27,6 +27,7 @@ type PieceProps = JSX.HTMLAttributes<HTMLDivElement> & {
 const Piece = (allProps: PieceProps) => {
   const [local, rest] = splitProps(allProps, ['pieceId', 'moves', 'setMoves', 'onClick']);
 
+  // Checks the side the PIECE is on (not the player)
   const isSide = createMemo(() =>
     gameState.side === colors.WHITE
       ? gameState.whitePieceIds.includes(local.pieceId)

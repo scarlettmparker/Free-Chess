@@ -36,6 +36,8 @@ export const DARK_HOVER_HIGHLIGHTED = 'hover:bg-[#FCA5A5]'; // rgb(252 165 165)
 export const LIGHT_SELECTED = 'bg-[#909090]'; // rgb(144 144 144)
 export const DARK_SELECTED = 'bg-[#CDCDCD]'; // rgb(205 205 205)
 
+export type PlayerColor = typeof colors.WHITE | typeof colors.BLACK;
+
 export const colors: Colors = Object.freeze({
   WHITE: 0,
   BLACK: 1,

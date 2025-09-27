@@ -1,6 +1,12 @@
 import { MetaProvider, Title } from '@solidjs/meta';
 import { createSignal, For, type Component, Show, onCleanup } from 'solid-js';
-import { BOARD_SIZE, gameState, getBitboard, moveType } from './game/consts/board';
+import {
+  BOARD_SIZE,
+  gameState,
+  getBitboard,
+  moveType,
+  type PlayerColor,
+} from './game/consts/board';
 import { tryConnectFlow, setStoredSession } from './utils/connect';
 
 import { getBit } from './game/board/bitboard';
@@ -34,7 +40,7 @@ type PieceMoveKey = {
 const App: Component = () => {
   const [moves, setMoves] = createSignal<MoveList>(EMPTY_MOVE_LIST);
   const [pieceMoveKey, setPieceMoveKey] = createSignal<PieceMoveKey[]>([]);
-  const [playerColor, setPlayerColor] = createSignal<'White' | 'Black' | 'Spectator'>('Spectator');
+  const [playerColor, setPlayerColor] = createSignal<PlayerColor | null>(null);
 
   // websocket / session state
   let socket: WebSocket | null = null;
@@ -44,8 +50,8 @@ const App: Component = () => {
   (async () => {
     socket = await tryConnectFlow(WS_URL, (msg) => {
       if (msg.sessionId) setStoredSession(msg.sessionId);
-      if (msg.color) setPlayerColor(msg.color === 'white' ? 'White' : 'Black');
-      else if (msg.status === 'spectator') setPlayerColor('Spectator');
+      if (msg.color) setPlayerColor(msg.color === 'white' ? 0 : 1);
+      else if (msg.status === 'spectator') setPlayerColor(null);
     });
   })();
 
@@ -103,14 +109,14 @@ const App: Component = () => {
       }
 
       // only check black if piece is still undefined/null (handle pieceId === 0)
-      if (piece === undefined || piece === null) {
-        for (const bbPiece of gameState.blackPieceIds) {
-          if (getBit(getBitboard(bbPiece).bitboard, square)) {
-            piece = bbPiece;
-            break;
-          }
+      // if (piece === undefined || piece === null) {
+      for (const bbPiece of gameState.blackPieceIds) {
+        if (getBit(getBitboard(bbPiece).bitboard, square)) {
+          piece = bbPiece;
+          break;
         }
       }
+      // }
 
       // Push key-move-square values
       updatedKeys.push({
@@ -133,6 +139,7 @@ const App: Component = () => {
    * @param squareKey Square clicked.
    */
   const handleSquareClick = (squareKey: number) => {
+    console.log('handling square click');
     const moveList = moves();
     if (!moveList || moveList.count === 0) {
       setMoves(EMPTY_MOVE_LIST);
@@ -161,17 +168,31 @@ const App: Component = () => {
     <MetaProvider>
       <Title>Free Chess</Title>
       <div class="absolute left-1/2 transform -translate-x-1/2 my-16 flex flex-col gap-4">
-        <Board>
-          <For each={Array(BOARD_SIZE * BOARD_SIZE).fill(0)}>
-            {(_, i) => {
+        <Board class={`${playerColor() === 1 && ''}`}>
+          <For
+            each={
+              playerColor() === 1
+                ? Array.from(
+                    { length: BOARD_SIZE * BOARD_SIZE },
+                    (_, i) => BOARD_SIZE * BOARD_SIZE - 1 - i,
+                  )
+                : Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, i) => i)
+            }
+          >
+            {(squareIndex) => {
               return (
-                <Square key={i()} moves={moves} onClick={() => handleSquareClick(i())}>
+                <Square
+                  key={squareIndex}
+                  moves={moves}
+                  playerColor={playerColor}
+                  onClick={() => handleSquareClick(squareIndex)}
+                >
                   {(() => {
                     const pieceKeysBySquare = pieceMoveKey().reduce((arr, p) => {
                       arr[p.key] = p;
                       return arr;
                     }, [] as PieceMoveKey[]);
-                    const entry = pieceKeysBySquare[i()];
+                    const entry = pieceKeysBySquare[squareIndex];
                     const pieceId = entry?.pieceId;
 
                     return (

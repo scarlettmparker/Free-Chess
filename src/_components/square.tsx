@@ -12,6 +12,8 @@ import {
   LIGHT_HIGHLIGHTED,
   DARK_SELECTED,
   LIGHT_SELECTED,
+  colors,
+  type PlayerColor,
 } from '~/game/consts/board';
 import { MoveList } from '~/game/move/move-def';
 import { movesToSquares } from '~/utils';
@@ -31,13 +33,18 @@ type SquareProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'key'> & {
    * List of available moves.
    */
   moves: Accessor<MoveList>;
+
+  /**
+   * Player's current color.
+   */
+  playerColor: Accessor<PlayerColor | null>;
 };
 
 /**
  * An individual square.
  */
 const Square = (props: SquareProps) => {
-  const [local, rest] = splitProps(props, ['key', 'children', 'moves']);
+  const [local, rest] = splitProps(props, ['key', 'children', 'moves', 'playerColor']);
   const [bgStyle, setBgStyle] = createSignal<string | null>(null);
 
   const squareWidth = `${WIDTH}px`;
@@ -67,13 +74,31 @@ const Square = (props: SquareProps) => {
     }
   });
 
+  const fileLetter = createMemo(() => String.fromCharCode(97 + col()));
+  const rankNumber = createMemo(() => BOARD_SIZE - row());
+  const textColor = createMemo(() => (isDark() ? 'text-black' : 'text-white'));
+
   return (
     <div
-      class={`${bgStyle() ?? ''} ${rest.class ?? ''}`}
+      class={`${bgStyle() ?? ''} ${rest.class ?? ''} relative`}
       style={{ width: squareWidth, height: squareHeight }}
       {...rest}
     >
       {local.children}
+
+      {/* Show file letter on bottom row */}
+      {row() === BOARD_SIZE - (local.playerColor() == colors.WHITE ? 1 : 8) && (
+        <span class={`${textColor()} text-xs font-bold absolute bottom-0 left-1`}>
+          {fileLetter()}
+        </span>
+      )}
+
+      {/* Show rank number on right column */}
+      {col() === BOARD_SIZE - (local.playerColor() == colors.WHITE ? 1 : 8) && (
+        <span class={`${textColor()} text-xs font-bold absolute top-0.5 right-1`}>
+          {rankNumber()}
+        </span>
+      )}
     </div>
   );
 };
