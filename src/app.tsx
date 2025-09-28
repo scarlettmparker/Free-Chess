@@ -223,6 +223,7 @@ const App: Component = () => {
                         <Piece
                           pieceId={pieceId!}
                           moves={entry.moves ?? EMPTY_MOVE_LIST}
+                          playerColor={playerColor}
                           setMoves={setMoves}
                         />
                       </Show>

@@ -1,5 +1,5 @@
-import { createMemo, splitProps, JSX } from 'solid-js';
-import { gameState, moveType, colors } from '~/game/consts/board';
+import { createMemo, splitProps, JSX, Accessor } from 'solid-js';
+import { gameState, moveType, colors, PlayerColor } from '~/game/consts/board';
 import { MoveList } from '~/game/move/move-def';
 import { copyBoard, takeBack } from '~/game/board/copy';
 import { makeMove } from '~/game/move/move';
@@ -16,6 +16,11 @@ type PieceProps = JSX.HTMLAttributes<HTMLDivElement> & {
   moves: MoveList;
 
   /**
+   * Player's current color.
+   */
+  playerColor: Accessor<PlayerColor | null>;
+
+  /**
    * Setter for available moves to make.
    */
   setMoves: (moves: MoveList) => void;
@@ -25,7 +30,13 @@ type PieceProps = JSX.HTMLAttributes<HTMLDivElement> & {
  * An individual piece.
  */
 const Piece = (allProps: PieceProps) => {
-  const [local, rest] = splitProps(allProps, ['pieceId', 'moves', 'setMoves', 'onClick']);
+  const [local, rest] = splitProps(allProps, [
+    'pieceId',
+    'moves',
+    'playerColor',
+    'setMoves',
+    'onClick',
+  ]);
 
   // Checks the side the PIECE is on (not the player)
   const isSide = createMemo(() =>
@@ -67,6 +78,8 @@ const Piece = (allProps: PieceProps) => {
    * @param e MouseEvent.
    */
   const handleClick: JSX.EventHandlerUnion<HTMLDivElement, MouseEvent> = (e) => {
+    if (local.playerColor() !== gameState.side) return;
+
     if (isSide()) {
       e.stopPropagation();
       const legal = filterLegalMoves(local.moves);
