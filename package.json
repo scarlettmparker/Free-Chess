@@ -5,7 +5,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "start:server": "ts-node -r tsconfig-paths/register -P tsconfig.server.json server/src/index.ts",
+    "dev:server": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -P tsconfig.server.json server/src/index.ts",
     "build": "vite build",
     "serve": "vite preview",
     "pretty": "npx prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
@@ -31,6 +31,7 @@
     "tailwindcss": "^3.4.15",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.5.0",
     "vite": "^5.0.11",

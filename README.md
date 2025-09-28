@@ -58,13 +58,7 @@ The server now lives in `server/` as TypeScript sources. Quick commands:
 npm install
 
 # run tests
-npx jest
-
-# build server (emit to server/dist)
-npx tsc -p tsconfig.json
-
-# start built server
-node server/dist/index.js
+npm run jest
 ```
 
 ## Server (Express + WebSocket)
@@ -75,7 +69,7 @@ Install dependencies and run the server:
 
 ```bash
 npm install
-npm run start:server
+npm run dev:server
 ```
 
 By default the server reads `PORT` from the project `.env` file. The front-end can use the Vite environment variable `import.meta.env.VITE_PUBLIC_API_URL` to obtain the WebSocket URL (the project includes a `.env` with `VITE_PUBLIC_API_URL=ws://localhost:4000`).
