@@ -68,7 +68,6 @@ const App: Component = () => {
         if (msg.type === 'state' && msg.state) {
           Object.assign(gameState, deserializeGameState(msg.state));
           updateBoard();
-          setMoves(EMPTY_MOVE_LIST);
         } else if (msg.type === 'opponent_move' && msg.move) {
           makeMove(msg.move, moveType.ALL_MOVES, 0);
         }

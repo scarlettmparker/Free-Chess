@@ -305,7 +305,6 @@ export const getCheckMove = (piece: Piece, sourceSquare: number) => {
       ? (piece.getMoveBehavior() as LeaperMoveBehavior).getLeaperOffsets().length
       : 1;
   const pieceMoves = piece.getColor() == colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
-  console.log(pieceMoves, 'pieceMoves');
   let checkMove = 0;
 
   if (

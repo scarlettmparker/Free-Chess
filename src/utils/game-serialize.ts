@@ -1,5 +1,5 @@
 import { Piece, PieceFactory } from '~/game/piece/piece';
-import { GameState } from '~/game/consts/board';
+import { gameState, GameState } from '~/game/consts/board';
 
 type SerializedPiece = {
   pieceType: string;
@@ -135,8 +135,13 @@ export function deserializeGameState(json: SerializedGameState): GameState {
    *
    * @param serialized Serialized piece.
    */
-  function deserializePiece(serialized: SerializedPiece): Piece {
-    const piece = PieceFactory.createPiece(serialized.pieceType, serialized.id, serialized.color);
+  function deserializePiece(serialized: SerializedPiece, currentPieces: Piece[]): Piece {
+    const existing = currentPieces.find((p) => p.getId() === serialized.id);
+
+    const piece =
+      existing ?? PieceFactory.createPiece(serialized.pieceType, serialized.id, serialized.color);
+
+    // Reassign attributes (don’t recreate attacks)
     piece.setPieceMask(
       new BigUint64Array(
         serialized.pieceMask.map((s) => {
@@ -163,12 +168,14 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     return piece;
   }
 
+  const currentPieces = gameState?.pieces ?? [];
+
   return {
     whiteMoves: new Map(json.whiteMoves),
     blackMoves: new Map(json.blackMoves),
     whitePieceIds: json.whitePieceIds,
     blackPieceIds: json.blackPieceIds,
-    pieces: json.pieces.map(deserializePiece),
+    pieces: json.pieces.map((p) => deserializePiece(p, currentPieces)),
     bitboards: json.bitboards.map((bb) => ({
       pieceId: bb.pieceId,
       bitboard: BigInt(bb.bitboard),
