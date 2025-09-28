@@ -208,7 +208,7 @@ const App: Component = () => {
                   key={squareIndex}
                   moves={moves}
                   playerColor={playerColor}
-                  onClick={() => handleSquareClick(squareIndex)}
+                  onClick={() => playerColor() == gameState.side && handleSquareClick(squareIndex)}
                 >
                   {(() => {
                     const pieceKeysBySquare = pieceMoveKey().reduce((arr, p) => {

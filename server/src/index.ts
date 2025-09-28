@@ -144,9 +144,7 @@ wss.on('connection', (ws: WS, req) => {
   ws.on('message', messageHandler);
   ws.on('close', closeHandler);
 
-  // === Session Handling ===
-
-  // Case 1: Reattach to existing session
+  // reattach to existing session
   if (sessionId && sessions.has(sessionId)) {
     const sess = sessions.get(sessionId)!;
     sess.ws = ws;
@@ -214,25 +212,39 @@ wss.on('connection', (ws: WS, req) => {
   sendGameState(ws);
 });
 
-// === CLI Helpers ===
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (data) => {
   const cmd = String(data || '').trim();
   if (!cmd) return;
 
-  if (cmd === 'cb') {
-    const ok = clearColor('black');
-    if (!ok) console.log('No session for color black');
-  } else if (cmd === 'cw') {
-    const ok = clearColor('white');
-    if (!ok) console.log('No session for color white');
-  } else if (cmd === 'list') {
-    console.log('Sessions:');
-    for (const [sid, s] of sessions.entries()) {
-      console.log(' ', sid, 'color:', s.color || '<none>', 'connected:', !!s.ws);
-    }
-  } else {
-    console.log('Unknown command. Supported: cb (clear black), cw (clear white), list');
+  switch (cmd) {
+    case 'cb':
+      const cbOk = clearColor('black');
+      if (!cbOk) console.log('No session for color black');
+      break;
+
+    case 'cw':
+      const cwOk = clearColor('white');
+      if (!cwOk) console.log('No session for color white');
+      break;
+
+    case 'list':
+      console.log('Sessions:');
+      for (const [sid, s] of sessions.entries()) {
+        console.log(' ', sid, 'color:', s.color || '<none>', 'connected:', !!s.ws);
+      }
+      break;
+
+    case 'reset':
+      console.log('Resetting game state');
+      mountGame();
+      console.log('Game state reset, broadcasting new state');
+      broadcast({ type: 'state', state: serializeGameState(gameState) });
+      break;
+
+    default:
+      console.log('Unknown command. Supported: cb (clear black), cw (clear white), list, reset');
+      break;
   }
 });
 

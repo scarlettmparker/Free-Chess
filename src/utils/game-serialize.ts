@@ -1,11 +1,22 @@
 import { Piece, PieceFactory } from '~/game/piece/piece';
-import { GameState, gameState } from '~/game/consts/board';
+import { GameState } from '~/game/consts/board';
 
 type SerializedPiece = {
   pieceType: string;
   id: number;
   color: number;
   pieceMask: string[];
+  move: number;
+  globalEffect: boolean;
+  firstMove: number;
+  king: boolean;
+  pawn: boolean;
+  enpassant: boolean;
+  promote: boolean;
+  slider: boolean;
+  leaper: boolean;
+  rotationalMoveType: string;
+  reverse: [number, number][];
 };
 
 type SerializedBitboardData = {
@@ -24,6 +35,8 @@ export type SerializedGameState = {
   castle: string;
   globalMove: number;
   nodes: number;
+  whiteMoves: [number, number][];
+  blackMoves: [number, number][];
 };
 
 /**
@@ -77,6 +90,17 @@ export function serializeGameState(gs: GameState): SerializedGameState {
       id: piece.getId(),
       color: piece.getColor(),
       pieceMask: Array.from(piece.getPieceMask()).map((b) => b.toString()),
+      move: piece.getMove(),
+      globalEffect: piece.getGlobalEffect(),
+      firstMove: piece.getFirstMove(),
+      king: piece.getKing(),
+      pawn: piece.getPawn(),
+      enpassant: piece.getEnpassant(),
+      promote: piece.getPromote(),
+      slider: piece.getSlider(),
+      leaper: piece.getLeaper(),
+      rotationalMoveType: piece.getRotationalMoveType(),
+      reverse: Array.from(piece.getReverse().entries()),
     };
   }
 
@@ -94,6 +118,8 @@ export function serializeGameState(gs: GameState): SerializedGameState {
     castle: gs.castle.toString(),
     globalMove: gs.globalMove,
     nodes: gs.nodes,
+    whiteMoves: Array.from(gs.whiteMoves.entries()),
+    blackMoves: Array.from(gs.blackMoves.entries()),
   };
   return serialized;
 }
@@ -123,12 +149,23 @@ export function deserializeGameState(json: SerializedGameState): GameState {
         }),
       ),
     );
+    piece.setMove(serialized.move);
+    piece.setGlobalEffect(serialized.globalEffect);
+    piece.setFirstMove(serialized.firstMove);
+    piece.setKing(serialized.king);
+    piece.setPawn(serialized.pawn);
+    piece.setEnpassant(serialized.enpassant);
+    piece.setPromote(serialized.promote);
+    piece.setSlider(serialized.slider);
+    piece.setLeaper(serialized.leaper);
+    piece.setRotationalMoveType(serialized.rotationalMoveType);
+    piece.setReverse(new Map(serialized.reverse));
     return piece;
   }
 
   return {
-    whiteMoves: new Map(),
-    blackMoves: new Map(),
+    whiteMoves: new Map(json.whiteMoves),
+    blackMoves: new Map(json.blackMoves),
     whitePieceIds: json.whitePieceIds,
     blackPieceIds: json.blackPieceIds,
     pieces: json.pieces.map(deserializePiece),

@@ -305,6 +305,7 @@ export const getCheckMove = (piece: Piece, sourceSquare: number) => {
       ? (piece.getMoveBehavior() as LeaperMoveBehavior).getLeaperOffsets().length
       : 1;
   const pieceMoves = piece.getColor() == colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
+  console.log(pieceMoves, 'pieceMoves');
   let checkMove = 0;
 
   if (
@@ -316,6 +317,7 @@ export const getCheckMove = (piece: Piece, sourceSquare: number) => {
     piece.getRotationalMoveType() == 'REVERSE_ROTATE' &&
     piece.getMoveBehavior() instanceof LeaperMoveBehavior
   ) {
+    // flip moves when at right square
     const pieceDirection = piece.getReverse().get(sourceSquare) || 0;
     const offset = pieceDirection * (pieceMoveLength / 2);
     const currentMove = pieceMoves.get(Number(`${sourceSquare}${piece.getId()}`)) || 0;
