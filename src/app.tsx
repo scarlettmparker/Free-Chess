@@ -18,6 +18,7 @@ import Board from './_components/board';
 import Piece from './_components/piece';
 import Square from './_components/square';
 import { makeMove } from './game/move/move';
+import { deserializeGameState } from './utils/game-serialize';
 
 const EMPTY_MOVE_LIST: MoveList = { moves: [], count: 0 };
 
@@ -54,6 +55,25 @@ const App: Component = () => {
       if (msg.color) setPlayerColor(msg.color === 'white' ? 0 : 1);
       else if (msg.status === 'spectator') setPlayerColor(null);
     });
+
+    if (socket) {
+      socket.onmessage = (ev) => {
+        let msg;
+        try {
+          msg = JSON.parse(ev.data);
+        } catch (e) {
+          return; // ignore json
+        }
+
+        if (msg.type === 'state' && msg.state) {
+          Object.assign(gameState, deserializeGameState(msg.state));
+          updateBoard();
+          setMoves(EMPTY_MOVE_LIST);
+        } else if (msg.type === 'opponent_move' && msg.move) {
+          makeMove(msg.move, moveType.ALL_MOVES, 0);
+        }
+      };
+    }
   })();
 
   /**
@@ -151,6 +171,9 @@ const App: Component = () => {
       const ok = makeMove(found, moveType.ALL_MOVES, 0);
       // we can move
       if (ok) {
+        if (socket) {
+          socket.send(JSON.stringify({ type: 'move', move: found }));
+        }
         updateBoard();
       } else {
         setMoves(EMPTY_MOVE_LIST);

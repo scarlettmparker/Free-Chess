@@ -8,13 +8,28 @@ type BitboardData = {
   bitboard: bigint;
 };
 
-export const gameState = {
-  whiteMoves: new Map<number, number>(),
-  blackMoves: new Map<number, number>(),
-  whitePieceIds: [] as number[],
-  blackPieceIds: [] as number[],
-  pieces: [] as Piece[],
-  bitboards: [] as BitboardData[],
+export type GameState = {
+  whiteMoves: Map<number, number>;
+  blackMoves: Map<number, number>;
+  whitePieceIds: number[];
+  blackPieceIds: number[];
+  pieces: Piece[];
+  bitboards: BitboardData[];
+  occupancies: bigint[];
+  globalMove: number;
+  side: number;
+  enpassant: number;
+  castle: bigint;
+  nodes: number;
+};
+
+export const gameState: GameState = {
+  whiteMoves: new Map(),
+  blackMoves: new Map(),
+  whitePieceIds: [],
+  blackPieceIds: [],
+  pieces: [],
+  bitboards: [],
   occupancies: Array.from({ length: 3 }, () => 0n),
   globalMove: 0,
   side: 0,

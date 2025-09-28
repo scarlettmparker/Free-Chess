@@ -116,24 +116,30 @@ export const tryConnectFlow = async (
   onSession: (msg: SessionMsg) => void,
 ): Promise<WebSocket | null> => {
   const stored = getStoredSession();
-  try {
-    if (stored) {
+  if (stored) {
+    try {
       return await connectWith(baseUrl, null, stored, onSession);
-    }
-
-    try {
-      return await connectWith(baseUrl, 'white', undefined, onSession);
     } catch (e) {
-      // try black
+      // Continue to try new connections
     }
+  }
 
-    try {
-      return await connectWith(baseUrl, 'black', undefined, onSession);
-    } catch (e) {
-      // spectator
-      onSession({ type: 'session', status: 'spectator' });
-      return null;
-    }
+  try {
+    return await connectWith(baseUrl, 'white', undefined, onSession);
+  } catch (e) {
+    // try black
+  }
+
+  try {
+    return await connectWith(baseUrl, 'black', undefined, onSession);
+  } catch (e) {
+    // try spectator
+  }
+
+  try {
+    const ws = await connectWith(baseUrl, null, undefined, onSession);
+    onSession({ type: 'session', status: 'spectator' });
+    return ws;
   } catch (e) {
     onSession({ type: 'session', status: 'spectator' });
     return null;

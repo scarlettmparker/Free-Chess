@@ -457,7 +457,7 @@ abstract class Piece {
   }
 }
 
-class KingPiece extends Piece {
+export class KingPiece extends Piece {
   constructor(id: number, color: number) {
     super(
       id,
@@ -480,28 +480,28 @@ class KingPiece extends Piece {
   }
 }
 
-class QueenPiece extends Piece {
+export class QueenPiece extends Piece {
   constructor(id: number, color: number) {
     super(id, color, new SlidingMoveBehavior(true, true, [8, 8, 8, 8], [8, 8, 8, 8]));
     this.setSlider(true);
   }
 }
 
-class RookPiece extends Piece {
+export class RookPiece extends Piece {
   constructor(id: number, color: number) {
     super(id, color, new SlidingMoveBehavior(true, false, [8, 8, 8, 8], []));
     this.setSlider(true);
   }
 }
 
-class BishopPiece extends Piece {
+export class BishopPiece extends Piece {
   constructor(id: number, color: number) {
     super(id, color, new SlidingMoveBehavior(false, true, [], [8, 8, 8, 8]));
     this.setSlider(true);
   }
 }
 
-class KnightPiece extends Piece {
+export class KnightPiece extends Piece {
   constructor(id: number, color: number) {
     super(
       id,
@@ -523,7 +523,7 @@ class KnightPiece extends Piece {
   }
 }
 
-class PawnPiece extends Piece {
+export class PawnPiece extends Piece {
   constructor(id: number, color: number) {
     super(id, color, new PawnMoveBehavior());
     this.setPawn(true);
@@ -532,7 +532,7 @@ class PawnPiece extends Piece {
   }
 }
 
-class BalloonPiece extends Piece {
+export class BalloonPiece extends Piece {
   constructor(id: number, color: number) {
     super(
       id,
@@ -565,7 +565,7 @@ class BalloonPiece extends Piece {
   }
 }
 
-class PogoPiece extends Piece {
+export class PogoPiece extends Piece {
   constructor(id: number, color: number) {
     super(
       id,
