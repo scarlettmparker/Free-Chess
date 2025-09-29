@@ -1,13 +1,6 @@
 import { createSignal, For, type Component, Show, onCleanup } from 'solid-js';
 import { getBit } from '~/game/board/bitboard';
-import {
-  PlayerColor,
-  gameState,
-  moveType,
-  BOARD_SIZE,
-  getBitboard,
-  colors,
-} from '~/game/consts/board';
+import { PlayerColor, gameState, moveType, BOARD_SIZE, getBitboard } from '~/game/consts/board';
 import { generateMoves } from '~/game/move/legal-move-generator';
 import { makeMove } from '~/game/move/move';
 import { MoveList, getMovePiece, getMoveSource, getMoveTarget } from '~/game/move/move-def';
@@ -185,7 +178,7 @@ const Game: Component = () => {
   updateBoard();
 
   return (
-    <div class="absolute left-1/2 transform -translate-x-1/2 my-16 flex flex-col gap-4">
+    <div class="flex flex-col gap-4">
       <Board class={`${playerColor() === 1 && ''}`}>
         <For
           each={
@@ -229,9 +222,6 @@ const Game: Component = () => {
           }}
         </For>
       </Board>
-      <span class="text-white ml-auto">
-        Player: {playerColor() == colors.WHITE ? 'White' : 'Black'}
-      </span>
     </div>
   );
 };

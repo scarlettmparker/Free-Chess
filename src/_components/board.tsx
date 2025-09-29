@@ -12,8 +12,8 @@ type BoardProps = {
 /**
  * Chess board component.
  */
-const Board = (_props: BoardProps) => {
-  const [props, rest] = splitProps(_props, ['children']);
+const Board = (props: BoardProps) => {
+  const [local, rest] = splitProps(props, ['children']);
   const boardSizeWidth = `${WIDTH * BOARD_SIZE}px`;
   const boardSizeHeight = `${HEIGHT * BOARD_SIZE}px`;
 
@@ -23,7 +23,7 @@ const Board = (_props: BoardProps) => {
       class={`flex flex-wrap bg-white ${rest.class}`}
       style={{ width: boardSizeWidth, height: boardSizeHeight }}
     >
-      {props.children}
+      {local.children}
     </div>
   );
 };

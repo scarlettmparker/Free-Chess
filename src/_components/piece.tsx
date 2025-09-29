@@ -95,7 +95,7 @@ const Piece = (allProps: PieceProps) => {
 
   return (
     <div {...rest} onClick={handleClick}>
-      <img src={`/piece/${local.pieceId}.png`} draggable={false} />
+      <img src={`/piece/sprite/${local.pieceId}.png`} draggable={false} />
     </div>
   );
 };
