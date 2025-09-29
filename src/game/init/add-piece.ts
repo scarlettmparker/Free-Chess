@@ -6,14 +6,14 @@ import { preloadPieceSounds } from '~/game/sound/play';
  * Piece IDs
  */
 // White pieces (even numbers)
-const PAWN_ID = 0;
-const KNIGHT_ID = 2;
-const BISHOP_ID = 4;
-const ROOK_ID = 6;
-const QUEEN_ID = 8;
-const KING_ID = 10;
-const POGO_ID = 12;
-const BALLOON_ID = 14;
+export const PAWN_ID = 0;
+export const KNIGHT_ID = 2;
+export const BISHOP_ID = 4;
+export const ROOK_ID = 6;
+export const QUEEN_ID = 8;
+export const KING_ID = 10;
+export const POGO_ID = 12;
+export const BALLOON_ID = 14;
 
 /**
  * Helper functions to add pieces to the current game state

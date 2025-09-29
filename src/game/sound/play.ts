@@ -3,7 +3,7 @@ import { getMovePiece, getMoveCapture, getMovePromoted, getMoveCastle } from '~/
 const isBrowser = typeof window !== 'undefined' && typeof Audio !== 'undefined';
 
 // Config
-const SOUND_CATEGORIES = ['capture', 'move-check', 'move-self', 'promote'] as const;
+const SOUND_CATEGORIES = ['capture', 'move-self', 'promote'] as const;
 const OTHER_SOUNDS = ['castle', 'game-end'] as const;
 
 /**

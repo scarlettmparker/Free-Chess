@@ -16,6 +16,7 @@ export type GameState = {
   pieces: Piece[];
   bitboards: BitboardData[];
   occupancies: bigint[];
+  checked: [boolean, boolean];
   globalMove: number;
   side: number;
   enpassant: number;
@@ -31,6 +32,7 @@ export const gameState: GameState = {
   pieces: [],
   bitboards: [],
   occupancies: Array.from({ length: 3 }, () => 0n),
+  checked: [false, false],
   globalMove: 0,
   side: 0,
   enpassant: -1,

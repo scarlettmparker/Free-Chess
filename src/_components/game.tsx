@@ -1,6 +1,14 @@
 import { createSignal, For, type Component, Show, onCleanup } from 'solid-js';
-import { getBit } from '~/game/board/bitboard';
-import { PlayerColor, gameState, moveType, BOARD_SIZE, getBitboard } from '~/game/consts/board';
+import { getBit, getLSFBIndex } from '~/game/board/bitboard';
+import {
+  PlayerColor,
+  gameState,
+  moveType,
+  BOARD_SIZE,
+  getBitboard,
+  colors,
+  charPieces,
+} from '~/game/consts/board';
 import { generateMoves } from '~/game/move/legal-move-generator';
 import { makeMove } from '~/game/move/move';
 import { MoveList, getMovePiece, getMoveSource, getMoveTarget } from '~/game/move/move-def';
@@ -11,6 +19,7 @@ import Board from './board';
 import Piece from './piece';
 import Square from './square';
 import { playMoveSound } from '~/game/sound/play';
+import { isSquareAttacked } from '~/game/board/attacks';
 
 const EMPTY_MOVE_LIST: MoveList = { moves: [], count: 0 };
 
@@ -89,6 +98,7 @@ const Game: Component = () => {
     // Store bitboards and moves
     const moves: MoveList = { moves: [], count: 0 };
     generateMoves(moves, gameState.pieces);
+    gameState.checked = [false, false];
 
     // Precompute moves mapped by piece id (source piece)
     const movesByPieceAndSquare = new Map<string, MoveList>();
@@ -141,6 +151,17 @@ const Game: Component = () => {
             : EMPTY_MOVE_LIST,
       });
     }
+
+    // check if king is in check
+    const sideToMove = gameState.side;
+    const opponent = sideToMove ^ 1;
+
+    const kingSquare =
+      sideToMove === colors.WHITE
+        ? getLSFBIndex(getBitboard(charPieces.K).bitboard) // white king
+        : getLSFBIndex(getBitboard(charPieces.k).bitboard); // black king
+
+    gameState.checked[gameState.side] = isSquareAttacked(kingSquare, opponent);
 
     setPieceMoveKey(updatedKeys);
     setMoves(EMPTY_MOVE_LIST);

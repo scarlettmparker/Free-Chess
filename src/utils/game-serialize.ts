@@ -30,6 +30,7 @@ export type SerializedGameState = {
   pieces: SerializedPiece[];
   bitboards: SerializedBitboardData[];
   occupancies: string[];
+  checked: boolean;
   side: number;
   enpassant: number;
   castle: string;
@@ -113,6 +114,7 @@ export function serializeGameState(gs: GameState): SerializedGameState {
       bitboard: bb.bitboard.toString(),
     })),
     occupancies: gs.occupancies.map((o) => o.toString()),
+    checked: gs.checked,
     side: gs.side,
     enpassant: gs.enpassant,
     castle: gs.castle.toString(),
@@ -181,6 +183,7 @@ export function deserializeGameState(json: SerializedGameState): GameState {
       bitboard: BigInt(bb.bitboard),
     })),
     occupancies: json.occupancies.map((o) => BigInt(o)),
+    checked: json.checked,
     side: json.side,
     enpassant: json.enpassant,
     castle: BigInt(json.castle),
