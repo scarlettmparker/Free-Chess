@@ -19,6 +19,7 @@ export function resetGameState() {
   gameState.whiteMoves = new Map();
   gameState.blackMoves = new Map();
   gameState.checked = [false, false];
+  gameState.moves = { captures: 0, enpassants: 0, castles: 0, promotions: 0 };
   gameState.globalMove = 0;
   gameState.side = 0;
   gameState.enpassant = -1;

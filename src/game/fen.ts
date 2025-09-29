@@ -3,6 +3,49 @@ import { notToRawPos } from './board/square-helper';
 import { gameState, BOARD_SIZE, getBitboard, castlePieces, colors } from './consts/board';
 
 /**
+ * Converts a standard FEN string into Free Chess piece ID format.
+ * @param fen Standard FEN string
+ * @returns Converted FEN string with piece IDs
+ */
+export const convertFEN = (fen: string): string => {
+  const pieceMap: Record<string, number> = {
+    P: 0,
+    N: 2,
+    B: 4,
+    R: 6,
+    Q: 8,
+    K: 10,
+    p: 1,
+    n: 3,
+    b: 5,
+    r: 7,
+    q: 9,
+    k: 11,
+  };
+
+  // split FEN into board and other info
+  const [board, turn, castling, enPassant, halfMove, fullMove] = fen.split(' ');
+
+  // convert each rank
+  const newBoard = board
+    .split('/')
+    .map((rank) => {
+      let newRank = '';
+      for (const char of rank) {
+        if (/[1-8]/.test(char)) {
+          newRank += char; // leave empty squares as-is
+        } else {
+          newRank += `[${pieceMap[char]}]`;
+        }
+      }
+      return newRank;
+    })
+    .join('/');
+
+  return `${newBoard} ${turn} ${castling} ${enPassant} ${halfMove} ${fullMove}`;
+};
+
+/**
  * Parses a FEN and sets the board's position.
  * @param fen FEN of a Chess board position.
  */
