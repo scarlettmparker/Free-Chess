@@ -1,5 +1,8 @@
 import { Accessor, createSignal, createMemo, createEffect, splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
+import { colors, type PlayerColor } from '~/game/consts/board';
+import { MoveList } from '~/game/move/move-def';
+import { movesToSquares } from '~/utils';
 import {
   WIDTH,
   HEIGHT,
@@ -12,11 +15,7 @@ import {
   LIGHT_HIGHLIGHTED,
   DARK_SELECTED,
   LIGHT_SELECTED,
-  colors,
-  type PlayerColor,
-} from '~/game/consts/board';
-import { MoveList } from '~/game/move/move-def';
-import { movesToSquares } from '~/utils';
+} from './const';
 
 type SquareProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'key'> & {
   /**

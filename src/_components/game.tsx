@@ -1,13 +1,6 @@
 import { createSignal, For, Show, onCleanup, splitProps } from 'solid-js';
 import { getBit } from '~/game/board/bitboard';
-import {
-  PlayerColor,
-  gameState,
-  moveType,
-  BOARD_SIZE,
-  getBitboard,
-  colors,
-} from '~/game/consts/board';
+import { PlayerColor, gameState, moveType, getBitboard, colors } from '~/game/consts/board';
 import { generateMoves } from '~/game/move/legal-move-generator';
 import { makeMove } from '~/game/move/move';
 import { MoveList, getMovePiece, getMoveSource, getMoveTarget } from '~/game/move/move-def';
@@ -19,6 +12,7 @@ import Piece from './piece';
 import Square from './square';
 import { playMoveSound } from '~/game/sound/play';
 import { copyBoard, takeBack } from '~/game/board/copy';
+import { BOARD_SIZE } from './const';
 
 const EMPTY_MOVE_LIST: MoveList = { moves: [], count: 0 };
 

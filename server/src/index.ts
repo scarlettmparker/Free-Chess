@@ -20,6 +20,7 @@ import { getLSFBIndex } from '~/game/board/bitboard.ts';
 dotenv.config();
 
 const app = express();
+const host = process.env.HOST || '0.0.0.0';
 const port = process.env.PORT || 4000;
 
 app.get('/', (_, res) => {
@@ -265,7 +266,7 @@ process.stdin.on('data', (data) => {
 });
 
 if (process.argv[1]?.endsWith('index.ts')) {
-  server.listen(port, () => {
-    console.log(`Server listening on http://localhost:${port}`);
+  server.listen(port as number, host, () => {
+    console.log(`Server listening on http://${host}:${port}`);
   });
 }
