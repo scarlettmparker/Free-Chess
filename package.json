@@ -11,7 +11,7 @@
     "pretty": "npx prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "lint": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
     "lint:fix": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --fix",
-    "test": "jest"
+    "test": "jest --maxWorkers=8"
   },
   "license": "MIT",
   "devDependencies": {

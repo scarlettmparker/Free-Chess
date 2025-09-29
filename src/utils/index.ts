@@ -1,4 +1,4 @@
-import { parseFEN } from '~/game/fen';
+import { convertFEN, parseFEN } from '~/game/fen';
 import {
   addPawn,
   addKnight,
@@ -49,5 +49,21 @@ export function mountGame() {
 
   initGameState();
   parseFEN(startPosition);
+  initGame();
+}
+
+/**
+ * Helper function.
+ */
+export function loadTestPosition(startPosition: string) {
+  resetGameState();
+  addPawn();
+  addKnight();
+  addBishop();
+  addRook();
+  addQueen();
+  addKing();
+  initGameState();
+  parseFEN(convertFEN(startPosition));
   initGame();
 }
