@@ -11,9 +11,11 @@ import {
   clearColor,
 } from './sessions.ts';
 import { mountGame } from '~/utils/index.ts';
-import { gameState, moveType } from '~/game/consts/board.ts';
+import { charPieces, colors, gameState, getBitboard, moveType } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';
 import { makeMove } from '~/game/move/move.ts';
+import { isSquareAttacked } from '~/game/board/attacks.ts';
+import { getLSFBIndex } from '~/game/board/bitboard.ts';
 
 dotenv.config();
 
@@ -110,6 +112,20 @@ wss.on('connection', (ws: WS, req) => {
       const accepted = makeMove(parsed.move, moveType.ALL_MOVES, 0);
       if (accepted === 1) {
         console.log('Move accepted, updating state');
+        gameState.checked = [false, false];
+
+        // check if king is in check
+        const sideToMove = gameState.side;
+        const opponent = sideToMove ^ 1;
+
+        // we probably shouldn't care about this server side
+        const kingSquare =
+          sideToMove === colors.WHITE
+            ? getLSFBIndex(getBitboard(charPieces.K).bitboard) // white king
+            : getLSFBIndex(getBitboard(charPieces.k).bitboard); // black king
+
+        gameState.checked[gameState.side] = isSquareAttacked(kingSquare, opponent);
+
         // Notify opponent of the move
         const oppColor = color === 'white' ? 'black' : 'white';
         const oppSess = Array.from(sessions.values()).find((s) => s.color === oppColor && s.ws);

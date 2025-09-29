@@ -1,5 +1,5 @@
 import { createSignal, For, Show, onCleanup, splitProps } from 'solid-js';
-import { getBit, getLSFBIndex } from '~/game/board/bitboard';
+import { getBit } from '~/game/board/bitboard';
 import {
   PlayerColor,
   gameState,
@@ -7,7 +7,6 @@ import {
   BOARD_SIZE,
   getBitboard,
   colors,
-  charPieces,
 } from '~/game/consts/board';
 import { generateMoves } from '~/game/move/legal-move-generator';
 import { makeMove } from '~/game/move/move';
@@ -19,7 +18,7 @@ import Board from './board';
 import Piece from './piece';
 import Square from './square';
 import { playMoveSound } from '~/game/sound/play';
-import { isSquareAttacked } from '~/game/board/attacks';
+import { copyBoard, takeBack } from '~/game/board/copy';
 
 const EMPTY_MOVE_LIST: MoveList = { moves: [], count: 0 };
 
@@ -46,9 +45,12 @@ type GameProps = {
 
 const Game = (props: GameProps) => {
   const [local] = splitProps(props, ['setSide']);
+
+  // setters
   const [moves, setMoves] = createSignal<MoveList>(EMPTY_MOVE_LIST);
   const [pieceMoveKey, setPieceMoveKey] = createSignal<PieceMoveKey[]>([]);
   const [playerColor, setPlayerColor] = createSignal<PlayerColor | null>(null);
+  const [gameOver, setGameOver] = createSignal(false);
 
   // websocket / session state
   let socket: WebSocket | null = null;
@@ -96,6 +98,16 @@ const Game = (props: GameProps) => {
   });
 
   /**
+   * Check for legal moves. Not expensive to do at all.
+   */
+  const isMoveLegal = (move: number): boolean => {
+    const copies = copyBoard();
+    const ok = makeMove(move, moveType.ALL_MOVES, 0);
+    takeBack(copies);
+    return ok === 1;
+  };
+
+  /**
    * Generate moves (client side) after a piece has moved.
    * We know how this will be done server side.
    */
@@ -103,13 +115,23 @@ const Game = (props: GameProps) => {
     // Store bitboards and moves
     const moves: MoveList = { moves: [], count: 0 };
     generateMoves(moves, gameState.pieces);
-    gameState.checked = [false, false];
+    let whiteMoves = 0,
+      blackMoves = 0;
 
     // Precompute moves mapped by piece id (source piece)
     const movesByPieceAndSquare = new Map<string, MoveList>();
-
     moves.moves.forEach((move: number) => {
+      if (!isMoveLegal(move)) return; // skip illegal moves
+
       const pieceId = getMovePiece(move);
+
+      // count moves
+      if (gameState.whitePieceIds.includes(pieceId)) {
+        whiteMoves++;
+      } else if (gameState.blackPieceIds.includes(pieceId)) {
+        blackMoves++;
+      }
+
       const sourceSquare = getMoveSource(move);
       const key = `${pieceId}-${sourceSquare}`;
       let list = movesByPieceAndSquare.get(key);
@@ -151,27 +173,21 @@ const Game = (props: GameProps) => {
         key: square,
         pieceId: piece,
         moves:
-          piece !== undefined && piece !== null
+          piece != null
             ? movesByPieceAndSquare.get(`${piece}-${square}`) ?? EMPTY_MOVE_LIST
             : EMPTY_MOVE_LIST,
       });
     }
 
-    // check if king is in check
-    const sideToMove = gameState.side;
-    const opponent = sideToMove ^ 1;
-
-    const kingSquare =
-      sideToMove === colors.WHITE
-        ? getLSFBIndex(getBitboard(charPieces.K).bitboard) // white king
-        : getLSFBIndex(getBitboard(charPieces.k).bitboard); // black king
-
-    gameState.checked[gameState.side] = isSquareAttacked(kingSquare, opponent);
+    if (gameState.side == colors.WHITE ? whiteMoves == 0 : blackMoves == 0) {
+      setGameOver(true);
+    }
 
     setPieceMoveKey(updatedKeys);
     setMoves(EMPTY_MOVE_LIST);
   };
 
+  /** Set states on a move */
   const handleMove = () => {
     updateBoard();
     local.setSide(gameState.side);
@@ -254,6 +270,7 @@ const Game = (props: GameProps) => {
           }}
         </For>
       </Board>
+      {gameOver() && <span class="ml-auto text-white">Game Over</span>}
     </div>
   );
 };

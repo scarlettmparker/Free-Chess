@@ -19,11 +19,11 @@ export function encodeMove(
     source |
     (target << 6) |
     (piece << 12) |
-    (promoted << 16) |
-    (capture << 20) |
-    (double << 21) |
-    (enpassant << 22) |
-    (castling << 23)
+    (promoted << 20) |
+    (capture << 28) |
+    (double << 29) |
+    (enpassant << 30) |
+    (castling << 31)
   );
 }
 
@@ -40,23 +40,23 @@ export function getMovePiece(move: number): number {
 }
 
 export function getMovePromoted(move: number): number {
-  return (move & 0xf0000) >> 16;
+  return (move >> 20) & 0xff;
 }
 
 export function getMoveCapture(move: number): number {
-  return move & 0x100000;
+  return (move >> 28) & 0x1;
 }
 
 export function getMoveDouble(move: number): number {
-  return move & 0x200000;
+  return (move >> 29) & 0x1;
 }
 
 export function getMoveEnpassant(move: number): number {
-  return move & 0x400000;
+  return (move >> 30) & 0x1;
 }
 
 export function getMoveCastle(move: number): number {
-  return move & 0x800000;
+  return (move >> 31) & 0x1;
 }
 
 export default null;

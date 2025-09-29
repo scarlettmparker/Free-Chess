@@ -1,8 +1,6 @@
 import { createMemo, splitProps, JSX, Accessor } from 'solid-js';
-import { gameState, moveType, colors, PlayerColor } from '~/game/consts/board';
+import { gameState, colors, PlayerColor } from '~/game/consts/board';
 import { MoveList } from '~/game/move/move-def';
-import { copyBoard, takeBack } from '~/game/board/copy';
-import { makeMove } from '~/game/move/move';
 import { getPieceById } from '~/game/board/bitboard';
 
 type PieceProps = JSX.HTMLAttributes<HTMLDivElement> & {
@@ -50,33 +48,6 @@ const Piece = (props: PieceProps) => {
   const isSide = createMemo(() => pieceSide() === gameState.side);
 
   /**
-   * Filter legal moves. Only pseudo-legal moves are generated in the piece itself.
-   * This is only the client side check for it.
-   *
-   * @param raw Piece move list.
-   */
-  const filterLegalMoves = (raw: MoveList): MoveList => {
-    if (!raw || raw.count === 0) return { moves: [], count: 0 };
-    const filtered: MoveList = { moves: [], count: 0 };
-
-    for (let i = 0; i < raw.count; i++) {
-      const move = raw.moves[i];
-
-      // Copy the board and test the move
-      const copies = copyBoard();
-      const ok = makeMove(move, moveType.ALL_MOVES, 0);
-      takeBack(copies);
-
-      if (ok) {
-        filtered.moves.push(move);
-        filtered.count++;
-      }
-    }
-
-    return filtered;
-  };
-
-  /**
    * Handle click (selecting a piece or capturing another)
    *
    * @param e MouseEvent.
@@ -86,8 +57,7 @@ const Piece = (props: PieceProps) => {
 
     if (isSide()) {
       e.stopPropagation();
-      const legal = filterLegalMoves(local.moves);
-      local.setMoves(legal);
+      local.setMoves(local.moves);
     }
     // Always call parent-provided onClick if it exists
     const parentHandler = local.onClick as

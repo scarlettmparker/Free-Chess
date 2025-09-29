@@ -5,6 +5,7 @@ import { PlayerColor, colors, gameState } from './game/consts/board';
 
 const App = () => {
   const [side, setSide] = createSignal<PlayerColor>(gameState.side);
+
   return (
     <MetaProvider>
       <Title>Free Chess</Title>
