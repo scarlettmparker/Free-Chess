@@ -30,7 +30,7 @@ export type SerializedGameState = {
   pieces: SerializedPiece[];
   bitboards: SerializedBitboardData[];
   occupancies: string[];
-  checked: boolean;
+  checked: [boolean, boolean];
   side: number;
   enpassant: number;
   castle: string;

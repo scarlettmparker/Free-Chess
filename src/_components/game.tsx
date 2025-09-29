@@ -1,4 +1,4 @@
-import { createSignal, For, type Component, Show, onCleanup } from 'solid-js';
+import { createSignal, For, Show, onCleanup, splitProps } from 'solid-js';
 import { getBit, getLSFBIndex } from '~/game/board/bitboard';
 import {
   PlayerColor,
@@ -40,7 +40,12 @@ type PieceMoveKey = {
   moves?: MoveList;
 };
 
-const Game: Component = () => {
+type GameProps = {
+  setSide: (side: PlayerColor) => void;
+};
+
+const Game = (props: GameProps) => {
+  const [local] = splitProps(props, ['setSide']);
   const [moves, setMoves] = createSignal<MoveList>(EMPTY_MOVE_LIST);
   const [pieceMoveKey, setPieceMoveKey] = createSignal<PieceMoveKey[]>([]);
   const [playerColor, setPlayerColor] = createSignal<PlayerColor | null>(null);
@@ -68,7 +73,7 @@ const Game: Component = () => {
 
         if (msg.type === 'state' && msg.state) {
           Object.assign(gameState, deserializeGameState(msg.state));
-          updateBoard();
+          handleMove();
         } else if (msg.type === 'opponent_move' && msg.move) {
           makeMove(msg.move, moveType.ALL_MOVES, 0);
           playMoveSound(msg.move);
@@ -167,6 +172,11 @@ const Game: Component = () => {
     setMoves(EMPTY_MOVE_LIST);
   };
 
+  const handleMove = () => {
+    updateBoard();
+    local.setSide(gameState.side);
+  };
+
   /**
    * Handle clicking a square (select a piece or move it).
    *
@@ -188,7 +198,7 @@ const Game: Component = () => {
           socket.send(JSON.stringify({ type: 'move', move: found }));
         }
         playMoveSound(found);
-        updateBoard();
+        handleMove();
       } else {
         setMoves(EMPTY_MOVE_LIST);
       }
@@ -198,8 +208,6 @@ const Game: Component = () => {
   };
 
   mountGame();
-  // Draw the pieces
-  updateBoard();
 
   return (
     <div class="flex flex-col gap-4">
