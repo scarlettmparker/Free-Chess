@@ -173,5 +173,3 @@ export const parseFEN = (fen: string) => {
   bothOccupancies |= gameState.occupancies[colors.BLACK];
   gameState.occupancies[colors.BOTH] = bothOccupancies;
 };
-
-export default null;

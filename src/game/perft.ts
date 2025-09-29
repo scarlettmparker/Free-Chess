@@ -40,5 +40,3 @@ export const perftDriver = (depth: number, lastMove: number = 0) => {
     takeBack(copies);
   }
 };
-
-export default null;

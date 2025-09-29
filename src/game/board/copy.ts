@@ -70,5 +70,3 @@ export function takeBack(copies: {
   gameState.enpassant = enpassantCopy;
   gameState.castle = castleCopy;
 }
-
-export default null;

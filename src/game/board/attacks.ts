@@ -90,5 +90,3 @@ export const printAttackedSquares = (side: number) => {
   out += '    a  b  c  d  e  f  g  h';
   console.log(out);
 };
-
-export default null;

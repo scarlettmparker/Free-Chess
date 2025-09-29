@@ -131,5 +131,3 @@ export const diagonalMagicNumbers = [
   0x8918844842082200n,
   0x4010011029020020n,
 ];
-
-export default null;

@@ -58,5 +58,3 @@ export function getMoveEnpassant(move: number): number {
 export function getMoveCastle(move: number): number {
   return (move >> 31) & 0x1;
 }
-
-export default null;
