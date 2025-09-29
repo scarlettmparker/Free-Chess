@@ -10,6 +10,7 @@ import { deserializeGameState } from '~/utils/game-serialize';
 import Board from './board';
 import Piece from './piece';
 import Square from './square';
+import { playMoveSound } from '~/game/sound/play';
 
 const EMPTY_MOVE_LIST: MoveList = { moves: [], count: 0 };
 
@@ -61,6 +62,7 @@ const Game: Component = () => {
           updateBoard();
         } else if (msg.type === 'opponent_move' && msg.move) {
           makeMove(msg.move, moveType.ALL_MOVES, 0);
+          playMoveSound(msg.move);
         }
       };
     }
@@ -164,6 +166,7 @@ const Game: Component = () => {
         if (socket) {
           socket.send(JSON.stringify({ type: 'move', move: found }));
         }
+        playMoveSound(found);
         updateBoard();
       } else {
         setMoves(EMPTY_MOVE_LIST);
