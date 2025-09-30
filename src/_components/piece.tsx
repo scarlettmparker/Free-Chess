@@ -78,7 +78,11 @@ const Piece = (props: PieceProps) => {
   return (
     <div {...rest} onClick={handleClick} class="relative inline-block">
       {isChecked() && <div class="absolute inset-0 rounded-full bg-red-500 opacity-50 blur-md" />}
-      <img src={`/piece/sprite/${local.pieceId}.png`} draggable={false} class="relative z-10" />
+      <img
+        src={`/piece/sprite/${local.pieceId}.png`}
+        draggable={false}
+        class="relative z-10 w-16"
+      />
     </div>
   );
 };

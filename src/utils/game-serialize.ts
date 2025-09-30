@@ -1,5 +1,5 @@
 import { Piece, PieceFactory } from '~/game/piece/piece';
-import { gameState, GameState } from '~/game/consts/board';
+import { gameState, GameState, Moves } from '~/game/consts/board';
 
 type SerializedPiece = {
   pieceType: string;
@@ -36,6 +36,7 @@ export type SerializedGameState = {
   castle: string;
   globalMove: number;
   nodes: number;
+  moves: Moves;
   whiteMoves: [number, number][];
   blackMoves: [number, number][];
 };
@@ -79,6 +80,9 @@ export function serializeGameState(gs: GameState): SerializedGameState {
         case 'PogoPiece':
           pieceType = 'pogo';
           break;
+        case 'SpongebobPiece':
+          pieceType = 'spongebob';
+          break;
         default:
           throw new Error('Unknown Piece type');
       }
@@ -120,6 +124,7 @@ export function serializeGameState(gs: GameState): SerializedGameState {
     castle: gs.castle.toString(),
     globalMove: gs.globalMove,
     nodes: gs.nodes,
+    moves: gs.moves,
     whiteMoves: Array.from(gs.whiteMoves.entries()),
     blackMoves: Array.from(gs.blackMoves.entries()),
   };
@@ -188,6 +193,7 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     enpassant: json.enpassant,
     castle: BigInt(json.castle),
     globalMove: json.globalMove,
+    moves: json.moves,
     nodes: json.nodes,
   };
 }

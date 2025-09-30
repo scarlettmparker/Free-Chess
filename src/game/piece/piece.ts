@@ -565,6 +565,59 @@ export class BalloonPiece extends Piece {
   }
 }
 
+export class SpongebobPiece extends Piece {
+  constructor(id: number, color: number) {
+    super(
+      id,
+      color,
+      new LeaperMoveBehavior([
+        [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+          [1, 1],
+          [1, -1],
+          [-1, 1],
+          [-1, -1],
+        ],
+        [
+          [2, 0],
+          [-2, 0],
+          [0, 2],
+          [0, -2],
+          [2, 2],
+          [2, -2],
+          [-2, 2],
+          [-2, -2],
+        ],
+        [
+          [3, 0],
+          [-3, 0],
+          [0, 3],
+          [0, -3],
+          [3, 3],
+          [3, -3],
+          [-3, 3],
+          [-3, -3],
+        ],
+        [
+          [2, 0],
+          [-2, 0],
+          [0, 2],
+          [0, -2],
+          [2, 2],
+          [2, -2],
+          [-2, 2],
+          [-2, -2],
+        ],
+      ]),
+      'ROTATE',
+    );
+    this.setLeaper(true);
+  }
+}
+
 export class PogoPiece extends Piece {
   constructor(id: number, color: number) {
     super(
@@ -597,6 +650,8 @@ class PieceFactory {
         return new BalloonPiece(id, color);
       case 'pogo':
         return new PogoPiece(id, color);
+      case 'spongebob':
+        return new SpongebobPiece(id, color);
       default:
         throw new Error(`Unknown piece type: ${type}`);
     }

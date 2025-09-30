@@ -25,7 +25,7 @@ export type GameState = {
   nodes: number;
 };
 
-type Moves = {
+export type Moves = {
   captures: number;
   enpassants: number;
   castles: number;

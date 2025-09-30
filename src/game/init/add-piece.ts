@@ -14,6 +14,7 @@ export const QUEEN_ID = 8;
 export const KING_ID = 10;
 export const POGO_ID = 12;
 export const BALLOON_ID = 14;
+export const SPONGEBOB_ID = 16;
 
 /**
  * Helper functions to add pieces to the current game state
@@ -37,3 +38,4 @@ export const addQueen = () => addPiece('queen', QUEEN_ID);
 export const addKing = () => addPiece('king', KING_ID);
 export const addPogoPiece = () => addPiece('pogo', POGO_ID);
 export const addBalloonPiece = () => addPiece('balloon', BALLOON_ID);
+export const addSpongebobPiece = () => addPiece('spongebob', SPONGEBOB_ID);
