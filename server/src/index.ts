@@ -113,6 +113,7 @@ wss.on('connection', (ws: WS, req) => {
       const accepted = makeMove(parsed.move, moveType.ALL_MOVES, 0);
       if (accepted === 1) {
         console.log('Move accepted, updating state');
+        gameState.moveHistory.push(parsed.move);
         gameState.checked = [false, false];
 
         // check if king is in check
@@ -255,6 +256,7 @@ process.stdin.on('data', (data) => {
     case 'reset':
       console.log('Resetting game state');
       mountGame();
+      gameState.moveHistory = [];
       console.log('Game state reset, broadcasting new state');
       broadcast({ type: 'state', state: serializeGameState(gameState) });
       break;

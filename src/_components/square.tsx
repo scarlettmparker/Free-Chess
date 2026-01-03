@@ -1,7 +1,7 @@
 import { Accessor, createSignal, createMemo, createEffect, splitProps } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
 import { colors, type PlayerColor } from '~/game/consts/board';
-import { MoveList } from '~/game/move/move-def';
+import { MoveList, getMoveSource, getMoveTarget } from '~/game/move/move-def';
 import { movesToSquares } from '~/utils';
 import {
   WIDTH,
@@ -37,13 +37,24 @@ type SquareProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'key'> & {
    * Player's current color.
    */
   playerColor: Accessor<PlayerColor | null>;
+
+  /**
+   * Latest move.
+   */
+  latestMove: Accessor<number | null>;
 };
 
 /**
  * An individual square.
  */
 const Square = (props: SquareProps) => {
-  const [local, rest] = splitProps(props, ['key', 'children', 'moves', 'playerColor']);
+  const [local, rest] = splitProps(props, [
+    'key',
+    'children',
+    'moves',
+    'playerColor',
+    'latestMove',
+  ]);
   const [bgStyle, setBgStyle] = createSignal<string | null>(null);
 
   const squareWidth = `${WIDTH}px`;
@@ -63,10 +74,16 @@ const Square = (props: SquareProps) => {
   const squareMoves = createMemo(() => movesToSquares(local.moves()));
 
   createEffect(() => {
+    const lm = local.latestMove();
+    const lmSource = lm ? getMoveSource(lm) : -1;
+    const lmTarget = lm ? getMoveTarget(lm) : -1;
+
     if (squareMoves().some((m) => m.target === local.key)) {
       setBgStyle(isDark() ? DARK_HIGHLIGHTED : LIGHT_HIGHLIGHTED);
     } else if (squareMoves().some((m) => m.source === local.key)) {
       setBgStyle(isDark() ? DARK_SELECTED : LIGHT_SELECTED);
+    } else if (lmTarget === local.key || lmSource === local.key) {
+      setBgStyle(isDark() ? DARK_HIGHLIGHTED : LIGHT_HIGHLIGHTED);
     } else {
       // Reset to default style when not a source or target
       setBgStyle(`${defaultBgStyle()} ${defaultHoverStyle()}`);

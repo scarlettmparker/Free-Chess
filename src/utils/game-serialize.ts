@@ -39,12 +39,14 @@ export type SerializedGameState = {
   moves: Moves;
   whiteMoves: [number, number][];
   blackMoves: [number, number][];
+  moveHistory: number[];
 };
 
 /**
  * Serialize a game state to send to the server
  *
  * @param gs Game state
+ * @param latestMove Latest move
  */
 export function serializeGameState(gs: GameState): SerializedGameState {
   /**
@@ -127,6 +129,7 @@ export function serializeGameState(gs: GameState): SerializedGameState {
     moves: gs.moves,
     whiteMoves: Array.from(gs.whiteMoves.entries()),
     blackMoves: Array.from(gs.blackMoves.entries()),
+    moveHistory: gs.moveHistory,
   };
   return serialized;
 }
@@ -177,7 +180,7 @@ export function deserializeGameState(json: SerializedGameState): GameState {
 
   const currentPieces = gameState?.pieces ?? [];
 
-  return {
+  const gs = {
     whiteMoves: new Map(json.whiteMoves),
     blackMoves: new Map(json.blackMoves),
     whitePieceIds: json.whitePieceIds,
@@ -195,5 +198,8 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     globalMove: json.globalMove,
     moves: json.moves,
     nodes: json.nodes,
+    moveHistory: json.moveHistory,
   };
+
+  return gs;
 }

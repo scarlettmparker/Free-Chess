@@ -1,4 +1,4 @@
-import { createSignal, For, Show, onCleanup, splitProps } from 'solid-js';
+import { createSignal, For, Show, onCleanup, splitProps, onMount } from 'solid-js';
 import { getBit } from '~/game/board/bitboard';
 import { PlayerColor, gameState, moveType, getBitboard, colors } from '~/game/consts/board';
 import { generateMoves } from '~/game/move/legal-move-generator';
@@ -45,6 +45,7 @@ const Game = (props: GameProps) => {
   const [pieceMoveKey, setPieceMoveKey] = createSignal<PieceMoveKey[]>([]);
   const [playerColor, setPlayerColor] = createSignal<PlayerColor | null>(null);
   const [gameOver, setGameOver] = createSignal(false);
+  const [latestMove, setLatestMove] = createSignal<number | null>(null);
 
   // websocket / session state
   let socket: WebSocket | null = null;
@@ -69,9 +70,11 @@ const Game = (props: GameProps) => {
 
         if (msg.type === 'state' && msg.state) {
           Object.assign(gameState, deserializeGameState(msg.state));
+          setLatestMove(gameState.moveHistory[gameState.moveHistory.length - 1] || null);
           handleMove();
         } else if (msg.type === 'opponent_move' && msg.move) {
           makeMove(msg.move, moveType.ALL_MOVES, 0);
+          setLatestMove(msg.move);
           playMoveSound(msg.move);
         }
       };
@@ -204,6 +207,7 @@ const Game = (props: GameProps) => {
       const ok = makeMove(found, moveType.ALL_MOVES, 0);
       // we can move
       if (ok) {
+        setLatestMove(found);
         if (socket) {
           socket.send(JSON.stringify({ type: 'move', move: found }));
         }
@@ -238,6 +242,7 @@ const Game = (props: GameProps) => {
                 key={squareIndex}
                 moves={moves}
                 playerColor={playerColor}
+                latestMove={latestMove}
                 onClick={() => playerColor() == gameState.side && handleSquareClick(squareIndex)}
               >
                 {(() => {

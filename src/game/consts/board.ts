@@ -23,6 +23,7 @@ export type GameState = {
   enpassant: number;
   castle: bigint;
   nodes: number;
+  moveHistory: number[];
 };
 
 export type Moves = {
@@ -47,6 +48,7 @@ export const gameState: GameState = {
   enpassant: -1,
   castle: 0n,
   nodes: 0,
+  moveHistory: [],
 };
 
 export const BOARD_SIZE = 8;
