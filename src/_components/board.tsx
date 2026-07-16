@@ -2,12 +2,7 @@ import { JSX } from 'solid-js/jsx-runtime';
 import { splitProps } from 'solid-js';
 import { WIDTH, BOARD_SIZE, HEIGHT } from './const';
 
-type BoardProps = {
-  /**
-   * Squares and pieces.
-   */
-  children: JSX.Element | JSX.Element[];
-} & JSX.HTMLAttributes<HTMLDivElement>;
+type BoardProps = JSX.HTMLAttributes<HTMLDivElement>;
 
 /**
  * Chess board component.

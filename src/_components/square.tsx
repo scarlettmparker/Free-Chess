@@ -24,11 +24,6 @@ type SquareProps = Omit<JSX.HTMLAttributes<HTMLDivElement>, 'key'> & {
   key: number;
 
   /**
-   * Pieces.
-   */
-  children: JSX.Element | JSX.Element[];
-
-  /**
    * List of available moves.
    */
   moves: Accessor<MoveList>;

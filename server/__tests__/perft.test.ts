@@ -48,7 +48,6 @@ describe('Perft tests for start position', () => {
 
   test('depth 4', () => {
     perftDriver(4);
-    console.log(gameState.moves);
     expect(gameState.nodes).toBe(197281);
     expect(gameState.moves.captures).toBe(1576);
     expect(gameState.moves.enpassants).toBe(0);

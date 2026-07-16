@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ES2020",
-    "moduleResolution": "node",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "outDir": "server/dist",
     "rootDir": ".",
     "esModuleInterop": true,
@@ -16,11 +16,9 @@
     "allowSyntheticDefaultImports": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "baseUrl": ".",
     "paths": {
-      "~/": ["src"],
-      "~/*": ["src/*", "server/src/*"],
-      "~server/*": ["server/src/*"]
+      "~/*": ["./src/*", "./server/src/*"],
+      "~server/*": ["./server/src/*"]
     }
   },
   "include": ["server/**/*", "src/**/*"],
