@@ -1,6 +1,6 @@
 import { BOARD_SIZE, colors, gameState, getBitboard } from '~/game/consts/board';
 import { getCheckMove } from '~/game/move/move';
-import { getLSFBIndex } from '~/game/board/bitboard';
+import { lsbIndex, loOf, hiOf } from '~/game/board/bb';
 import { SlidingMoveBehavior, LeaperMoveBehavior, PawnMoveBehavior } from '~/game/piece/piece';
 
 /**
@@ -15,57 +15,58 @@ import { SlidingMoveBehavior, LeaperMoveBehavior, PawnMoveBehavior } from '~/gam
  */
 export const isSquareAttacked = (pos: number, side: number) => {
   if (pos == -1) return false;
-  const color = side === colors.WHITE ? colors.WHITE : colors.BLACK;
-  const filteredPieces = gameState.pieces.filter((piece) => piece.getColor() === color);
 
-  const l = filteredPieces.length;
+  const pieces = gameState.pieces;
+  const l = pieces.length;
+  const bothLo = loOf(gameState.occupancies[colors.BOTH]);
+  const bothHi = hiOf(gameState.occupancies[colors.BOTH]);
   for (let i = 0; i < l; i++) {
-    const piece = filteredPieces[i];
-    const pieceId = piece.getId();
+    const piece = pieces[i];
+    if (piece.getColor() !== side) continue;
+
+    const pieceBB = getBitboard(piece.getId()).bitboard;
+    // convert this piece's bitboard to lo/hi once
+    const pieceLo = loOf(pieceBB);
+    const pieceHi = hiOf(pieceBB);
+    if (pieceLo === 0 && pieceHi === 0) continue;
     const moveBehavior = piece.getMoveBehavior();
+    const oppColor = piece.getColor() ^ 1;
 
     if (moveBehavior instanceof PawnMoveBehavior) {
-      if (
-        moveBehavior.getPawnPieceState()[piece.getColor() ^ 1][pos] & getBitboard(pieceId).bitboard
-      )
-        return true;
+      const lo = moveBehavior.getPawnPieceStateLo();
+      const hi = moveBehavior.getPawnPieceStateHi();
+      if (lo[oppColor][pos] & pieceLo || hi[oppColor][pos] & pieceHi) return true;
     }
 
     if (moveBehavior instanceof SlidingMoveBehavior) {
-      if (
-        moveBehavior.getAttacks(pos, gameState.occupancies[colors.BOTH], piece.getColor(), 0) &
-        getBitboard(pieceId).bitboard
-      )
-        return true;
+      const r = moveBehavior.getSliderAttacksLoHi(pos, bothLo, bothHi);
+      if ((r.lo & pieceLo) | (r.hi & pieceHi)) return true;
     }
 
     if (moveBehavior instanceof LeaperMoveBehavior) {
-      let bitboard = getBitboard(pieceId).bitboard;
+      const loTbl = moveBehavior.getLeaperPieceStateLo();
+      const hiTbl = moveBehavior.getLeaperPieceStateHi();
+      let bbLo = pieceLo;
+      let bbHi = pieceHi;
       let checkMove = 0;
       let checked = false;
 
-      while (bitboard > 0n) {
-        const sourceSquare = getLSFBIndex(bitboard);
+      while (bbLo !== 0 || bbHi !== 0) {
+        const sourceSquare = lsbIndex(bbLo, bbHi);
         checkMove = getCheckMove(piece, sourceSquare);
 
         if (checkMove && checkMove > 0) {
           checked = true;
-          if (
-            moveBehavior.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] &
-            getBitboard(pieceId).bitboard
-          )
+          if (loTbl[oppColor][checkMove][pos] & pieceLo || hiTbl[oppColor][checkMove][pos] & pieceHi)
             return true;
         }
 
-        bitboard &= ~(1n << BigInt(sourceSquare));
+        if (sourceSquare < 32) bbLo &= ~(1 << sourceSquare);
+        else bbHi &= ~(1 << (sourceSquare - 32));
       }
 
       if (checkMove == 0 && !checked) {
-        if (
-          moveBehavior.getLeaperPieceState()[piece.getColor() ^ 1][checkMove][pos] &
-          getBitboard(pieceId).bitboard
-        )
-          return true;
+        if (loTbl[oppColor][0][pos] & pieceLo || hiTbl[oppColor][0][pos] & pieceHi) return true;
       }
     }
   }

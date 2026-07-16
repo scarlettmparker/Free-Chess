@@ -1,59 +1,71 @@
-import {
-  straightRelevantBits,
-  straightBitMask,
-  diagonalRelevantBits,
-  diagonalBitMask,
-} from '~/game/consts/bits';
-import { straightMagicNumbers, diagonalMagicNumbers } from '~/game/consts/magic';
-import { countBits } from '~/game/board/bitboard';
+import { getLSFBIndex } from '~/game/board/bitboard';
 import { setOccupancyBits } from '~/game/occupancies';
 
 /**
- * Function that initializes piece attacks for sliding pieces.
+ * Extract the set-bit positions of a bigint mask (used to build PEXT bit lists at init).
  */
-export const initSlidingPieces = () => {
-  const straightPieceMask = new BigUint64Array(64);
-  const diagonalPieceMask = new BigUint64Array(64);
-  const straightPieceState = Array.from({ length: 64 }, () => new BigUint64Array(4096));
-  const diagonalPieceState = Array.from({ length: 64 }, () => new BigUint64Array(512));
-
-  for (let square = 0; square < 64; square++) {
-    let relevantBitsCount;
-    let occupancyIndicies;
-
-    straightPieceMask[square] = maskStraightAttacks(square);
-    relevantBitsCount = countBits(straightPieceMask[square]);
-
-    occupancyIndicies = 1 << relevantBitsCount;
-    for (let idx = 0; idx < occupancyIndicies; idx++) {
-      const occupancy = setOccupancyBits(idx, relevantBitsCount, straightPieceMask[square]);
-      const magicIdx =
-        (occupancy * straightMagicNumbers[square]) >> (64n - BigInt(straightRelevantBits[square]));
-      const maskedMagicIdx = Number(magicIdx & straightBitMask);
-      straightPieceState[square][maskedMagicIdx] = maskStraightAttacksOTF(square, occupancy);
-    }
-
-    diagonalPieceMask[square] = maskDiagonalAttacks(square);
-    relevantBitsCount = countBits(diagonalPieceMask[square]);
-
-    occupancyIndicies = 1 << relevantBitsCount;
-    for (let idx = 0; idx < occupancyIndicies; idx++) {
-      const occupancy = setOccupancyBits(idx, relevantBitsCount, diagonalPieceMask[square]);
-      const magicIdx =
-        (occupancy * diagonalMagicNumbers[square]) >> (64n - BigInt(diagonalRelevantBits[square]));
-      const maskedMagicIdx = Number(magicIdx & diagonalBitMask);
-      diagonalPieceState[square][maskedMagicIdx] = maskDiagonalAttacksOTF(square, occupancy);
-    }
+const bitsOf = (bb: bigint): number[] => {
+  const bits: number[] = [];
+  let b = bb;
+  while (b > 0n) {
+    bits.push(getLSFBIndex(b));
+    b &= b - 1n;
   }
-
-  return { straightPieceMask, diagonalPieceMask, straightPieceState, diagonalPieceState };
+  return bits;
 };
 
 /**
- * Function to mask a piece's sliding straight attacks.
- *
- * @param pos Position on the bitboard.
- * @returns Piece occupancy bits for magic bitboard.
+ * Initialize sliding-piece attack tables indexed by a software PEXT of the relevant
+ * occupancy (no magic numbers, no bigint multiply at runtime). Returns lo/hi Uint32Array
+ * tables plus the per-square mask bit lists used to compute the PEXT index.
+ */
+export const initSlidingPieces = () => {
+  const straightLo: Uint32Array[] = new Array(64);
+  const straightHi: Uint32Array[] = new Array(64);
+  const straightBits: number[][] = new Array(64);
+  const diagonalLo: Uint32Array[] = new Array(64);
+  const diagonalHi: Uint32Array[] = new Array(64);
+  const diagonalBits: number[][] = new Array(64);
+
+  for (let square = 0; square < 64; square++) {
+    // straight (rook) rays
+    const sMask = maskStraightAttacks(square);
+    const sBitsList = bitsOf(sMask);
+    const sn = sBitsList.length;
+    straightBits[square] = sBitsList;
+    const slo = new Uint32Array(1 << sn);
+    const shi = new Uint32Array(1 << sn);
+    for (let idx = 0; idx < 1 << sn; idx++) {
+      const occ = setOccupancyBits(idx, sn, sMask);
+      const att = maskStraightAttacksOTF(square, occ);
+      slo[idx] = Number(att & 0xffffffffn) >>> 0;
+      shi[idx] = Number(att >> 32n) >>> 0;
+    }
+    straightLo[square] = slo;
+    straightHi[square] = shi;
+
+    // diagonal (bishop) rays
+    const dMask = maskDiagonalAttacks(square);
+    const dBitsList = bitsOf(dMask);
+    const dn = dBitsList.length;
+    diagonalBits[square] = dBitsList;
+    const dlo = new Uint32Array(1 << dn);
+    const dhi = new Uint32Array(1 << dn);
+    for (let idx = 0; idx < 1 << dn; idx++) {
+      const occ = setOccupancyBits(idx, dn, dMask);
+      const att = maskDiagonalAttacksOTF(square, occ);
+      dlo[idx] = Number(att & 0xffffffffn) >>> 0;
+      dhi[idx] = Number(att >> 32n) >>> 0;
+    }
+    diagonalLo[square] = dlo;
+    diagonalHi[square] = dhi;
+  }
+
+  return { straightLo, straightHi, straightBits, diagonalLo, diagonalHi, diagonalBits };
+};
+
+/**
+ * Mask of a piece's sliding straight attack squares (excluding edges) for the relevant-occupancy set.
  */
 const maskStraightAttacks = (pos: number) => {
   let currentAttacks = 0n;
@@ -84,6 +96,7 @@ const maskStraightAttacks = (pos: number) => {
   return currentAttacks;
 };
 
+/** On-the-fly straight attacks for a given blocker occupancy (includes the blocker square). */
 const maskStraightAttacksOTF = (pos: number, block: bigint) => {
   let currentAttacks = 0n;
 
@@ -118,10 +131,7 @@ const maskStraightAttacksOTF = (pos: number, block: bigint) => {
 };
 
 /**
- * Function to mask a piece's sliding diagonal attacks.
- *
- * @param pos Position on the bitboard.
- * @returns Piece occupancy bits for magic bitboard.
+ * Mask of a piece's sliding diagonal attack squares (excluding edges) for the relevant-occupancy set.
  */
 const maskDiagonalAttacks = (pos: number) => {
   let currentAttacks = 0n;
@@ -152,6 +162,7 @@ const maskDiagonalAttacks = (pos: number) => {
   return currentAttacks;
 };
 
+/** On-the-fly diagonal attacks for a given blocker occupancy (includes the blocker square). */
 const maskDiagonalAttacksOTF = (pos: number, block: bigint) => {
   let currentAttacks = 0n;
 
@@ -183,75 +194,4 @@ const maskDiagonalAttacksOTF = (pos: number, block: bigint) => {
   }
 
   return currentAttacks;
-};
-
-/**
- * Function to apply constraints to a piece's sliding moves.
- * @param moves Bitboard of piece's possible sliding moves.
- * @param constraints Array of constraints for each direction (e.g. [2, 2, 2, 2]).
- * @param pos Position of the piece on the bitboard.
- * @param isStraight If the piece is a straight slider or diagonal.
- */
-export const applyConstraintsToMoves = (
-  moves: bigint,
-  constraints: number[],
-  pos: number,
-  isStraight: boolean,
-): bigint => {
-  let constrainedMoves = 0n;
-  if (!constraints) return constrainedMoves;
-
-  if (isStraight) {
-    for (let dir = 0; dir < 4; dir++) {
-      constrainedMoves |= limitDirectionMoves(moves, constraints[dir], pos, dir, true);
-    }
-  } else {
-    for (let dir = 0; dir < 4; dir++) {
-      constrainedMoves |= limitDirectionMoves(moves, constraints[dir], pos, dir, false);
-    }
-  }
-
-  return constrainedMoves;
-};
-
-/**
- * Function to limit the number of moves in a given direction.
- * @param moves Bitboard of piece's possible sliding moves.
- * @param maxSteps Maximum number of steps the piece can slide in a given direction.
- * @param pos Position of the piece on the bitboard.
- * @param dir Direction of the piece's sliding moves.
- * @param isStraight If the piece is a straight slider or diagonal.
- */
-const limitDirectionMoves = (
-  moves: bigint,
-  maxSteps: number,
-  pos: number,
-  dir: number,
-  isStraight: boolean,
-): bigint => {
-  let limitedMoves = 0n;
-  const directionOffset = getDirectionOffset(dir, isStraight);
-
-  for (let step = 1; step <= maxSteps; step++) {
-    const targetPos = pos + step * directionOffset;
-
-    if (targetPos >= 0 && targetPos < 64) {
-      const bit = 1n << BigInt(targetPos);
-      if (moves & bit) limitedMoves |= bit;
-      else break;
-    }
-  }
-
-  return limitedMoves;
-};
-
-/**
- * Function to get the direction offset for a given direction.
- * @param dir Direction of the piece's sliding moves.
- * @param isStraight If the piece is a straight slider or diagonal.
- */
-const getDirectionOffset = (dir: number, isStraight: boolean): number => {
-  const straightOffsets = [-8, 8, -1, 1]; // UP, DOWN, LEFT, RIGHT
-  const diagonalOffsets = [9, -7, 7, -9]; // DOWN_RIGHT, UP_RIGHT, DOWN_LEFT, UP_LEFT
-  return isStraight ? straightOffsets[dir] : diagonalOffsets[dir];
 };

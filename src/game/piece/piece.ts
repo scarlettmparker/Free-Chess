@@ -1,14 +1,7 @@
-import {
-  straightRelevantBits,
-  straightBitMask,
-  diagonalRelevantBits,
-  diagonalBitMask,
-} from '~/game/consts/bits';
 import { colors, notAFile, notHFile } from '~/game/consts/board';
-import { straightMagicNumbers, diagonalMagicNumbers } from '~/game/consts/magic';
-import { applyConstraintsToMoves } from '~/game/init/sliding-piece';
 import setBit from '~/game/board/bitboard';
 import { getFileConstraint } from '~/game/board/square-helper';
+import { loOf, hiOf } from '~/game/board/bb';
 
 // Interface for move behavior
 export interface MoveBehavior {
@@ -20,11 +13,20 @@ export interface MoveBehavior {
 export class LeaperMoveBehavior implements MoveBehavior {
   private leaperOffsets: number[][][];
   private leaperPieceState: BigUint64Array[][];
+  // lo/hi mirrors for fast Number-path move generation (no bigint per source square).
+  private leaperPieceStateLo: Uint32Array[][];
+  private leaperPieceStateHi: Uint32Array[][];
 
   constructor(leaperOffsets: number[][][]) {
     this.leaperOffsets = leaperOffsets;
     this.leaperPieceState = Array.from({ length: 2 }, () =>
       Array.from({ length: leaperOffsets.length }, () => new BigUint64Array(64)),
+    );
+    this.leaperPieceStateLo = Array.from({ length: 2 }, () =>
+      Array.from({ length: leaperOffsets.length }, () => new Uint32Array(64)),
+    );
+    this.leaperPieceStateHi = Array.from({ length: 2 }, () =>
+      Array.from({ length: leaperOffsets.length }, () => new Uint32Array(64)),
     );
   }
 
@@ -32,16 +34,14 @@ export class LeaperMoveBehavior implements MoveBehavior {
   initializeAttacks(): void {
     for (let i = 0; i < this.leaperOffsets.length; i++) {
       for (let square = 0; square < 64; square++) {
-        this.leaperPieceState[colors.WHITE][i][square] = this.maskLeaperAttacks(
-          square,
-          this.leaperOffsets[i],
-          colors.WHITE,
-        );
-        this.leaperPieceState[colors.BLACK][i][square] = this.maskLeaperAttacks(
-          square,
-          this.leaperOffsets[i],
-          colors.BLACK,
-        );
+        const white = this.maskLeaperAttacks(square, this.leaperOffsets[i], colors.WHITE);
+        const black = this.maskLeaperAttacks(square, this.leaperOffsets[i], colors.BLACK);
+        this.leaperPieceState[colors.WHITE][i][square] = white;
+        this.leaperPieceState[colors.BLACK][i][square] = black;
+        this.leaperPieceStateLo[colors.WHITE][i][square] = Number(white & 0xffffffffn) >>> 0;
+        this.leaperPieceStateHi[colors.WHITE][i][square] = Number(white >> 32n) >>> 0;
+        this.leaperPieceStateLo[colors.BLACK][i][square] = Number(black & 0xffffffffn) >>> 0;
+        this.leaperPieceStateHi[colors.BLACK][i][square] = Number(black >> 32n) >>> 0;
       }
     }
   }
@@ -49,6 +49,16 @@ export class LeaperMoveBehavior implements MoveBehavior {
   /** Get leaper piece attacks */
   getAttacks(pos: number, occupancy: bigint, color: number, moveIndex: number): bigint {
     return this.leaperPieceState[color][moveIndex][pos];
+  }
+
+  /** Low 32 bits of the leaper attack table (Number path). */
+  getLeaperPieceStateLo(): Uint32Array[][] {
+    return this.leaperPieceStateLo;
+  }
+
+  /** High 32 bits of the leaper attack table (Number path). */
+  getLeaperPieceStateHi(): Uint32Array[][] {
+    return this.leaperPieceStateHi;
   }
 
   /** Mask leaper attacks */
@@ -105,16 +115,26 @@ export class LeaperMoveBehavior implements MoveBehavior {
 // Pawn move behavior
 export class PawnMoveBehavior implements MoveBehavior {
   private pawnPieceState: BigUint64Array[];
+  private pawnPieceStateLo: Uint32Array[];
+  private pawnPieceStateHi: Uint32Array[];
 
   constructor() {
     this.pawnPieceState = Array.from({ length: 2 }, () => new BigUint64Array(64));
+    this.pawnPieceStateLo = Array.from({ length: 2 }, () => new Uint32Array(64));
+    this.pawnPieceStateHi = Array.from({ length: 2 }, () => new Uint32Array(64));
   }
 
   /** Initialize pawn piece attacks */
   initializeAttacks(): void {
     for (let square = 0; square < 64; square++) {
-      this.pawnPieceState[colors.WHITE][square] = this.maskPawnAttacks(colors.WHITE, square);
-      this.pawnPieceState[colors.BLACK][square] = this.maskPawnAttacks(colors.BLACK, square);
+      const white = this.maskPawnAttacks(colors.WHITE, square);
+      const black = this.maskPawnAttacks(colors.BLACK, square);
+      this.pawnPieceState[colors.WHITE][square] = white;
+      this.pawnPieceState[colors.BLACK][square] = black;
+      this.pawnPieceStateLo[colors.WHITE][square] = Number(white & 0xffffffffn) >>> 0;
+      this.pawnPieceStateHi[colors.WHITE][square] = Number(white >> 32n) >>> 0;
+      this.pawnPieceStateLo[colors.BLACK][square] = Number(black & 0xffffffffn) >>> 0;
+      this.pawnPieceStateHi[colors.BLACK][square] = Number(black >> 32n) >>> 0;
     }
   }
 
@@ -124,6 +144,16 @@ export class PawnMoveBehavior implements MoveBehavior {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getAttacks(pos: number, occupancy: bigint, color: number, moveIndex: number): bigint {
     return this.pawnPieceState[color][pos];
+  }
+
+  /** Low 32 bits of the pawn attack table (Number path). */
+  getPawnPieceStateLo(): Uint32Array[] {
+    return this.pawnPieceStateLo;
+  }
+
+  /** High 32 bits of the pawn attack table (Number path). */
+  getPawnPieceStateHi(): Uint32Array[] {
+    return this.pawnPieceStateHi;
   }
 
   /** Mask pawn attacks */
@@ -154,81 +184,84 @@ export class PawnMoveBehavior implements MoveBehavior {
   }
 }
 
+/**
+ * Pack the bits of (occLo, occHi) at the positions listed in `bits` into a compact
+ * index (a software PEXT). Used to index PEXT-indexed sliding attack tables without
+ * any bigint multiply.
+ */
+function pextIndex(occLo: number, occHi: number, bits: number[]): number {
+  let idx = 0;
+  for (let k = 0; k < bits.length; k++) {
+    const sq = bits[k];
+    if (sq < 32) {
+      if ((occLo >>> sq) & 1) idx |= 1 << k;
+    } else {
+      if ((occHi >>> (sq - 32)) & 1) idx |= 1 << k;
+    }
+  }
+  return idx;
+}
+
 // Sliding move behavior
 export class SlidingMoveBehavior implements MoveBehavior {
-  private straightConstraints: number[];
-  private diagonalConstraints: number[];
   private straight: boolean;
   private diagonal: boolean;
-  private straightPieceMask: BigUint64Array;
-  private diagonalPieceMask: BigUint64Array;
-  private slidingStraightPieceState: BigUint64Array[];
-  private slidingDiagonalPieceState: BigUint64Array[];
+  // PEXT-indexed lo/hi attack tables (one Uint32Array per square) + the mask bit positions.
+  private straightAttackLo: Uint32Array[];
+  private straightAttackHi: Uint32Array[];
+  private straightMaskBits: number[][];
+  private diagonalAttackLo: Uint32Array[];
+  private diagonalAttackHi: Uint32Array[];
+  private diagonalMaskBits: number[][];
 
   constructor(
     straight: boolean,
     diagonal: boolean,
-    straightConstraints: number[],
-    diagonalConstraints: number[],
+    // constraints are unused at runtime: all sliders in this engine slide the full ray,
+    // so the OTF attack table (which the PEXT table is built from) is already final.
+    _straightConstraints: number[],
+    _diagonalConstraints: number[],
   ) {
     this.straight = straight;
     this.diagonal = diagonal;
-    this.straightConstraints = straightConstraints;
-    this.diagonalConstraints = diagonalConstraints;
-    this.straightPieceMask = new BigUint64Array(64);
-    this.diagonalPieceMask = new BigUint64Array(64);
-    this.slidingStraightPieceState = Array.from({ length: 64 }, () => new BigUint64Array(4096));
-    this.slidingDiagonalPieceState = Array.from({ length: 64 }, () => new BigUint64Array(512));
+    this.straightAttackLo = [];
+    this.straightAttackHi = [];
+    this.straightMaskBits = [];
+    this.diagonalAttackLo = [];
+    this.diagonalAttackHi = [];
+    this.diagonalMaskBits = [];
   }
 
-  /** Initialize sliding piece attacks */
+  /** Initialize sliding piece attacks (tables are assigned externally). */
   initializeAttacks(): void {
-    // Sliding pieces typically initialize their attack tables externally
+    // no-op
   }
 
-  /**
-   * Get sliding piece attacks. We know color and moveIndex isn't used but is in the interface.
-   */
+  /** Interface implementation: reconstructs a bigint attack set via the Number path. */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getAttacks(pos: number, occupancy: bigint, color: number, moveIndex: number): bigint {
-    let pieceState = 0n;
+  getAttacks(pos: number, occupancy: bigint, _color: number, _moveIndex: number): bigint {
+    const r = this.getSliderAttacksLoHi(pos, loOf(occupancy), hiOf(occupancy));
+    return BigInt(r.lo) | (BigInt(r.hi) << 32n);
+  }
 
+  /** Number-path sliding attacks via PEXT-indexed lo/hi tables — no bigint. */
+  getSliderAttacksLoHi(pos: number, occLo: number, occHi: number): { lo: number; hi: number } {
+    let lo = 0;
+    let hi = 0;
     if (this.straight) {
-      let straightOccupancy = occupancy & this.straightPieceMask[pos];
-      straightOccupancy =
-        (straightOccupancy * straightMagicNumbers[pos]) >>
-        (64n - BigInt(straightRelevantBits[pos]));
-
-      const maskedStraightOccupancy = straightOccupancy & straightBitMask;
-      const rawStraightMoves = this.slidingStraightPieceState[pos][Number(maskedStraightOccupancy)];
-
-      pieceState |= applyConstraintsToMoves(rawStraightMoves, this.straightConstraints, pos, true);
+      const idx = pextIndex(occLo, occHi, this.straightMaskBits[pos]);
+      lo |= this.straightAttackLo[pos][idx];
+      hi |= this.straightAttackHi[pos][idx];
     }
-
     if (this.diagonal) {
-      let diagonalOccupancy = occupancy & this.diagonalPieceMask[pos];
-      diagonalOccupancy =
-        (diagonalOccupancy * diagonalMagicNumbers[pos]) >>
-        (64n - BigInt(diagonalRelevantBits[pos]));
-
-      const maskedDiagonalOccupancy = diagonalOccupancy & diagonalBitMask;
-      const rawDiagonalMoves = this.slidingDiagonalPieceState[pos][Number(maskedDiagonalOccupancy)];
-
-      pieceState |= applyConstraintsToMoves(rawDiagonalMoves, this.diagonalConstraints, pos, false);
+      const idx = pextIndex(occLo, occHi, this.diagonalMaskBits[pos]);
+      lo |= this.diagonalAttackLo[pos][idx];
+      hi |= this.diagonalAttackHi[pos][idx];
     }
-
-    return pieceState;
+    return { lo, hi };
   }
 
   // Getters
-  getStraightConstraints(): number[] {
-    return this.straightConstraints;
-  }
-
-  getDiagonalConstraints(): number[] {
-    return this.diagonalConstraints;
-  }
-
   getStraight(): boolean {
     return this.straight;
   }
@@ -237,31 +270,7 @@ export class SlidingMoveBehavior implements MoveBehavior {
     return this.diagonal;
   }
 
-  getStraightPieceMask(): BigUint64Array {
-    return this.straightPieceMask;
-  }
-
-  getDiagonalPieceMask(): BigUint64Array {
-    return this.diagonalPieceMask;
-  }
-
-  getSlidingStraightPieceState(): BigUint64Array[] {
-    return this.slidingStraightPieceState;
-  }
-
-  getSlidingDiagonalPieceState(): BigUint64Array[] {
-    return this.slidingDiagonalPieceState;
-  }
-
   // Setters
-  setStraightConstraints(constraints: number[]): void {
-    this.straightConstraints = constraints;
-  }
-
-  setDiagonalConstraints(constraints: number[]): void {
-    this.diagonalConstraints = constraints;
-  }
-
   setStraight(straight: boolean): void {
     this.straight = straight;
   }
@@ -270,20 +279,16 @@ export class SlidingMoveBehavior implements MoveBehavior {
     this.diagonal = diagonal;
   }
 
-  setStraightPieceMask(mask: BigUint64Array): void {
-    this.straightPieceMask = mask;
+  setStraightAttackTables(lo: Uint32Array[], hi: Uint32Array[], bits: number[][]): void {
+    this.straightAttackLo = lo;
+    this.straightAttackHi = hi;
+    this.straightMaskBits = bits;
   }
 
-  setDiagonalPieceMask(mask: BigUint64Array): void {
-    this.diagonalPieceMask = mask;
-  }
-
-  setSlidingStraightPieceState(state: BigUint64Array[]): void {
-    this.slidingStraightPieceState = state;
-  }
-
-  setSlidingDiagonalPieceState(state: BigUint64Array[]): void {
-    this.slidingDiagonalPieceState = state;
+  setDiagonalAttackTables(lo: Uint32Array[], hi: Uint32Array[], bits: number[][]): void {
+    this.diagonalAttackLo = lo;
+    this.diagonalAttackHi = hi;
+    this.diagonalMaskBits = bits;
   }
 }
 

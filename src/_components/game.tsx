@@ -2,7 +2,7 @@ import { createSignal, For, Show, onCleanup, splitProps, onMount } from 'solid-j
 import { getBit } from '~/game/board/bitboard';
 import { PlayerColor, gameState, moveType, getBitboard, colors } from '~/game/consts/board';
 import { generateMoves } from '~/game/move/legal-move-generator';
-import { makeMove } from '~/game/move/move';
+import { makeMove, isLegalMove } from '~/game/move/move';
 import { MoveList, getMovePiece, getMoveSource, getMoveTarget } from '~/game/move/move-def';
 import { mountGame } from '~/utils';
 import { tryConnectFlow, setStoredSession } from '~/utils/connect';
@@ -11,7 +11,6 @@ import Board from './board';
 import Piece from './piece';
 import Square from './square';
 import { playMoveSound } from '~/game/sound/play';
-import { copyBoard, takeBack } from '~/game/board/copy';
 import { BOARD_SIZE } from './const';
 
 const EMPTY_MOVE_LIST: MoveList = { moves: [], count: 0 };
@@ -98,10 +97,7 @@ const Game = (props: GameProps) => {
    * Check for legal moves. Not expensive to do at all.
    */
   const isMoveLegal = (move: number): boolean => {
-    const copies = copyBoard();
-    const ok = makeMove(move, moveType.ALL_MOVES, 0);
-    takeBack(copies);
-    return ok === 1;
+    return isLegalMove(move);
   };
 
   /**

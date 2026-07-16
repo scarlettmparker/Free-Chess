@@ -7,6 +7,10 @@ import {
 } from '~/game/consts/board';
 import { rawPosToNot } from './square-helper';
 
+/** Precomputed single-bit and cleared-bit bigint masks (avoid `1n << BigInt(pos)` in hot paths). */
+export const BIT: bigint[] = Array.from({ length: 64 }, (_, i) => 1n << BigInt(i));
+export const NOT_BIT: bigint[] = BIT.map((b) => ~b);
+
 /**
  *
  * @param bitBoard Bitboard to modify.
@@ -15,11 +19,7 @@ import { rawPosToNot } from './square-helper';
  * @returns Updated bitboard.
  */
 function setBit(bitboard: bigint, pos: number, push: boolean) {
-  if (push) {
-    return bitboard | (1n << BigInt(pos));
-  } else {
-    return bitboard & ~(1n << BigInt(pos));
-  }
+  return push ? bitboard | BIT[pos] : bitboard & NOT_BIT[pos];
 }
 
 /**
@@ -29,9 +29,7 @@ function setBit(bitboard: bigint, pos: number, push: boolean) {
  * @returns Bit at position in bitboard.
  */
 export function getBit(bitboard: bigint, pos: number) {
-  // shift bit board by index pos & mask with 1
-  const bit = (bitboard >> BigInt(pos)) & 1n;
-  return Number(bit);
+  return Number((bitboard >> BigInt(pos)) & 1n);
 }
 
 const BIT_COUNT_LOOKUP: number[] = Array(256)
@@ -53,10 +51,16 @@ const BIT_COUNT_LOOKUP: number[] = Array(256)
  */
 export function countBits(bitboard: bigint): number {
   let count = 0;
-  while (bitboard > 0n) {
-    const chunk = Number(bitboard & 0xffn);
-    count += BIT_COUNT_LOOKUP[chunk];
-    bitboard >>= 8n;
+  // low 32 bits via Number popcount, then high bits
+  let lo = Number(bitboard & 0xffffffffn) >>> 0;
+  while (lo !== 0) {
+    count += BIT_COUNT_LOOKUP[lo & 0xff];
+    lo >>>= 8;
+  }
+  let hi = Number(bitboard >> 32n) >>> 0;
+  while (hi !== 0) {
+    count += BIT_COUNT_LOOKUP[hi & 0xff];
+    hi >>>= 8;
   }
   return count;
 }
@@ -67,11 +71,11 @@ export function countBits(bitboard: bigint): number {
  * @returns Least significant 1st bit index.
  */
 export function getLSFBIndex(bitboard: bigint) {
-  if (bitboard > 0n) {
-    return countBits((bitboard & -bitboard) - 1n);
-  } else {
-    return -1; // illegal index
-  }
+  if (bitboard === 0n) return -1;
+  const lo = Number(bitboard & 0xffffffffn) >>> 0;
+  if (lo !== 0) return Math.clz32(lo & -lo) ^ 31;
+  const hi = Number(bitboard >> 32n) >>> 0;
+  return 32 + (Math.clz32(hi & -hi) ^ 31);
 }
 
 /**

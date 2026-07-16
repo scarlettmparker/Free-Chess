@@ -116,11 +116,5 @@ export const getBitboard = (
   pieceId: number,
   bitboards: BitboardData[] = gameState.bitboards,
 ): BitboardData => {
-  const foundPiece = bitboards.find((piece) => piece.pieceId === pieceId);
-
-  if (!foundPiece) {
-    return { pieceId: pieceId, bitboard: 0n };
-  }
-
-  return foundPiece;
+  return bitboards[pieceId] ?? { pieceId, bitboard: 0n };
 };

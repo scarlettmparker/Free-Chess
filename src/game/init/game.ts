@@ -54,7 +54,7 @@ export function initGameState() {
  * their attacks, copying the sliding pieces from white to black.
  */
 export function initGame() {
-  const { straightPieceMask, diagonalPieceMask, straightPieceState, diagonalPieceState } =
+  const { straightLo, straightHi, straightBits, diagonalLo, diagonalHi, diagonalBits } =
     initSlidingPieces();
 
   gameState.pieces.forEach((piece: Piece) => {
@@ -62,12 +62,10 @@ export function initGame() {
 
     if (moveBehavior instanceof SlidingMoveBehavior) {
       if (moveBehavior.getStraight()) {
-        moveBehavior.setSlidingStraightPieceState(straightPieceState);
-        moveBehavior.setStraightPieceMask(straightPieceMask);
+        moveBehavior.setStraightAttackTables(straightLo, straightHi, straightBits);
       }
       if (moveBehavior.getDiagonal()) {
-        moveBehavior.setSlidingDiagonalPieceState(diagonalPieceState);
-        moveBehavior.setDiagonalPieceMask(diagonalPieceMask);
+        moveBehavior.setDiagonalAttackTables(diagonalLo, diagonalHi, diagonalBits);
       }
     }
 

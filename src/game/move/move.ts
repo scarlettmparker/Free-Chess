@@ -19,8 +19,7 @@ import {
   MoveList,
   promotedPieces,
 } from '~/game/move/move-def';
-import { copyBoard, takeBack } from '~/game/board/copy';
-import setBit, { getBit, getLSFBIndex, getPieceById } from '~/game/board/bitboard';
+import setBit, { getBit, getLSFBIndex, getPieceById, BIT, NOT_BIT } from '~/game/board/bitboard';
 import { castlingRights } from '~/game/consts/bits';
 import { isSquareAttacked } from '~/game/board/attacks';
 import { Piece, LeaperMoveBehavior } from '~/game/piece/piece';
@@ -36,222 +35,338 @@ export const addMove = (moves: MoveList, move: number) => {
 };
 
 /**
- * Makes a move by recursively calling the move function and copying/restoring the board state.
- * @param move Encoded move.
- * @param moveFlag Move type.
- * @returns 1 (legal move), 0 (illegal move).
+ * Undo record returned by applyMove and consumed by undoMove.
+ * Captures only the state that is not derivable from the move encoding itself.
  */
-export const makeMove = (move: number, moveFlag: number, currentMove: number) => {
-  if (moveFlag == moveType.ALL_MOVES) {
-    const copies = copyBoard();
+export type Undo = {
+  capturedPiece: number;
+  enpassant: number;
+  castle: bigint;
+  // Rotational piece bookkeeping (only meaningful when the mover is rotational).
+  mapKeySrc: number;
+  mapHadSrc: boolean;
+  mapValSrc: number;
+  mapKeyTgt: number;
+  mapHadTgt: boolean;
+  mapValTgt: number;
+  reverseChanged: boolean;
+  revKeySrc: number;
+  revHadSrc: boolean;
+  revValSrc: number;
+  revKeyTgt: number;
+  revHadTgt: boolean;
+  revValTgt: number;
+};
 
-    const tempBitboards = gameState.bitboards;
-    const tempMoves =
-      gameState.side == colors.WHITE
-        ? new Map(gameState.whiteMoves)
-        : new Map(gameState.blackMoves);
+const WHITE = colors.WHITE;
+const BLACK = colors.BLACK;
 
-    // parse the move
-    const sourceSquare = getMoveSource(move);
-    const targetSquare = getMoveTarget(move);
-    const piece = getMovePiece(move);
-    const promoted = getMovePromoted(move);
-    const capture = getMoveCapture(move);
-    const double = getMoveDouble(move);
-    const enpassantFlag = getMoveEnpassant(move);
-    const castling = getMoveCastle(move);
+/**
+ * Applies a move in place, mutating global game state, without testing legality.
+ * Occupancies are updated incrementally (XOR) instead of full recompute.
+ * @param move Encoded move.
+ * @returns Undo record for undoMove.
+ */
+export const applyMove = (move: number): Undo => {
+  const sourceSquare = getMoveSource(move);
+  const targetSquare = getMoveTarget(move);
+  const piece = getMovePiece(move);
+  const promoted = getMovePromoted(move);
+  const capture = getMoveCapture(move);
+  const double = getMoveDouble(move);
+  const enpassantFlag = getMoveEnpassant(move);
+  const castling = getMoveCastle(move);
 
-    // move the piece
-    const newPieceBitboard = getBitboard(piece, tempBitboards);
-    newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, sourceSquare, false);
-    newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, true);
+  const mover = gameState.side;
+  const opponent = mover ^ 1;
+  const bitboards = gameState.bitboards;
+  const occ = gameState.occupancies;
 
-    // update move number
-    let currentMove = tempMoves.get(Number(`${sourceSquare}${piece}`));
-    if (currentMove) {
-      tempMoves.delete(Number('' + sourceSquare + piece));
-    } else {
-      currentMove = 0;
-    }
+  const undo: Undo = {
+    capturedPiece: -1,
+    enpassant: gameState.enpassant,
+    castle: gameState.castle,
+    mapKeySrc: 0,
+    mapHadSrc: false,
+    mapValSrc: 0,
+    mapKeyTgt: 0,
+    mapHadTgt: false,
+    mapValTgt: 0,
+    reverseChanged: false,
+    revKeySrc: 0,
+    revHadSrc: false,
+    revValSrc: 0,
+    revKeyTgt: 0,
+    revHadTgt: false,
+    revValTgt: 0,
+  };
 
-    tempMoves.set(Number('' + targetSquare + piece), currentMove + 1);
-    const opponentPieceIds =
-      gameState.side == colors.WHITE ? gameState.blackPieceIds : gameState.whitePieceIds;
-    const pieceObj = getPieceById(piece);
+  const srcBit = BIT[sourceSquare];
+  const tgtBit = BIT[targetSquare];
 
-    // captures
-    if (capture) {
-      // loop over bitboard of opposite side
-      for (const bbPiece of opponentPieceIds) {
-        const newCaptureBitboard = getBitboard(bbPiece, tempBitboards);
-        if (getBit(newCaptureBitboard.bitboard, targetSquare)) {
-          // piece on target square
-          newCaptureBitboard.bitboard = setBit(newCaptureBitboard.bitboard, targetSquare, false);
-          break;
-        }
+  // move the piece (clear source, set target)
+  const moverBB = bitboards[piece];
+  moverBB.bitboard = (moverBB.bitboard & NOT_BIT[sourceSquare]) | tgtBit;
+  const moveDelta = srcBit | tgtBit;
+  occ[mover] ^= moveDelta;
+
+  // captures (find the opponent piece on the target square and clear it)
+  if (capture) {
+    const opponentPieceIds = mover == WHITE ? gameState.blackPieceIds : gameState.whitePieceIds;
+    for (let i = 0; i < opponentPieceIds.length; i++) {
+      const bbPiece = opponentPieceIds[i];
+      const capBB = bitboards[bbPiece];
+      if (capBB.bitboard & tgtBit) {
+        capBB.bitboard &= NOT_BIT[targetSquare];
+        undo.capturedPiece = bbPiece;
+        occ[opponent] ^= tgtBit;
+        break;
       }
-    }
-
-    if (pieceObj) {
-      // promotions
-      if (promoted && pieceObj.getPromote()) {
-        newPieceBitboard.bitboard = setBit(newPieceBitboard.bitboard, targetSquare, false);
-        tempBitboards[promoted].bitboard = setBit(
-          tempBitboards[promoted].bitboard,
-          targetSquare,
-          true,
-        );
-      }
-    }
-
-    // en passant
-    if (enpassantFlag) {
-      gameState.side == colors.WHITE
-        ? (tempBitboards[charPieces.p].bitboard = setBit(
-            tempBitboards[charPieces.p].bitboard,
-            targetSquare + 8,
-            false,
-          ))
-        : (tempBitboards[charPieces.P].bitboard = setBit(
-            tempBitboards[charPieces.P].bitboard,
-            targetSquare - 8,
-            false,
-          ));
-    }
-
-    gameState.enpassant = -1;
-
-    // double pawn push
-    if (double) {
-      gameState.side == colors.WHITE
-        ? (gameState.enpassant = targetSquare + 8)
-        : (gameState.enpassant = targetSquare - 8);
-    }
-
-    // castling moves
-    if (castling) {
-      switch (targetSquare) {
-        case notToRawPos['g1']:
-          tempBitboards[charPieces.R].bitboard = setBit(
-            tempBitboards[charPieces.R].bitboard,
-            notToRawPos['h1'],
-            false,
-          );
-          tempBitboards[charPieces.R].bitboard = setBit(
-            tempBitboards[charPieces.R].bitboard,
-            notToRawPos['f1'],
-            true,
-          );
-          break;
-        case notToRawPos['c1']:
-          tempBitboards[charPieces.R].bitboard = setBit(
-            tempBitboards[charPieces.R].bitboard,
-            notToRawPos['a1'],
-            false,
-          );
-          tempBitboards[charPieces.R].bitboard = setBit(
-            tempBitboards[charPieces.R].bitboard,
-            notToRawPos['d1'],
-            true,
-          );
-          break;
-        case notToRawPos['g8']:
-          tempBitboards[charPieces.r].bitboard = setBit(
-            tempBitboards[charPieces.r].bitboard,
-            notToRawPos['h8'],
-            false,
-          );
-          tempBitboards[charPieces.r].bitboard = setBit(
-            tempBitboards[charPieces.r].bitboard,
-            notToRawPos['f8'],
-            true,
-          );
-          break;
-        case notToRawPos['c8']:
-          tempBitboards[charPieces.r].bitboard = setBit(
-            tempBitboards[charPieces.r].bitboard,
-            notToRawPos['a8'],
-            false,
-          );
-          tempBitboards[charPieces.r].bitboard = setBit(
-            tempBitboards[charPieces.r].bitboard,
-            notToRawPos['d8'],
-            true,
-          );
-          break;
-      }
-    }
-
-    // update castling rights
-    let newCastle = Number(gameState.castle);
-    newCastle &= castlingRights[sourceSquare];
-    newCastle &= castlingRights[targetSquare];
-    gameState.castle = BigInt(newCastle);
-
-    // update occupancies
-    const l = 3;
-    for (let i = 0; i < l; i++) {
-      gameState.occupancies[i] = 0n;
-    }
-
-    // update white pieces occupancies
-    let whiteOccupancy = gameState.occupancies[colors.WHITE];
-    for (const bbPiece of gameState.whitePieceIds) {
-      if (!getBitboard(bbPiece).bitboard) continue;
-      whiteOccupancy |= getBitboard(bbPiece).bitboard;
-    }
-    gameState.occupancies[colors.WHITE] = whiteOccupancy;
-
-    // update black pieces occupancies
-    let blackOccupancy = gameState.occupancies[colors.BLACK];
-    for (const bbPiece of gameState.blackPieceIds) {
-      if (!getBitboard(bbPiece).bitboard) continue;
-      blackOccupancy |= getBitboard(bbPiece).bitboard;
-    }
-    gameState.occupancies[colors.BLACK] = blackOccupancy;
-
-    // update both sides occupancies
-    let bothOccupancy = gameState.occupancies[colors.BOTH];
-    bothOccupancy |= whiteOccupancy;
-    bothOccupancy |= blackOccupancy;
-    gameState.occupancies[colors.BOTH] = bothOccupancy;
-
-    if (gameState.side == colors.WHITE) {
-      gameState.whiteMoves = tempMoves;
-    } else {
-      gameState.blackMoves = tempMoves;
-    }
-
-    // change side
-    gameState.side ^= 1;
-    gameState.bitboards = tempBitboards;
-
-    // deal with rotating piece moves
-    if (pieceObj?.getRotationalMoveType() === 'REVERSE_ROTATE') {
-      updateRotatorMoves(pieceObj, tempMoves, sourceSquare, targetSquare);
-    }
-
-    // check if king exposed to check
-    if (
-      isSquareAttacked(
-        gameState.side == colors.WHITE
-          ? getLSFBIndex(getBitboard(charPieces.k).bitboard)
-          : getLSFBIndex(getBitboard(charPieces.K).bitboard),
-        gameState.side,
-      )
-    ) {
-      takeBack(copies);
-      return 0; // illegal move
-    } else {
-      return 1; // legal move
-    }
-  } else {
-    if (getMoveCapture(move)) {
-      makeMove(move, moveType.ALL_MOVES, currentMove);
-    } else {
-      return 0; // illegal move
     }
   }
+
+  // promotions (mover leaves target, promoted piece occupies it — same side, no occ delta)
+  if (promoted) {
+    moverBB.bitboard &= NOT_BIT[targetSquare];
+    bitboards[promoted].bitboard |= tgtBit;
+  }
+
+  // en passant (captured pawn sits behind the target square)
+  if (enpassantFlag) {
+    const capPawnId = mover == WHITE ? charPieces.p : charPieces.P;
+    const capSquare = mover == WHITE ? targetSquare + 8 : targetSquare - 8;
+    const capBit = BIT[capSquare];
+    bitboards[capPawnId].bitboard &= NOT_BIT[capSquare];
+    occ[opponent] ^= capBit;
+  }
+
+  // reset / set en passant square
+  gameState.enpassant = double ? (mover == WHITE ? targetSquare + 8 : targetSquare - 8) : -1;
+
+  // castling: move the rook
+  if (castling) {
+    let rookId: number;
+    let rookFrom: number;
+    let rookTo: number;
+    switch (targetSquare) {
+      case notToRawPos['g1']:
+        rookId = charPieces.R;
+        rookFrom = notToRawPos['h1'];
+        rookTo = notToRawPos['f1'];
+        break;
+      case notToRawPos['c1']:
+        rookId = charPieces.R;
+        rookFrom = notToRawPos['a1'];
+        rookTo = notToRawPos['d1'];
+        break;
+      case notToRawPos['g8']:
+        rookId = charPieces.r;
+        rookFrom = notToRawPos['h8'];
+        rookTo = notToRawPos['f8'];
+        break;
+      default:
+        rookId = charPieces.r;
+        rookFrom = notToRawPos['a8'];
+        rookTo = notToRawPos['d8'];
+        break;
+    }
+    const rookBit = BIT[rookFrom] | BIT[rookTo];
+    bitboards[rookId].bitboard ^= rookBit;
+    occ[mover] ^= rookBit;
+  }
+
+  // update castling rights
+  gameState.castle = BigInt(
+    Number(gameState.castle) & castlingRights[sourceSquare] & castlingRights[targetSquare],
+  );
+
+  // both-sides occupancy = union (cheap single OR)
+  occ[colors.BOTH] = occ[WHITE] | occ[BLACK];
+
+  // rotational pieces maintain per-square move counters; standard pieces skip this entirely.
+  const pieceObj = getPieceById(piece);
+  if (pieceObj) {
+    const rot = pieceObj.getRotationalMoveType();
+    if (rot === 'ROTATE' || rot === 'REVERSE_ROTATE') {
+      const pieceMoves = mover == WHITE ? gameState.whiteMoves : gameState.blackMoves;
+      const mapKeySrc = Number(`${sourceSquare}${piece}`);
+      const mapKeyTgt = Number(`${targetSquare}${piece}`);
+      undo.mapKeySrc = mapKeySrc;
+      undo.mapHadSrc = pieceMoves.has(mapKeySrc);
+      undo.mapValSrc = undo.mapHadSrc ? (pieceMoves.get(mapKeySrc) as number) : 0;
+      undo.mapKeyTgt = mapKeyTgt;
+      undo.mapHadTgt = pieceMoves.has(mapKeyTgt);
+      undo.mapValTgt = undo.mapHadTgt ? (pieceMoves.get(mapKeyTgt) as number) : 0;
+
+      const prev = undo.mapValSrc;
+      pieceMoves.delete(mapKeySrc);
+      pieceMoves.set(mapKeyTgt, prev + 1);
+
+      if (rot === 'REVERSE_ROTATE') {
+        undo.reverseChanged = true;
+        updateRotatorMoves(pieceObj, pieceMoves, sourceSquare, targetSquare, undo);
+      }
+    }
+  }
+
+  // change side
+  gameState.side = opponent;
+  return undo;
+};
+
+/**
+ * Reverts a move previously applied by applyMove.
+ * @param move Encoded move (same one passed to applyMove).
+ * @param undo Undo record returned by applyMove.
+ */
+export const undoMove = (move: number, undo: Undo) => {
+  const sourceSquare = getMoveSource(move);
+  const targetSquare = getMoveTarget(move);
+  const piece = getMovePiece(move);
+  const promoted = getMovePromoted(move);
+  const capture = getMoveCapture(move);
+  const enpassantFlag = getMoveEnpassant(move);
+  const castling = getMoveCastle(move);
+
+  // the side that moved is the side now NOT to move (state was flipped by applyMove)
+  const mover = gameState.side ^ 1;
+  const opponent = mover ^ 1;
+  const bitboards = gameState.bitboards;
+  const occ = gameState.occupancies;
+
+  const srcBit = BIT[sourceSquare];
+  const tgtBit = BIT[targetSquare];
+
+  // restore side first
+  gameState.side = mover;
+
+  // undo castling rook
+  if (castling) {
+    let rookId: number;
+    let rookFrom: number;
+    let rookTo: number;
+    switch (targetSquare) {
+      case notToRawPos['g1']:
+        rookId = charPieces.R;
+        rookFrom = notToRawPos['h1'];
+        rookTo = notToRawPos['f1'];
+        break;
+      case notToRawPos['c1']:
+        rookId = charPieces.R;
+        rookFrom = notToRawPos['a1'];
+        rookTo = notToRawPos['d1'];
+        break;
+      case notToRawPos['g8']:
+        rookId = charPieces.r;
+        rookFrom = notToRawPos['h8'];
+        rookTo = notToRawPos['f8'];
+        break;
+      default:
+        rookId = charPieces.r;
+        rookFrom = notToRawPos['a8'];
+        rookTo = notToRawPos['d8'];
+        break;
+    }
+    const rookBit = BIT[rookFrom] | BIT[rookTo];
+    bitboards[rookId].bitboard ^= rookBit;
+    occ[mover] ^= rookBit;
+  }
+
+  // undo promotion (promoted leaves target, original piece returns)
+  if (promoted) {
+    bitboards[promoted].bitboard &= NOT_BIT[targetSquare];
+    bitboards[piece].bitboard |= tgtBit;
+  }
+
+  // undo en passant capture
+  if (enpassantFlag) {
+    const capPawnId = mover == WHITE ? charPieces.p : charPieces.P;
+    const capSquare = mover == WHITE ? targetSquare + 8 : targetSquare - 8;
+    const capBit = BIT[capSquare];
+    bitboards[capPawnId].bitboard |= capBit;
+    occ[opponent] ^= capBit;
+  }
+
+  // undo normal capture
+  if (capture && undo.capturedPiece !== -1) {
+    bitboards[undo.capturedPiece].bitboard |= tgtBit;
+    occ[opponent] ^= tgtBit;
+  }
+
+  // move the piece back (clear target, set source)
+  const moverBB = bitboards[piece];
+  moverBB.bitboard = (moverBB.bitboard & NOT_BIT[targetSquare]) | srcBit;
+  occ[mover] ^= srcBit | tgtBit;
+
+  // restore occupancies union + state
+  occ[colors.BOTH] = occ[WHITE] | occ[BLACK];
+  gameState.enpassant = undo.enpassant;
+  gameState.castle = undo.castle;
+
+  // restore rotational piece bookkeeping
+  if (undo.reverseChanged || undo.mapHadSrc || undo.mapHadTgt || undo.mapKeySrc !== 0) {
+    const pieceMoves = mover == WHITE ? gameState.whiteMoves : gameState.blackMoves;
+    if (undo.mapKeySrc !== 0) {
+      if (undo.mapHadSrc) pieceMoves.set(undo.mapKeySrc, undo.mapValSrc);
+      else pieceMoves.delete(undo.mapKeySrc);
+    }
+    if (undo.mapKeyTgt !== 0) {
+      if (undo.mapHadTgt) pieceMoves.set(undo.mapKeyTgt, undo.mapValTgt);
+      else pieceMoves.delete(undo.mapKeyTgt);
+    }
+  }
+  if (undo.reverseChanged) {
+    const pieceObj = getPieceById(piece);
+    if (pieceObj) {
+      const rev = pieceObj.getReverse();
+      if (undo.revHadSrc) rev.set(undo.revKeySrc, undo.revValSrc);
+      else rev.delete(undo.revKeySrc);
+      if (undo.revHadTgt) rev.set(undo.revKeyTgt, undo.revValTgt);
+      else rev.delete(undo.revKeyTgt);
+    }
+  }
+};
+
+/**
+ * Returns true if the side that just moved has left its king in check.
+ * Must be called immediately after applyMove (side has already been flipped).
+ */
+export const moverKingInCheck = () => {
+  // gameState.side is now the opponent; the mover's king is the other colour's king.
+  const kingId = gameState.side == WHITE ? charPieces.k : charPieces.K;
+  return isSquareAttacked(getLSFBIndex(getBitboard(kingId).bitboard), gameState.side);
+};
+
+/**
+ * Applies a move, tests legality, and reverts it if illegal.
+ * @param move Encoded move.
+ * @returns 1 (legal, move stays applied), 0 (illegal, state reverted).
+ */
+export const makeMove = (move: number, moveFlag: number, _currentMove: number): number => {
+  if (moveFlag == moveType.ALL_MOVES) {
+    const undo = applyMove(move);
+    if (moverKingInCheck()) {
+      undoMove(move, undo);
+      return 0;
+    }
+    return 1;
+  }
+  // capture-only mode (unused by the current engine): accept captures only.
+  if (getMoveCapture(move)) {
+    return makeMove(move, moveType.ALL_MOVES, 0);
+  }
+  return 0;
+};
+
+/**
+ * Tests whether a move is legal without leaving it applied.
+ * @param move Encoded move.
+ */
+export const isLegalMove = (move: number) => {
+  const undo = applyMove(move);
+  const legal = !moverKingInCheck();
+  undoMove(move, undo);
+  return legal;
 };
 
 /**
@@ -262,14 +377,25 @@ export const makeMove = (move: number, moveFlag: number, currentMove: number) =>
  * @param tempMoves Temp moves denoting the piece's position and its current move. If it hits the edge of the board it resets.
  * @param sourceSquare The piece's current position.
  * @param targetSquare The piece's target position after moving.
+ * @param undo Undo record to capture reverse-map mutations for unmake.
  */
 const updateRotatorMoves = (
   pieceObj: Piece,
   tempMoves: Map<number, number>,
   sourceSquare: number,
   targetSquare: number,
+  undo: Undo,
 ) => {
   const tempReverse = pieceObj.getReverse();
+
+  // capture pre-mutation state of the two keys we will touch, for unmake
+  undo.revKeySrc = sourceSquare;
+  undo.revHadSrc = tempReverse.has(sourceSquare);
+  undo.revValSrc = undo.revHadSrc ? (tempReverse.get(sourceSquare) as number) : 0;
+  undo.revKeyTgt = targetSquare;
+  undo.revHadTgt = tempReverse.has(targetSquare);
+  undo.revValTgt = undo.revHadTgt ? (tempReverse.get(targetSquare) as number) : 0;
+
   const newSquare = tempReverse.get(targetSquare) ?? 0;
   const oldSquare = tempReverse.get(sourceSquare);
 

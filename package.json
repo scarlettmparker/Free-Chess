@@ -11,7 +11,8 @@
     "pretty": "npx prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "lint": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
     "lint:fix": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --fix",
-    "test": "jest --maxWorkers=8"
+    "test": "jest --maxWorkers=8",
+    "bench:perft": "tsx -r tsconfig-paths/register src/game/perft.bench.ts"
   },
   "license": "MIT",
   "devDependencies": {
