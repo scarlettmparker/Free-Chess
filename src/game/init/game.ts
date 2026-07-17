@@ -15,7 +15,8 @@ import { initSlidingPieces } from '~/game/init/sliding-piece';
 export function resetGameState() {
   gameState.pieces = [];
   gameState.bitboards = [];
-  gameState.occupancies = Array.from({ length: 3 }, () => 0n);
+  gameState.occLo = new Uint32Array(3);
+  gameState.occHi = new Uint32Array(3);
   gameState.whiteMoves = new Map();
   gameState.blackMoves = new Map();
   gameState.checked = [false, false];
@@ -23,7 +24,7 @@ export function resetGameState() {
   gameState.globalMove = 0;
   gameState.side = 0;
   gameState.enpassant = -1;
-  gameState.castle = 0n;
+  gameState.castle = 0;
   gameState.nodes = 0;
 }
 
@@ -44,7 +45,7 @@ export function initGameState() {
     { length: gameState.whitePieceIds.length + gameState.blackPieceIds.length },
     (_, index) => {
       const pieceId = gameState.pieces[index].getId();
-      return { pieceId, bitboard: 0n };
+      return { pieceId, lo: 0, hi: 0 };
     },
   );
 }

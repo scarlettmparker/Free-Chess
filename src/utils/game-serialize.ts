@@ -117,9 +117,11 @@ export function serializeGameState(gs: GameState): SerializedGameState {
     pieces: gs.pieces.map(serializePiece),
     bitboards: gs.bitboards.map((bb) => ({
       pieceId: bb.pieceId,
-      bitboard: bb.bitboard.toString(),
+      bitboard: ((BigInt(bb.hi >>> 0) << 32n) | BigInt(bb.lo >>> 0)).toString(),
     })),
-    occupancies: gs.occupancies.map((o) => o.toString()),
+    occupancies: [0, 1, 2].map((i) =>
+      ((BigInt(gs.occHi[i]) << 32n) | BigInt(gs.occLo[i])).toString(),
+    ),
     checked: gs.checked,
     side: gs.side,
     enpassant: gs.enpassant,
@@ -186,15 +188,22 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     whitePieceIds: json.whitePieceIds,
     blackPieceIds: json.blackPieceIds,
     pieces: json.pieces.map((p) => deserializePiece(p, currentPieces)),
-    bitboards: json.bitboards.map((bb) => ({
-      pieceId: bb.pieceId,
-      bitboard: BigInt(bb.bitboard),
-    })),
-    occupancies: json.occupancies.map((o) => BigInt(o)),
+    bitboards: json.bitboards.map((bb) => {
+      const v = BigInt(bb.bitboard);
+      return {
+        pieceId: bb.pieceId,
+        lo: Number(v & 0xffffffffn) >>> 0,
+        hi: Number(v >> 32n) >>> 0,
+      };
+    }),
+    occLo: Uint32Array.from(
+      json.occupancies.map((o) => Number(BigInt(o) & 0xffffffffn) >>> 0),
+    ),
+    occHi: Uint32Array.from(json.occupancies.map((o) => Number(BigInt(o) >> 32n) >>> 0)),
     checked: json.checked,
     side: json.side,
     enpassant: json.enpassant,
-    castle: BigInt(json.castle),
+    castle: Number(json.castle),
     globalMove: json.globalMove,
     moves: json.moves,
     nodes: json.nodes,

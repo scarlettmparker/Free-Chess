@@ -15,7 +15,7 @@ import { charPieces, colors, gameState, getBitboard, moveType } from '~/game/con
 import { serializeGameState } from '~/utils/game-serialize.ts';
 import { makeMove } from '~/game/move/move.ts';
 import { isSquareAttacked } from '~/game/board/attacks.ts';
-import { getLSFBIndex } from '~/game/board/bitboard.ts';
+import { lsbIndex } from '~/game/board/bb.ts';
 
 dotenv.config();
 
@@ -121,10 +121,8 @@ wss.on('connection', (ws: WS, req) => {
         const opponent = sideToMove ^ 1;
 
         // we probably shouldn't care about this server side
-        const kingSquare =
-          sideToMove === colors.WHITE
-            ? getLSFBIndex(getBitboard(charPieces.K).bitboard) // white king
-            : getLSFBIndex(getBitboard(charPieces.k).bitboard); // black king
+        const whiteKing = sideToMove === colors.WHITE ? getBitboard(charPieces.K) : getBitboard(charPieces.k);
+        const kingSquare = lsbIndex(whiteKing.lo, whiteKing.hi);
 
         gameState.checked[gameState.side] = isSquareAttacked(kingSquare, opponent);
 

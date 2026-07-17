@@ -1,6 +1,6 @@
 import { BOARD_SIZE, colors, gameState, getBitboard } from '~/game/consts/board';
 import { getCheckMove } from '~/game/move/move';
-import { lsbIndex, loOf, hiOf } from '~/game/board/bb';
+import { lsbIndex } from '~/game/board/bb';
 import { SlidingMoveBehavior, LeaperMoveBehavior, PawnMoveBehavior } from '~/game/piece/piece';
 
 /**
@@ -18,16 +18,15 @@ export const isSquareAttacked = (pos: number, side: number) => {
 
   const pieces = gameState.pieces;
   const l = pieces.length;
-  const bothLo = loOf(gameState.occupancies[colors.BOTH]);
-  const bothHi = hiOf(gameState.occupancies[colors.BOTH]);
+  const bothLo = gameState.occLo[colors.BOTH];
+  const bothHi = gameState.occHi[colors.BOTH];
   for (let i = 0; i < l; i++) {
     const piece = pieces[i];
     if (piece.getColor() !== side) continue;
 
-    const pieceBB = getBitboard(piece.getId()).bitboard;
-    // convert this piece's bitboard to lo/hi once
-    const pieceLo = loOf(pieceBB);
-    const pieceHi = hiOf(pieceBB);
+    const pieceBB = getBitboard(piece.getId());
+    const pieceLo = pieceBB.lo;
+    const pieceHi = pieceBB.hi;
     if (pieceLo === 0 && pieceHi === 0) continue;
     const moveBehavior = piece.getMoveBehavior();
     const oppColor = piece.getColor() ^ 1;

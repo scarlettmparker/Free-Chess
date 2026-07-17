@@ -14,7 +14,7 @@ import {
 } from '~/game/piece/piece';
 import { isSquareAttacked } from '~/game/board/attacks';
 import { getBit, getLSFBIndex } from '~/game/board/bitboard';
-import { lsbIndex, loOf, hiOf } from '~/game/board/bb';
+import { lsbIndex } from '~/game/board/bb';
 import { notToRawPos } from '~/game/board/square-helper';
 import { addMove, getCheckMove } from './move';
 import { encodeMove, MoveList } from './move-def';
@@ -40,19 +40,18 @@ export const generateMoves = (moves: MoveList, pieces: Piece[]) => {
  */
 export const generateMove = (movesCopy: MoveList, piece: Piece) => {
   let targetSquare: number;
-  let bitboard;
   const moveBehavior = piece.getMoveBehavior();
 
-  bitboard = getBitboard(piece.getId()).bitboard;
-  let sourceSquare = getLSFBIndex(bitboard);
+  const pieceBB = getBitboard(piece.getId());
+  let sourceSquare = lsbIndex(pieceBB.lo, pieceBB.hi);
 
   if (piece.getColor() === colors.WHITE && moveBehavior instanceof PawnMoveBehavior) {
-    const bothLo = loOf(gameState.occupancies[colors.BOTH]);
-    const bothHi = hiOf(gameState.occupancies[colors.BOTH]);
-    const oppLo = loOf(gameState.occupancies[colors.BLACK]);
-    const oppHi = hiOf(gameState.occupancies[colors.BLACK]);
-    let bbLo = loOf(bitboard);
-    let bbHi = hiOf(bitboard);
+    const bothLo = gameState.occLo[colors.BOTH];
+    const bothHi = gameState.occHi[colors.BOTH];
+    const oppLo = gameState.occLo[colors.BLACK];
+    const oppHi = gameState.occHi[colors.BLACK];
+    let bbLo = pieceBB.lo;
+    let bbHi = pieceBB.hi;
 
     while (bbLo !== 0 || bbHi !== 0) {
       sourceSquare = lsbIndex(bbLo, bbHi);
@@ -126,10 +125,10 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
   }
 
   if (piece.getColor() === colors.WHITE && piece.getKing()) {
-    if (gameState.castle & BigInt(castlePieces.wk)) {
+    if (gameState.castle & castlePieces.wk) {
       if (
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['f1']) &&
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['g1'])
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['f1']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['g1'])
       ) {
         if (
           !isSquareAttacked(notToRawPos['e1'], colors.BLACK) &&
@@ -144,11 +143,11 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
     }
 
     // queen side
-    if (gameState.castle & BigInt(castlePieces.wq)) {
+    if (gameState.castle & castlePieces.wq) {
       if (
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['d1']) &&
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['c1']) &&
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['b1'])
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['d1']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['c1']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['b1'])
       ) {
         if (
           !isSquareAttacked(notToRawPos['e1'], colors.BLACK) &&
@@ -164,12 +163,12 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
   }
 
   if (piece.getColor() === colors.BLACK && moveBehavior instanceof PawnMoveBehavior) {
-    const bothLo = loOf(gameState.occupancies[colors.BOTH]);
-    const bothHi = hiOf(gameState.occupancies[colors.BOTH]);
-    const oppLo = loOf(gameState.occupancies[colors.WHITE]);
-    const oppHi = hiOf(gameState.occupancies[colors.WHITE]);
-    let bbLo = loOf(bitboard);
-    let bbHi = hiOf(bitboard);
+    const bothLo = gameState.occLo[colors.BOTH];
+    const bothHi = gameState.occHi[colors.BOTH];
+    const oppLo = gameState.occLo[colors.WHITE];
+    const oppHi = gameState.occHi[colors.WHITE];
+    let bbLo = pieceBB.lo;
+    let bbHi = pieceBB.hi;
 
     while (bbLo !== 0 || bbHi !== 0) {
       sourceSquare = lsbIndex(bbLo, bbHi);
@@ -241,10 +240,10 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
   }
 
   if (piece.getColor() === colors.BLACK && piece.getKing()) {
-    if (gameState.castle & BigInt(castlePieces.bk)) {
+    if (gameState.castle & castlePieces.bk) {
       if (
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['f8']) &&
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['g8'])
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['f8']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['g8'])
       ) {
         if (
           !isSquareAttacked(notToRawPos['e8'], colors.WHITE) &&
@@ -259,11 +258,11 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
     }
 
     // queen side
-    if (gameState.castle & BigInt(castlePieces.bq)) {
+    if (gameState.castle & castlePieces.bq) {
       if (
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['d8']) &&
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['c8']) &&
-        !getBit(gameState.occupancies[colors.BOTH], notToRawPos['b8'])
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['d8']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['c8']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['b8'])
       ) {
         if (
           !isSquareAttacked(notToRawPos['e8'], colors.WHITE) &&
@@ -280,20 +279,22 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
 
   if (moveBehavior instanceof LeaperMoveBehavior || moveBehavior instanceof SlidingMoveBehavior) {
     const side = gameState.side;
-    const ownOccBB =
-      side == colors.WHITE ? gameState.occupancies[colors.WHITE] : gameState.occupancies[colors.BLACK];
-    const oppOccBB =
-      side == colors.WHITE ? gameState.occupancies[colors.BLACK] : gameState.occupancies[colors.WHITE];
-    const oppLo = loOf(oppOccBB);
-    const oppHi = hiOf(oppOccBB);
-    const notOwnLo = ~loOf(ownOccBB);
-    const notOwnHi = ~hiOf(ownOccBB);
-    const bothLo = loOf(gameState.occupancies[colors.BOTH]);
-    const bothHi = hiOf(gameState.occupancies[colors.BOTH]);
+    const ownLo =
+      side == colors.WHITE ? gameState.occLo[colors.WHITE] : gameState.occLo[colors.BLACK];
+    const ownHi =
+      side == colors.WHITE ? gameState.occHi[colors.WHITE] : gameState.occHi[colors.BLACK];
+    const oppLo =
+      side == colors.WHITE ? gameState.occLo[colors.BLACK] : gameState.occLo[colors.WHITE];
+    const oppHi =
+      side == colors.WHITE ? gameState.occHi[colors.BLACK] : gameState.occHi[colors.WHITE];
+    const notOwnLo = ~ownLo;
+    const notOwnHi = ~ownHi;
+    const bothLo = gameState.occLo[colors.BOTH];
+    const bothHi = gameState.occHi[colors.BOTH];
 
     // source-scan and target-drain in pure Number (lo/hi); bigint only for table reads.
-    let bbLo = loOf(bitboard);
-    let bbHi = hiOf(bitboard);
+    let bbLo = pieceBB.lo;
+    let bbHi = pieceBB.hi;
 
     while (bbLo !== 0 || bbHi !== 0) {
       sourceSquare = lsbIndex(bbLo, bbHi);

@@ -5,7 +5,8 @@ export const pieceIds = new Set<number>();
 
 type BitboardData = {
   pieceId: number;
-  bitboard: bigint;
+  lo: number;
+  hi: number;
 };
 
 export type GameState = {
@@ -15,13 +16,14 @@ export type GameState = {
   blackPieceIds: number[];
   pieces: Piece[];
   bitboards: BitboardData[];
-  occupancies: bigint[];
+  occLo: Uint32Array;
+  occHi: Uint32Array;
   checked: [boolean, boolean];
   moves: Moves;
   globalMove: number;
   side: number;
   enpassant: number;
-  castle: bigint;
+  castle: number;
   nodes: number;
   moveHistory: number[];
 };
@@ -40,13 +42,14 @@ export const gameState: GameState = {
   blackPieceIds: [],
   pieces: [],
   bitboards: [],
-  occupancies: Array.from({ length: 3 }, () => 0n),
+  occLo: new Uint32Array(3),
+  occHi: new Uint32Array(3),
   checked: [false, false],
   moves: { captures: 0, enpassants: 0, castles: 0, promotions: 0 },
   globalMove: 0,
   side: 0,
   enpassant: -1,
-  castle: 0n,
+  castle: 0,
   nodes: 0,
   moveHistory: [],
 };

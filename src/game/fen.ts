@@ -1,4 +1,4 @@
-import setBit, { getBit } from './board/bitboard';
+import { getBit, setBitLoHi } from './board/bitboard';
 import { notToRawPos } from './board/square-helper';
 import { gameState, BOARD_SIZE, getBitboard, castlePieces, colors } from './consts/board';
 
@@ -51,13 +51,13 @@ export const convertFEN = (fen: string): string => {
  */
 export const parseFEN = (fen: string) => {
   // reset board data
-  gameState.bitboards.map(() => 0n);
-  gameState.occupancies.map(() => 0n);
+  gameState.occLo.fill(0);
+  gameState.occHi.fill(0);
 
   // reset player data
   gameState.side = 0;
   gameState.enpassant = -1;
-  gameState.castle = 0n;
+  gameState.castle = 0;
 
   // occupancies
   let fenIndex = 0;
@@ -85,11 +85,11 @@ export const parseFEN = (fen: string) => {
 
         let bitboardData = gameState.bitboards.find((b) => b.pieceId === pieceId);
         if (!bitboardData) {
-          gameState.bitboards.push({ pieceId: pieceId, bitboard: 0n });
+          gameState.bitboards.push({ pieceId, lo: 0, hi: 0 });
           bitboardData = gameState.bitboards[gameState.bitboards.length - 1];
         }
 
-        bitboardData.bitboard = setBit(bitboardData.bitboard, square, true);
+        setBitLoHi(bitboardData, square, true);
 
         fenIndex = endBracketIndex + 1;
       } else if (char >= '0' && char <= '9') {
@@ -98,7 +98,8 @@ export const parseFEN = (fen: string) => {
 
         // loop over all piece bitboards
         for (let bbPiece = 0; bbPiece < gameState.bitboards.length; bbPiece++) {
-          if (getBit(getBitboard(bbPiece).bitboard, square)) {
+          const bb = getBitboard(bbPiece);
+          if (getBit(bb.lo, bb.hi, square)) {
             piece = bbPiece;
           }
         }
@@ -123,16 +124,16 @@ export const parseFEN = (fen: string) => {
     let currCastle = gameState.castle;
     switch (fen[fenIndex]) {
       case 'K':
-        currCastle |= BigInt(castlePieces.wk);
+        currCastle |= castlePieces.wk;
         break;
       case 'Q':
-        currCastle |= BigInt(castlePieces.wq);
+        currCastle |= castlePieces.wq;
         break;
       case 'k':
-        currCastle |= BigInt(castlePieces.bk);
+        currCastle |= castlePieces.bk;
         break;
       case 'q':
-        currCastle |= BigInt(castlePieces.bq);
+        currCastle |= castlePieces.bq;
         break;
       case '-':
         break;
@@ -154,22 +155,28 @@ export const parseFEN = (fen: string) => {
   }
 
   // loop over white pieces bitboard
-  let whiteOccupancies = gameState.occupancies[colors.WHITE];
+  let whiteLo = 0;
+  let whiteHi = 0;
   for (const piece of gameState.whitePieceIds) {
-    whiteOccupancies |= getBitboard(piece).bitboard;
+    const bb = getBitboard(piece);
+    whiteLo |= bb.lo;
+    whiteHi |= bb.hi;
   }
-  gameState.occupancies[colors.WHITE] = whiteOccupancies;
+  gameState.occLo[colors.WHITE] = whiteLo;
+  gameState.occHi[colors.WHITE] = whiteHi;
 
   // loop over black pieces bitboard
-  let blackOccupancies = gameState.occupancies[colors.BLACK];
+  let blackLo = 0;
+  let blackHi = 0;
   for (const piece of gameState.blackPieceIds) {
-    blackOccupancies |= getBitboard(piece).bitboard;
+    const bb = getBitboard(piece);
+    blackLo |= bb.lo;
+    blackHi |= bb.hi;
   }
-  gameState.occupancies[colors.BLACK] = blackOccupancies;
+  gameState.occLo[colors.BLACK] = blackLo;
+  gameState.occHi[colors.BLACK] = blackHi;
 
   // include all occupancies in both
-  let bothOccupancies = gameState.occupancies[colors.BOTH];
-  bothOccupancies |= gameState.occupancies[colors.WHITE];
-  bothOccupancies |= gameState.occupancies[colors.BLACK];
-  gameState.occupancies[colors.BOTH] = bothOccupancies;
+  gameState.occLo[colors.BOTH] = whiteLo | blackLo;
+  gameState.occHi[colors.BOTH] = whiteHi | blackHi;
 };

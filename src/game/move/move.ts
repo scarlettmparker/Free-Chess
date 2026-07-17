@@ -19,9 +19,10 @@ import {
   MoveList,
   promotedPieces,
 } from '~/game/move/move-def';
-import setBit, { getBit, getLSFBIndex, getPieceById, BIT, NOT_BIT } from '~/game/board/bitboard';
+import { getPieceById } from '~/game/board/bitboard';
 import { castlingRights } from '~/game/consts/bits';
 import { isSquareAttacked } from '~/game/board/attacks';
+import { lsbIndex } from '~/game/board/bb';
 import { Piece, LeaperMoveBehavior } from '~/game/piece/piece';
 
 /**
@@ -41,7 +42,7 @@ export const addMove = (moves: MoveList, move: number) => {
 export type Undo = {
   capturedPiece: number;
   enpassant: number;
-  castle: bigint;
+  castle: number;
   // Rotational piece bookkeeping (only meaningful when the mover is rotational).
   mapKeySrc: number;
   mapHadSrc: boolean;
@@ -80,7 +81,8 @@ export const applyMove = (move: number): Undo => {
   const mover = gameState.side;
   const opponent = mover ^ 1;
   const bitboards = gameState.bitboards;
-  const occ = gameState.occupancies;
+  const occLo = gameState.occLo;
+  const occHi = gameState.occHi;
 
   const undo: Undo = {
     capturedPiece: -1,
@@ -101,14 +103,23 @@ export const applyMove = (move: number): Undo => {
     revValTgt: 0,
   };
 
-  const srcBit = BIT[sourceSquare];
-  const tgtBit = BIT[targetSquare];
+  // toggle bit `pos` on a lo/hi bitboard and on the given side's occupancy (XOR, self-inverse)
+  const toggle = (bb: { lo: number; hi: number }, side: number, pos: number) => {
+    if (pos < 32) {
+      const m = 1 << pos;
+      bb.lo ^= m;
+      occLo[side] ^= m;
+    } else {
+      const m = 1 << (pos - 32);
+      bb.hi ^= m;
+      occHi[side] ^= m;
+    }
+  };
 
   // move the piece (clear source, set target)
   const moverBB = bitboards[piece];
-  moverBB.bitboard = (moverBB.bitboard & NOT_BIT[sourceSquare]) | tgtBit;
-  const moveDelta = srcBit | tgtBit;
-  occ[mover] ^= moveDelta;
+  toggle(moverBB, mover, sourceSquare);
+  toggle(moverBB, mover, targetSquare);
 
   // captures (find the opponent piece on the target square and clear it)
   if (capture) {
@@ -116,28 +127,37 @@ export const applyMove = (move: number): Undo => {
     for (let i = 0; i < opponentPieceIds.length; i++) {
       const bbPiece = opponentPieceIds[i];
       const capBB = bitboards[bbPiece];
-      if (capBB.bitboard & tgtBit) {
-        capBB.bitboard &= NOT_BIT[targetSquare];
+      const hasTgt =
+        targetSquare < 32
+          ? (capBB.lo >>> targetSquare) & 1
+          : (capBB.hi >>> (targetSquare - 32)) & 1;
+      if (hasTgt) {
+        toggle(capBB, opponent, targetSquare);
         undo.capturedPiece = bbPiece;
-        occ[opponent] ^= tgtBit;
         break;
       }
     }
   }
 
-  // promotions (mover leaves target, promoted piece occupies it — same side, no occ delta)
+  // promotions (transfer target bit from mover to promoted piece; same side, occ unchanged)
   if (promoted) {
-    moverBB.bitboard &= NOT_BIT[targetSquare];
-    bitboards[promoted].bitboard |= tgtBit;
+    const promotedBB = bitboards[promoted];
+    if (targetSquare < 32) {
+      const m = 1 << targetSquare;
+      moverBB.lo &= ~m;
+      promotedBB.lo |= m;
+    } else {
+      const m = 1 << (targetSquare - 32);
+      moverBB.hi &= ~m;
+      promotedBB.hi |= m;
+    }
   }
 
   // en passant (captured pawn sits behind the target square)
   if (enpassantFlag) {
     const capPawnId = mover == WHITE ? charPieces.p : charPieces.P;
     const capSquare = mover == WHITE ? targetSquare + 8 : targetSquare - 8;
-    const capBit = BIT[capSquare];
-    bitboards[capPawnId].bitboard &= NOT_BIT[capSquare];
-    occ[opponent] ^= capBit;
+    toggle(bitboards[capPawnId], opponent, capSquare);
   }
 
   // reset / set en passant square
@@ -170,18 +190,18 @@ export const applyMove = (move: number): Undo => {
         rookTo = notToRawPos['d8'];
         break;
     }
-    const rookBit = BIT[rookFrom] | BIT[rookTo];
-    bitboards[rookId].bitboard ^= rookBit;
-    occ[mover] ^= rookBit;
+    const rookBB = bitboards[rookId];
+    toggle(rookBB, mover, rookFrom);
+    toggle(rookBB, mover, rookTo);
   }
 
   // update castling rights
-  gameState.castle = BigInt(
-    Number(gameState.castle) & castlingRights[sourceSquare] & castlingRights[targetSquare],
-  );
+  gameState.castle =
+    gameState.castle & castlingRights[sourceSquare] & castlingRights[targetSquare];
 
-  // both-sides occupancy = union (cheap single OR)
-  occ[colors.BOTH] = occ[WHITE] | occ[BLACK];
+  // both-sides occupancy = union (cheap single OR per word)
+  occLo[colors.BOTH] = occLo[WHITE] | occLo[BLACK];
+  occHi[colors.BOTH] = occHi[WHITE] | occHi[BLACK];
 
   // rotational pieces maintain per-square move counters; standard pieces skip this entirely.
   const pieceObj = getPieceById(piece);
@@ -232,10 +252,23 @@ export const undoMove = (move: number, undo: Undo) => {
   const mover = gameState.side ^ 1;
   const opponent = mover ^ 1;
   const bitboards = gameState.bitboards;
-  const occ = gameState.occupancies;
+  const occLo = gameState.occLo;
+  const occHi = gameState.occHi;
 
-  const srcBit = BIT[sourceSquare];
-  const tgtBit = BIT[targetSquare];
+  // toggle bit `pos` on a lo/hi bitboard and on the given side's occupancy (XOR, self-inverse)
+  const toggle = (bb: { lo: number; hi: number }, side: number, pos: number) => {
+    if (pos < 32) {
+      const m = 1 << pos;
+      bb.lo ^= m;
+      occLo[side] ^= m;
+    } else {
+      const m = 1 << (pos - 32);
+      bb.hi ^= m;
+      occHi[side] ^= m;
+    }
+  };
+
+  const moverBB = bitboards[piece];
 
   // restore side first
   gameState.side = mover;
@@ -267,39 +300,44 @@ export const undoMove = (move: number, undo: Undo) => {
         rookTo = notToRawPos['d8'];
         break;
     }
-    const rookBit = BIT[rookFrom] | BIT[rookTo];
-    bitboards[rookId].bitboard ^= rookBit;
-    occ[mover] ^= rookBit;
+    const rookBB = bitboards[rookId];
+    toggle(rookBB, mover, rookFrom);
+    toggle(rookBB, mover, rookTo);
   }
 
-  // undo promotion (promoted leaves target, original piece returns)
+  // undo promotion (transfer target bit back from promoted to original piece; occ unchanged)
   if (promoted) {
-    bitboards[promoted].bitboard &= NOT_BIT[targetSquare];
-    bitboards[piece].bitboard |= tgtBit;
+    const promotedBB = bitboards[promoted];
+    if (targetSquare < 32) {
+      const m = 1 << targetSquare;
+      promotedBB.lo &= ~m;
+      moverBB.lo |= m;
+    } else {
+      const m = 1 << (targetSquare - 32);
+      promotedBB.hi &= ~m;
+      moverBB.hi |= m;
+    }
   }
 
   // undo en passant capture
   if (enpassantFlag) {
     const capPawnId = mover == WHITE ? charPieces.p : charPieces.P;
     const capSquare = mover == WHITE ? targetSquare + 8 : targetSquare - 8;
-    const capBit = BIT[capSquare];
-    bitboards[capPawnId].bitboard |= capBit;
-    occ[opponent] ^= capBit;
+    toggle(bitboards[capPawnId], opponent, capSquare);
   }
 
   // undo normal capture
   if (capture && undo.capturedPiece !== -1) {
-    bitboards[undo.capturedPiece].bitboard |= tgtBit;
-    occ[opponent] ^= tgtBit;
+    toggle(bitboards[undo.capturedPiece], opponent, targetSquare);
   }
 
   // move the piece back (clear target, set source)
-  const moverBB = bitboards[piece];
-  moverBB.bitboard = (moverBB.bitboard & NOT_BIT[targetSquare]) | srcBit;
-  occ[mover] ^= srcBit | tgtBit;
+  toggle(moverBB, mover, targetSquare);
+  toggle(moverBB, mover, sourceSquare);
 
   // restore occupancies union + state
-  occ[colors.BOTH] = occ[WHITE] | occ[BLACK];
+  occLo[colors.BOTH] = occLo[WHITE] | occLo[BLACK];
+  occHi[colors.BOTH] = occHi[WHITE] | occHi[BLACK];
   gameState.enpassant = undo.enpassant;
   gameState.castle = undo.castle;
 
@@ -334,7 +372,8 @@ export const undoMove = (move: number, undo: Undo) => {
 export const moverKingInCheck = () => {
   // gameState.side is now the opponent; the mover's king is the other colour's king.
   const kingId = gameState.side == WHITE ? charPieces.k : charPieces.K;
-  return isSquareAttacked(getLSFBIndex(getBitboard(kingId).bitboard), gameState.side);
+  const kingBB = getBitboard(kingId);
+  return isSquareAttacked(lsbIndex(kingBB.lo, kingBB.hi), gameState.side);
 };
 
 /**

@@ -28,8 +28,23 @@ function setBit(bitboard: bigint, pos: number, push: boolean) {
  * @param pos Position (e.g. a1) on a Chess board.
  * @returns Bit at position in bitboard.
  */
-export function getBit(bitboard: bigint, pos: number) {
-  return Number((bitboard >> BigInt(pos)) & 1n);
+export function getBit(lo: number, hi: number, pos: number) {
+  return pos < 32 ? (lo >>> pos) & 1 : (hi >>> (pos - 32)) & 1;
+}
+
+/**
+ * Mutates a stored lo/hi bitboard in place: sets or clears the bit at `pos`.
+ */
+export function setBitLoHi(bb: { lo: number; hi: number }, pos: number, on: boolean) {
+  if (pos < 32) {
+    const m = 1 << pos;
+    if (on) bb.lo |= m;
+    else bb.lo &= ~m;
+  } else {
+    const m = 1 << (pos - 32);
+    if (on) bb.hi |= m;
+    else bb.hi &= ~m;
+  }
 }
 
 const BIT_COUNT_LOOKUP: number[] = Array(256)
@@ -120,13 +135,15 @@ export const printBoard = () => {
 
       // loop over all piece bitboards
       for (const bbPiece of gameState.whitePieceIds) {
-        if (getBit(getBitboard(bbPiece).bitboard, square)) {
+        const bb = getBitboard(bbPiece);
+        if (getBit(bb.lo, bb.hi, square)) {
           piece = bbPiece;
         }
       }
 
       for (const bbPiece of gameState.blackPieceIds) {
-        if (getBit(getBitboard(bbPiece).bitboard, square)) {
+        const bb = getBitboard(bbPiece);
+        if (getBit(bb.lo, bb.hi, square)) {
           piece = bbPiece;
         }
       }
@@ -154,13 +171,13 @@ export const getPieceById = (id: number) => {
  * @param castle Current castling rights for all players.
  * @returns Formatted castling rights (e.g. KQkq).
  */
-function getCastling(castle: bigint) {
+function getCastling(castle: number) {
   const rights = [];
 
-  if (castle & BigInt(castlePieces.wk)) rights.push('K');
-  if (castle & BigInt(castlePieces.wq)) rights.push('Q');
-  if (castle & BigInt(castlePieces.bk)) rights.push('k');
-  if (castle & BigInt(castlePieces.bq)) rights.push('q');
+  if (castle & castlePieces.wk) rights.push('K');
+  if (castle & castlePieces.wq) rights.push('Q');
+  if (castle & castlePieces.bk) rights.push('k');
+  if (castle & castlePieces.bq) rights.push('q');
 
   return rights.join('');
 }

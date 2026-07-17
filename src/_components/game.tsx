@@ -145,7 +145,8 @@ const Game = (props: GameProps) => {
       // TODO: want to move this to a helper function and check if it's used elsewhere
       let piece: number | undefined;
       for (const bbPiece of gameState.whitePieceIds) {
-        if (getBit(getBitboard(bbPiece).bitboard, square)) {
+        const bb = getBitboard(bbPiece);
+        if (getBit(bb.lo, bb.hi, square)) {
           piece = bbPiece;
           break;
         }
@@ -154,7 +155,8 @@ const Game = (props: GameProps) => {
       // only check black if piece is still undefined/null (handle pieceId === 0)
       if (piece === undefined || piece === null) {
         for (const bbPiece of gameState.blackPieceIds) {
-          if (getBit(getBitboard(bbPiece).bitboard, square)) {
+          const bb = getBitboard(bbPiece);
+          if (getBit(bb.lo, bb.hi, square)) {
             piece = bbPiece;
             break;
           }
