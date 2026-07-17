@@ -56,7 +56,10 @@ export const isSquareAttacked = (pos: number, side: number) => {
 
         if (checkMove && checkMove > 0) {
           checked = true;
-          if (loTbl[oppColor][checkMove][pos] & pieceLo || hiTbl[oppColor][checkMove][pos] & pieceHi)
+          if (
+            loTbl[oppColor][checkMove][pos] & pieceLo ||
+            hiTbl[oppColor][checkMove][pos] & pieceHi
+          )
             return true;
         }
 

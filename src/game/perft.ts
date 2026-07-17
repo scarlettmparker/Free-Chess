@@ -15,13 +15,10 @@ const tally = (move: number) => {
 
 /**
  * Performance test & move path enumeration.
- * Uses in-place make/unmake (no per-node board copies), short-circuits leaf
- * nodes (no move generation at depth 0), and bulk-counts the depth-1 ply.
  * @param depth Number of moves from root.
  * @param lastMove The move that led to the current position (for counting properties at leaves).
  */
 export const perftDriver = (depth: number, lastMove: number = 0) => {
-  // leaf: count without generating moves (generation was wasted work at depth 0)
   if (depth === 0) {
     gameState.nodes += 1;
     tally(lastMove);
@@ -31,7 +28,7 @@ export const perftDriver = (depth: number, lastMove: number = 0) => {
   const moves: MoveList = { moves: [], count: 0 };
   generateMoves(moves, gameState.pieces);
 
-  // bulk-count the leaf ply: enumerate legal moves without recursing into make/unmake
+  // count the leaf ply directly
   if (depth === 1) {
     for (let moveCount = 0; moveCount < moves.count; moveCount++) {
       const move = moves.moves[moveCount];
@@ -58,10 +55,11 @@ export const perftDriver = (depth: number, lastMove: number = 0) => {
 };
 
 /**
- * Pure perft: returns counts without relying on/ mutating gameState.counters.
- * The caller is responsible for resetting gameState before calling.
+ * Run perft, returning counts without mutating gameState counters.
  */
-export const perft = (depth: number): { nodes: number; captures: number; enpassants: number; castles: number; promotions: number } => {
+export const perft = (
+  depth: number,
+): { nodes: number; captures: number; enpassants: number; castles: number; promotions: number } => {
   const savedNodes = gameState.nodes;
   const savedMoves = gameState.moves;
   gameState.nodes = 0;

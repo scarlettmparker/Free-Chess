@@ -36,14 +36,13 @@ export const addMove = (moves: MoveList, move: number) => {
 };
 
 /**
- * Undo record returned by applyMove and consumed by undoMove.
- * Captures only the state that is not derivable from the move encoding itself.
+ * State captured by applyMove to revert a move in undoMove.
  */
 export type Undo = {
   capturedPiece: number;
   enpassant: number;
   castle: number;
-  // Rotational piece bookkeeping (only meaningful when the mover is rotational).
+  // rotational piece bookkeeping
   mapKeySrc: number;
   mapHadSrc: boolean;
   mapValSrc: number;
@@ -63,8 +62,7 @@ const WHITE = colors.WHITE;
 const BLACK = colors.BLACK;
 
 /**
- * Applies a move in place, mutating global game state, without testing legality.
- * Occupancies are updated incrementally (XOR) instead of full recompute.
+ * Apply a move in place without testing legality.
  * @param move Encoded move.
  * @returns Undo record for undoMove.
  */
@@ -103,7 +101,7 @@ export const applyMove = (move: number): Undo => {
     revValTgt: 0,
   };
 
-  // toggle bit `pos` on a lo/hi bitboard and on the given side's occupancy (XOR, self-inverse)
+  // toggle a bit on a bitboard and the matching side occupancy
   const toggle = (bb: { lo: number; hi: number }, side: number, pos: number) => {
     if (pos < 32) {
       const m = 1 << pos;
@@ -116,12 +114,12 @@ export const applyMove = (move: number): Undo => {
     }
   };
 
-  // move the piece (clear source, set target)
+  // move the piece
   const moverBB = bitboards[piece];
   toggle(moverBB, mover, sourceSquare);
   toggle(moverBB, mover, targetSquare);
 
-  // captures (find the opponent piece on the target square and clear it)
+  // captures
   if (capture) {
     const opponentPieceIds = mover == WHITE ? gameState.blackPieceIds : gameState.whitePieceIds;
     for (let i = 0; i < opponentPieceIds.length; i++) {
@@ -139,7 +137,7 @@ export const applyMove = (move: number): Undo => {
     }
   }
 
-  // promotions (transfer target bit from mover to promoted piece; same side, occ unchanged)
+  // promotions
   if (promoted) {
     const promotedBB = bitboards[promoted];
     if (targetSquare < 32) {
@@ -153,17 +151,16 @@ export const applyMove = (move: number): Undo => {
     }
   }
 
-  // en passant (captured pawn sits behind the target square)
+  // en passant
   if (enpassantFlag) {
     const capPawnId = mover == WHITE ? charPieces.p : charPieces.P;
     const capSquare = mover == WHITE ? targetSquare + 8 : targetSquare - 8;
     toggle(bitboards[capPawnId], opponent, capSquare);
   }
 
-  // reset / set en passant square
   gameState.enpassant = double ? (mover == WHITE ? targetSquare + 8 : targetSquare - 8) : -1;
 
-  // castling: move the rook
+  // castling moves
   if (castling) {
     let rookId: number;
     let rookFrom: number;
@@ -196,14 +193,13 @@ export const applyMove = (move: number): Undo => {
   }
 
   // update castling rights
-  gameState.castle =
-    gameState.castle & castlingRights[sourceSquare] & castlingRights[targetSquare];
+  gameState.castle = gameState.castle & castlingRights[sourceSquare] & castlingRights[targetSquare];
 
-  // both-sides occupancy = union (cheap single OR per word)
+  // update both sides occupancies
   occLo[colors.BOTH] = occLo[WHITE] | occLo[BLACK];
   occHi[colors.BOTH] = occHi[WHITE] | occHi[BLACK];
 
-  // rotational pieces maintain per-square move counters; standard pieces skip this entirely.
+  // deal with rotating piece moves
   const pieceObj = getPieceById(piece);
   if (pieceObj) {
     const rot = pieceObj.getRotationalMoveType();
@@ -248,14 +244,14 @@ export const undoMove = (move: number, undo: Undo) => {
   const enpassantFlag = getMoveEnpassant(move);
   const castling = getMoveCastle(move);
 
-  // the side that moved is the side now NOT to move (state was flipped by applyMove)
+  // the side that moved is the side now NOT to move
   const mover = gameState.side ^ 1;
   const opponent = mover ^ 1;
   const bitboards = gameState.bitboards;
   const occLo = gameState.occLo;
   const occHi = gameState.occHi;
 
-  // toggle bit `pos` on a lo/hi bitboard and on the given side's occupancy (XOR, self-inverse)
+  // toggle a bit on a bitboard and the matching side occupancy
   const toggle = (bb: { lo: number; hi: number }, side: number, pos: number) => {
     if (pos < 32) {
       const m = 1 << pos;
@@ -305,7 +301,7 @@ export const undoMove = (move: number, undo: Undo) => {
     toggle(rookBB, mover, rookTo);
   }
 
-  // undo promotion (transfer target bit back from promoted to original piece; occ unchanged)
+  // undo promotion
   if (promoted) {
     const promotedBB = bitboards[promoted];
     if (targetSquare < 32) {
@@ -335,7 +331,7 @@ export const undoMove = (move: number, undo: Undo) => {
   toggle(moverBB, mover, targetSquare);
   toggle(moverBB, mover, sourceSquare);
 
-  // restore occupancies union + state
+  // restore occupancies and state
   occLo[colors.BOTH] = occLo[WHITE] | occLo[BLACK];
   occHi[colors.BOTH] = occHi[WHITE] | occHi[BLACK];
   gameState.enpassant = undo.enpassant;
@@ -390,7 +386,7 @@ export const makeMove = (move: number, moveFlag: number, _currentMove: number): 
     }
     return 1;
   }
-  // capture-only mode (unused by the current engine): accept captures only.
+  // capture-only mode: accept captures only
   if (getMoveCapture(move)) {
     return makeMove(move, moveType.ALL_MOVES, 0);
   }

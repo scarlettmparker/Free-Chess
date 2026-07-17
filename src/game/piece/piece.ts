@@ -21,7 +21,9 @@ export class LeaperMoveBehavior implements MoveBehavior {
     );
   }
 
-  /** Initialize leaper piece attacks (direct target-square computation, no bigint). */
+  /**
+   * Initialize leaper piece attacks.
+   */
   initializeAttacks(): void {
     for (let i = 0; i < this.leaperOffsets.length; i++) {
       for (let square = 0; square < 64; square++) {
@@ -35,18 +37,28 @@ export class LeaperMoveBehavior implements MoveBehavior {
     }
   }
 
-  /** Low 32 bits of the leaper attack table. */
+  /**
+   * Low 32 bits of the leaper attack table.
+   */
   getLeaperPieceStateLo(): Uint32Array[][] {
     return this.leaperPieceStateLo;
   }
 
-  /** High 32 bits of the leaper attack table. */
+  /**
+   * High 32 bits of the leaper attack table.
+   */
   getLeaperPieceStateHi(): Uint32Array[][] {
     return this.leaperPieceStateHi;
   }
 
-  /** Compute a leaper's attack set as {lo, hi} via direct file/rank target squares. */
-  private maskLeaperAttacks(pos: number, offsets: number[][], color: number): { lo: number; hi: number } {
+  /**
+   * Mask leaper attacks.
+   */
+  private maskLeaperAttacks(
+    pos: number,
+    offsets: number[][],
+    color: number,
+  ): { lo: number; hi: number } {
     let lo = 0;
     let hi = 0;
     const rankTop = pos >> 3;
@@ -86,7 +98,9 @@ export class PawnMoveBehavior implements MoveBehavior {
     this.pawnPieceStateHi = Array.from({ length: 2 }, () => new Uint32Array(64));
   }
 
-  /** Initialize pawn piece attacks (direct target-square computation, no bigint). */
+  /**
+   * Initialize pawn piece attacks.
+   */
   initializeAttacks(): void {
     for (let square = 0; square < 64; square++) {
       const white = this.maskPawnAttacks(colors.WHITE, square);
@@ -98,17 +112,23 @@ export class PawnMoveBehavior implements MoveBehavior {
     }
   }
 
-  /** Low 32 bits of the pawn attack table. */
+  /**
+   * Low 32 bits of the pawn attack table.
+   */
   getPawnPieceStateLo(): Uint32Array[] {
     return this.pawnPieceStateLo;
   }
 
-  /** High 32 bits of the pawn attack table. */
+  /**
+   * High 32 bits of the pawn attack table.
+   */
   getPawnPieceStateHi(): Uint32Array[] {
     return this.pawnPieceStateHi;
   }
 
-  /** Compute a pawn's capture set as {lo, hi} via direct diagonal target squares. */
+  /**
+   * Mask pawn attacks.
+   */
   private maskPawnAttacks(color: number, pos: number): { lo: number; hi: number } {
     let lo = 0;
     let hi = 0;
@@ -132,9 +152,7 @@ export class PawnMoveBehavior implements MoveBehavior {
 }
 
 /**
- * Pack the bits of (occLo, occHi) at the positions listed in `bits` into a compact
- * index (a software PEXT). Used to index PEXT-indexed sliding attack tables without
- * any bigint multiply.
+ * Pack the occupancy bits at the given positions into a compact index.
  */
 function pextIndex(occLo: number, occHi: number, bits: number[]): number {
   let idx = 0;
@@ -153,7 +171,7 @@ function pextIndex(occLo: number, occHi: number, bits: number[]): number {
 export class SlidingMoveBehavior implements MoveBehavior {
   private straight: boolean;
   private diagonal: boolean;
-  // PEXT-indexed lo/hi attack tables (one Uint32Array per square) + the mask bit positions.
+  // attack tables (lo/hi per square) and the relevant mask bit positions
   private straightAttackLo: Uint32Array[];
   private straightAttackHi: Uint32Array[];
   private straightMaskBits: number[][];
@@ -161,14 +179,7 @@ export class SlidingMoveBehavior implements MoveBehavior {
   private diagonalAttackHi: Uint32Array[];
   private diagonalMaskBits: number[][];
 
-  constructor(
-    straight: boolean,
-    diagonal: boolean,
-    // constraints are unused at runtime: all sliders in this engine slide the full ray,
-    // so the OTF attack table (which the PEXT table is built from) is already final.
-    _straightConstraints: number[],
-    _diagonalConstraints: number[],
-  ) {
+  constructor(straight: boolean, diagonal: boolean) {
     this.straight = straight;
     this.diagonal = diagonal;
     this.straightAttackLo = [];
@@ -179,12 +190,16 @@ export class SlidingMoveBehavior implements MoveBehavior {
     this.diagonalMaskBits = [];
   }
 
-  /** Initialize sliding piece attacks (tables are assigned externally). */
+  /**
+   * Initialize sliding piece attacks.
+   */
   initializeAttacks(): void {
-    // no-op
+    // sliding pieces initialize their attack tables externally
   }
 
-  /** Number-path sliding attacks via PEXT-indexed lo/hi tables — no bigint. */
+  /**
+   * Get sliding piece attacks as {lo, hi}.
+   */
   getSliderAttacksLoHi(pos: number, occLo: number, occHi: number): { lo: number; hi: number } {
     let lo = 0;
     let hi = 0;
@@ -422,21 +437,21 @@ export class KingPiece extends Piece {
 
 export class QueenPiece extends Piece {
   constructor(id: number, color: number) {
-    super(id, color, new SlidingMoveBehavior(true, true, [8, 8, 8, 8], [8, 8, 8, 8]));
+    super(id, color, new SlidingMoveBehavior(true, true));
     this.setSlider(true);
   }
 }
 
 export class RookPiece extends Piece {
   constructor(id: number, color: number) {
-    super(id, color, new SlidingMoveBehavior(true, false, [8, 8, 8, 8], []));
+    super(id, color, new SlidingMoveBehavior(true, false));
     this.setSlider(true);
   }
 }
 
 export class BishopPiece extends Piece {
   constructor(id: number, color: number) {
-    super(id, color, new SlidingMoveBehavior(false, true, [], [8, 8, 8, 8]));
+    super(id, color, new SlidingMoveBehavior(false, true));
     this.setSlider(true);
   }
 }

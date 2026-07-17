@@ -96,4 +96,3 @@ function getCastling(castle: number) {
 
   return rights.join('');
 }
-

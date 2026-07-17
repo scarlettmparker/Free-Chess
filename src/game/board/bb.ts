@@ -1,9 +1,6 @@
 /**
- * Lo/hi 32-bit bitboard primitives.
- *
- * Bitboards are stored as two 32-bit Number halves (lo = bits 0..31, hi = bits 32..63).
- * All move-generation, make/unmake and attack logic operates on these halves in pure
- * Number arithmetic (Math.clz32 bit-scan, Int32 AND/OR/XOR) — no bigint in any hot path.
+ * Lo/hi 32-bit bitboard primitives. A bitboard is two unsigned 32-bit halves where
+ * `lo` holds bits 0..31 and `hi` holds bits 32..63.
  */
 
 /** 16-bit popcount lookup. */

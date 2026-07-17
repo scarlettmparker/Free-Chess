@@ -121,7 +121,8 @@ wss.on('connection', (ws: WS, req) => {
         const opponent = sideToMove ^ 1;
 
         // we probably shouldn't care about this server side
-        const whiteKing = sideToMove === colors.WHITE ? getBitboard(charPieces.K) : getBitboard(charPieces.k);
+        const whiteKing =
+          sideToMove === colors.WHITE ? getBitboard(charPieces.K) : getBitboard(charPieces.k);
         const kingSquare = lsbIndex(whiteKing.lo, whiteKing.hi);
 
         gameState.checked[gameState.side] = isSquareAttacked(kingSquare, opponent);

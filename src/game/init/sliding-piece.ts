@@ -2,15 +2,14 @@ import { setOccupancyBits } from '~/game/occupancies';
 
 type LoHi = { lo: number; hi: number };
 
-/** Set bit `sq` in a {lo, hi} bitboard (mutates via return). */
+/** Set bit `sq` on a {lo, hi} bitboard. */
 const set = (acc: LoHi, sq: number) => {
   if (sq < 32) acc.lo |= 1 << sq;
   else acc.hi |= 1 << (sq - 32);
 };
 
-/** Test bit `sq` in a {lo, hi} bitboard. */
-const test = (bb: LoHi, sq: number) =>
-  sq < 32 ? (bb.lo >>> sq) & 1 : (bb.hi >>> (sq - 32)) & 1;
+/** Test bit `sq` on a {lo, hi} bitboard. */
+const test = (bb: LoHi, sq: number) => (sq < 32 ? (bb.lo >>> sq) & 1 : (bb.hi >>> (sq - 32)) & 1);
 
 /** Set-bit positions of a {lo, hi} bitboard, in increasing square order. */
 const bitsOf = (bb: LoHi): number[] => {
@@ -31,9 +30,7 @@ const bitsOf = (bb: LoHi): number[] => {
 };
 
 /**
- * Initialize sliding-piece attack tables indexed by a software PEXT of the relevant
- * occupancy (no magic numbers, no bigint). Returns lo/hi Uint32Array tables plus the
- * per-square mask bit lists used to compute the PEXT index.
+ * Initialize piece attacks for sliding pieces.
  */
 export const initSlidingPieces = () => {
   const straightLo: Uint32Array[] = new Array(64);

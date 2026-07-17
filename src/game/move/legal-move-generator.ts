@@ -75,8 +75,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
           addMove(movesCopy, encodeMove(sourceSquare, targetSquare, piece.getId(), 0, 0, 0, 0, 0));
           if (sourceSquare >= notToRawPos['a2'] && sourceSquare <= notToRawPos['h2']) {
             const t2 = targetSquare - 8;
-            const t2Free =
-              t2 < 32 ? !((bothLo >>> t2) & 1) : !((bothHi >>> (t2 - 32)) & 1);
+            const t2Free = t2 < 32 ? !((bothLo >>> t2) & 1) : !((bothHi >>> (t2 - 32)) & 1);
             if (t2Free) {
               addMove(movesCopy, encodeMove(sourceSquare, t2, piece.getId(), 0, 0, 1, 0, 0));
             }
@@ -84,7 +83,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
         }
       }
 
-      // pawn captures (mask with opponent occupancy in Number)
+      // pawn captures
       let alo = moveBehavior.getPawnPieceStateLo()[gameState.side][sourceSquare] & oppLo;
       let ahi = moveBehavior.getPawnPieceStateHi()[gameState.side][sourceSquare] & oppHi;
       while (alo !== 0 || ahi !== 0) {
@@ -124,8 +123,8 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
   if (piece.getColor() === colors.WHITE && piece.getKing()) {
     if (gameState.castle & castlePieces.wk) {
       if (
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['f1']) &&
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['g1'])
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['f1']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['g1'])
       ) {
         if (
           !isSquareAttacked(notToRawPos['e1'], colors.BLACK) &&
@@ -142,9 +141,9 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
     // queen side
     if (gameState.castle & castlePieces.wq) {
       if (
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['d1']) &&
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['c1']) &&
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['b1'])
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['d1']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['c1']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['b1'])
       ) {
         if (
           !isSquareAttacked(notToRawPos['e1'], colors.BLACK) &&
@@ -197,7 +196,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
         }
       }
 
-      // initialize pawn attacks bitboard (mask with opponent occupancy in Number)
+      // initialize pawn attacks bitboard
       let alo = moveBehavior.getPawnPieceStateLo()[gameState.side][sourceSquare] & oppLo;
       let ahi = moveBehavior.getPawnPieceStateHi()[gameState.side][sourceSquare] & oppHi;
       while (alo !== 0 || ahi !== 0) {
@@ -236,8 +235,8 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
   if (piece.getColor() === colors.BLACK && piece.getKing()) {
     if (gameState.castle & castlePieces.bk) {
       if (
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['f8']) &&
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['g8'])
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['f8']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['g8'])
       ) {
         if (
           !isSquareAttacked(notToRawPos['e8'], colors.WHITE) &&
@@ -254,9 +253,9 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
     // queen side
     if (gameState.castle & castlePieces.bq) {
       if (
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['d8']) &&
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['c8']) &&
-        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH],notToRawPos['b8'])
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['d8']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['c8']) &&
+        !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['b8'])
       ) {
         if (
           !isSquareAttacked(notToRawPos['e8'], colors.WHITE) &&
@@ -286,7 +285,6 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
     const bothLo = gameState.occLo[colors.BOTH];
     const bothHi = gameState.occHi[colors.BOTH];
 
-    // source-scan and target-drain in pure Number (lo/hi); bigint only for table reads.
     let bbLo = pieceBB.lo;
     let bbHi = pieceBB.hi;
 
@@ -294,7 +292,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
       sourceSquare = lsbIndex(bbLo, bbHi);
       const checkMove = getCheckMove(piece, sourceSquare);
 
-      // accumulate this source's raw attack set directly in lo/hi (no bigint in the loop)
+      // get attack set for this source square
       let alo = 0;
       let ahi = 0;
       if (moveBehavior instanceof LeaperMoveBehavior) {
@@ -314,9 +312,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
       while (alo !== 0 || ahi !== 0) {
         targetSquare = lsbIndex(alo, ahi);
         const isCapture =
-          targetSquare < 32
-            ? (oppLo >>> targetSquare) & 1
-            : (oppHi >>> (targetSquare - 32)) & 1;
+          targetSquare < 32 ? (oppLo >>> targetSquare) & 1 : (oppHi >>> (targetSquare - 32)) & 1;
         addMove(
           movesCopy,
           encodeMove(sourceSquare, targetSquare, piece.getId(), 0, isCapture ? 1 : 0, 0, 0, 0),

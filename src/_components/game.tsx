@@ -169,7 +169,7 @@ const Game = (props: GameProps) => {
         pieceId: piece,
         moves:
           piece != null
-            ? movesByPieceAndSquare.get(`${piece}-${square}`) ?? EMPTY_MOVE_LIST
+            ? (movesByPieceAndSquare.get(`${piece}-${square}`) ?? EMPTY_MOVE_LIST)
             : EMPTY_MOVE_LIST,
       });
     }

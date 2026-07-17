@@ -1,8 +1,5 @@
 /**
- * Perft benchmark harness — serial + parallel.
- * Usage: npm run bench:perft [depth]
- * Prints nodes/sec for the serial engine and the worker_threads parallel engine,
- * and cross-checks parallel node counts against the serial reference.
+ * Perft benchmark harness. Usage: npm run bench:perft [depth].
  */
 import { performance } from 'node:perf_hooks';
 import os from 'node:os';

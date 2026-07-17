@@ -1,9 +1,9 @@
 /**
- * Reconstruct an occupancy subset from a PEXT index: for each set bit `k` of `idx`,
- * set the bit at position `bits[k]`. Returns a {lo, hi} bitboard.
+ * Build an occupancy subset from an index over a set of mask bit positions.
  *
- * @param idx PEXT index (enumerator over the relevant occupancy bits).
- * @param bits Set-bit positions of the relevant occupancy mask (from bitsOf).
+ * @param idx Index over the relevant occupancy bits.
+ * @param bits Set-bit positions of the relevant occupancy mask.
+ * @returns Occupancy bitboard as {lo, hi}.
  */
 export const setOccupancyBits = (idx: number, bits: number[]): { lo: number; hi: number } => {
   let lo = 0;

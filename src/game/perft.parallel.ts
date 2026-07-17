@@ -16,9 +16,7 @@ export type PerftResult = {
 };
 
 /**
- * Parallel perft via worker_threads. Enumerates legal root moves in the main
- * thread, partitions them across N workers, and sums each worker's subtree
- * tally. Result is identical to serial perft for depth >= 2.
+ * Run perft split across worker threads, one subtree per legal root move.
  */
 export async function perftParallel(
   fen: string,

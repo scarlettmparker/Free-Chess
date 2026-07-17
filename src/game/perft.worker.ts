@@ -5,10 +5,8 @@ import { perftDriver } from '~/game/perft';
 import { applyMove, undoMove } from '~/game/move/move';
 
 /**
- * Worker entry: given a FEN, a subset of LEGAL root moves, and a full perft depth,
- * computes perft(depth - 1) for each root move and returns the summed tally.
- * Each worker owns an isolated gameState (separate realm), so there is no shared
- * mutable state.
+ * Perft worker: compute perft(depth - 1) for each assigned root move and return
+ * the summed tally.
  */
 type WorkerPayload = { fen: string; moves: number[]; depth: number };
 type Result = {

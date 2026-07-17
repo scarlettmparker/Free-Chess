@@ -196,9 +196,7 @@ export function deserializeGameState(json: SerializedGameState): GameState {
         hi: Number(v >> 32n) >>> 0,
       };
     }),
-    occLo: Uint32Array.from(
-      json.occupancies.map((o) => Number(BigInt(o) & 0xffffffffn) >>> 0),
-    ),
+    occLo: Uint32Array.from(json.occupancies.map((o) => Number(BigInt(o) & 0xffffffffn) >>> 0)),
     occHi: Uint32Array.from(json.occupancies.map((o) => Number(BigInt(o) >> 32n) >>> 0)),
     checked: json.checked,
     side: json.side,
