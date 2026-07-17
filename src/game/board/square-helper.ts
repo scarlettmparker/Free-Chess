@@ -1,5 +1,3 @@
-import { notHGFile, notHFile, notAFile, notABFile } from '~/game/consts/board';
-
 /**
  * Helper function to check which colour a square should be painted.
  * @param square Square to check.
@@ -67,20 +65,5 @@ function notToSquare(pos: string) {
 
   return [column, row];
 }
-
-export const getFileConstraint = (fileOffset: number): bigint => {
-  switch (fileOffset) {
-    case -2:
-      return notHGFile;
-    case -1:
-      return notHFile;
-    case 1:
-      return notAFile;
-    case 2:
-      return notABFile;
-    default:
-      return ~0n;
-  }
-};
 
 export default notToSquare;

@@ -13,7 +13,7 @@ import {
   PawnMoveBehavior,
 } from '~/game/piece/piece';
 import { isSquareAttacked } from '~/game/board/attacks';
-import { getBit, getLSFBIndex } from '~/game/board/bitboard';
+import { getBit } from '~/game/board/bitboard';
 import { lsbIndex } from '~/game/board/bb';
 import { notToRawPos } from '~/game/board/square-helper';
 import { addMove, getCheckMove } from './move';
@@ -107,15 +107,12 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
       }
 
       if (gameState.enpassant != -1) {
-        const enpassantAttacks =
-          moveBehavior.getPawnPieceState()[gameState.side][sourceSquare] &
-          (1n << BigInt(gameState.enpassant));
-        if (enpassantAttacks) {
-          const targetEnpassant = getLSFBIndex(enpassantAttacks);
-          addMove(
-            movesCopy,
-            encodeMove(sourceSquare, targetEnpassant, piece.getId(), 0, 1, 0, 1, 0),
-          );
+        const ep = gameState.enpassant;
+        const epLo = moveBehavior.getPawnPieceStateLo()[gameState.side][sourceSquare];
+        const epHi = moveBehavior.getPawnPieceStateHi()[gameState.side][sourceSquare];
+        const hits = ep < 32 ? (epLo >>> ep) & 1 : (epHi >>> (ep - 32)) & 1;
+        if (hits) {
+          addMove(movesCopy, encodeMove(sourceSquare, ep, piece.getId(), 0, 1, 0, 1, 0));
         }
       }
 
@@ -223,15 +220,12 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
       }
 
       if (gameState.enpassant != -1) {
-        const enpassantAttacks =
-          moveBehavior.getPawnPieceState()[gameState.side][sourceSquare] &
-          (1n << BigInt(gameState.enpassant));
-        if (enpassantAttacks) {
-          const targetEnpassant = getLSFBIndex(enpassantAttacks);
-          addMove(
-            movesCopy,
-            encodeMove(sourceSquare, targetEnpassant, piece.getId(), 0, 1, 0, 1, 0),
-          );
+        const ep = gameState.enpassant;
+        const epLo = moveBehavior.getPawnPieceStateLo()[gameState.side][sourceSquare];
+        const epHi = moveBehavior.getPawnPieceStateHi()[gameState.side][sourceSquare];
+        const hits = ep < 32 ? (epLo >>> ep) & 1 : (epHi >>> (ep - 32)) & 1;
+        if (hits) {
+          addMove(movesCopy, encodeMove(sourceSquare, ep, piece.getId(), 0, 1, 0, 1, 0));
         }
       }
       if (sourceSquare < 32) bbLo &= ~(1 << sourceSquare);

@@ -1,26 +1,19 @@
-import { getLSFBIndex } from './board/bitboard';
-
 /**
+ * Reconstruct an occupancy subset from a PEXT index: for each set bit `k` of `idx`,
+ * set the bit at position `bits[k]`. Returns a {lo, hi} bitboard.
  *
- * @param idx Bitmask indicating squares to be marked.
- * @param bitsInMask Number of bits to be considered.
- * @param attackMask Bitmask of attacks for a piece.
- * @returns Bitmask representing the occupancy of the squares.
+ * @param idx PEXT index (enumerator over the relevant occupancy bits).
+ * @param bits Set-bit positions of the relevant occupancy mask (from bitsOf).
  */
-export const setOccupancyBits = (idx: number, bitsInMask: number, attackMask: bigint) => {
-  let occupancy = 0n;
-  let currentAttackMask = attackMask;
-
-  for (let count = 0; count < bitsInMask; count++) {
-    const square = getLSFBIndex(currentAttackMask);
-    if (square === -1) break;
-
-    currentAttackMask &= currentAttackMask - 1n;
-
-    if (idx & (1 << count)) {
-      occupancy |= 1n << BigInt(square);
+export const setOccupancyBits = (idx: number, bits: number[]): { lo: number; hi: number } => {
+  let lo = 0;
+  let hi = 0;
+  for (let k = 0; k < bits.length; k++) {
+    if (idx & (1 << k)) {
+      const sq = bits[k];
+      if (sq < 32) lo |= 1 << sq;
+      else hi |= 1 << (sq - 32);
     }
   }
-
-  return occupancy;
+  return { lo, hi };
 };

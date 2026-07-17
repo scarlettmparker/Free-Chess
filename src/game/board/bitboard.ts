@@ -7,21 +7,6 @@ import {
 } from '~/game/consts/board';
 import { rawPosToNot } from './square-helper';
 
-/** Precomputed single-bit and cleared-bit bigint masks (avoid `1n << BigInt(pos)` in hot paths). */
-export const BIT: bigint[] = Array.from({ length: 64 }, (_, i) => 1n << BigInt(i));
-export const NOT_BIT: bigint[] = BIT.map((b) => ~b);
-
-/**
- *
- * @param bitBoard Bitboard to modify.
- * @param pos Position (e.g. a1) on a Chess board.
- * @param push True: sets to 1, False: sets to 0.
- * @returns Updated bitboard.
- */
-function setBit(bitboard: bigint, pos: number, push: boolean) {
-  return push ? bitboard | BIT[pos] : bitboard & NOT_BIT[pos];
-}
-
 /**
  *
  * @param bitboard Bitboard to get value from.
@@ -45,76 +30,6 @@ export function setBitLoHi(bb: { lo: number; hi: number }, pos: number, on: bool
     if (on) bb.hi |= m;
     else bb.hi &= ~m;
   }
-}
-
-const BIT_COUNT_LOOKUP: number[] = Array(256)
-  .fill(0)
-  .map((_, i) => {
-    let count = 0;
-    let num = i;
-    while (num) {
-      num &= num - 1;
-      count++;
-    }
-    return count;
-  });
-
-/**
- *
- * @param bitboard Bitboard to count.
- * @returns Number of bits available on the bitboard.
- */
-export function countBits(bitboard: bigint): number {
-  let count = 0;
-  // low 32 bits via Number popcount, then high bits
-  let lo = Number(bitboard & 0xffffffffn) >>> 0;
-  while (lo !== 0) {
-    count += BIT_COUNT_LOOKUP[lo & 0xff];
-    lo >>>= 8;
-  }
-  let hi = Number(bitboard >> 32n) >>> 0;
-  while (hi !== 0) {
-    count += BIT_COUNT_LOOKUP[hi & 0xff];
-    hi >>>= 8;
-  }
-  return count;
-}
-
-/**
- *
- * @param bitboard Bitboard to get LFSB from.
- * @returns Least significant 1st bit index.
- */
-export function getLSFBIndex(bitboard: bigint) {
-  if (bitboard === 0n) return -1;
-  const lo = Number(bitboard & 0xffffffffn) >>> 0;
-  if (lo !== 0) return Math.clz32(lo & -lo) ^ 31;
-  const hi = Number(bitboard >> 32n) >>> 0;
-  return 32 + (Math.clz32(hi & -hi) ^ 31);
-}
-
-/**
- * Prints out a bitboard and its current BigInt value.
- * @param bitboard Bitboard to print.
- */
-export function printBitboard(bitboard: bigint) {
-  const grid: string[] = [];
-
-  for (let i = 0; i < 8; i++) {
-    let row = ' ';
-    for (let j = 7; j >= 0; j--) {
-      const index = i * 8 + (7 - j);
-      if ((bitboard & (1n << BigInt(index))) !== 0n) {
-        row += '1 ';
-      } else {
-        row += '0 ';
-      }
-    }
-    grid.push(row.trim());
-  }
-
-  console.log(grid);
-  console.log(bitboard);
 }
 
 /**
@@ -182,4 +97,3 @@ function getCastling(castle: number) {
   return rights.join('');
 }
 
-export default setBit;

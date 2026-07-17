@@ -1,10 +1,9 @@
 /**
  * Lo/hi 32-bit bitboard primitives.
  *
- * The engine stores bitboards as bigint, but the hot inner loops convert each
- * relevant bitboard to a (lo, hi) number pair once and then operate in pure
- * Number arithmetic (Math.clz32 bit-scan, Int32 AND/OR). bigint arithmetic is
- * avoided entirely inside move-generation loops.
+ * Bitboards are stored as two 32-bit Number halves (lo = bits 0..31, hi = bits 32..63).
+ * All move-generation, make/unmake and attack logic operates on these halves in pure
+ * Number arithmetic (Math.clz32 bit-scan, Int32 AND/OR/XOR) — no bigint in any hot path.
  */
 
 /** 16-bit popcount lookup. */
@@ -26,14 +25,4 @@ export function lsbIndex(lo: number, hi: number): number {
   if (lo !== 0) return Math.clz32(lo & -lo) ^ 31;
   if (hi !== 0) return 32 + (Math.clz32(hi & -hi) ^ 31);
   return -1;
-}
-
-/** Low 32 bits of a bigint bitboard. */
-export function loOf(bb: bigint): number {
-  return Number(bb & 0xffffffffn) >>> 0;
-}
-
-/** High 32 bits of a bigint bitboard. */
-export function hiOf(bb: bigint): number {
-  return Number(bb >> 32n) >>> 0;
 }

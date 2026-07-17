@@ -1,27 +1,18 @@
-import { colors, notAFile, notHFile } from '~/game/consts/board';
-import setBit from '~/game/board/bitboard';
-import { getFileConstraint } from '~/game/board/square-helper';
-import { loOf, hiOf } from '~/game/board/bb';
+import { colors } from '~/game/consts/board';
 
 // Interface for move behavior
 export interface MoveBehavior {
   initializeAttacks(): void;
-  getAttacks(pos: number, occupancy: bigint, color: number, moveIndex: number): bigint;
 }
 
 // Leaper move behavior
 export class LeaperMoveBehavior implements MoveBehavior {
   private leaperOffsets: number[][][];
-  private leaperPieceState: BigUint64Array[][];
-  // lo/hi mirrors for fast Number-path move generation (no bigint per source square).
   private leaperPieceStateLo: Uint32Array[][];
   private leaperPieceStateHi: Uint32Array[][];
 
   constructor(leaperOffsets: number[][][]) {
     this.leaperOffsets = leaperOffsets;
-    this.leaperPieceState = Array.from({ length: 2 }, () =>
-      Array.from({ length: leaperOffsets.length }, () => new BigUint64Array(64)),
-    );
     this.leaperPieceStateLo = Array.from({ length: 2 }, () =>
       Array.from({ length: leaperOffsets.length }, () => new Uint32Array(64)),
     );
@@ -30,67 +21,48 @@ export class LeaperMoveBehavior implements MoveBehavior {
     );
   }
 
-  /** Initialize leaper piece attacks */
+  /** Initialize leaper piece attacks (direct target-square computation, no bigint). */
   initializeAttacks(): void {
     for (let i = 0; i < this.leaperOffsets.length; i++) {
       for (let square = 0; square < 64; square++) {
         const white = this.maskLeaperAttacks(square, this.leaperOffsets[i], colors.WHITE);
         const black = this.maskLeaperAttacks(square, this.leaperOffsets[i], colors.BLACK);
-        this.leaperPieceState[colors.WHITE][i][square] = white;
-        this.leaperPieceState[colors.BLACK][i][square] = black;
-        this.leaperPieceStateLo[colors.WHITE][i][square] = Number(white & 0xffffffffn) >>> 0;
-        this.leaperPieceStateHi[colors.WHITE][i][square] = Number(white >> 32n) >>> 0;
-        this.leaperPieceStateLo[colors.BLACK][i][square] = Number(black & 0xffffffffn) >>> 0;
-        this.leaperPieceStateHi[colors.BLACK][i][square] = Number(black >> 32n) >>> 0;
+        this.leaperPieceStateLo[colors.WHITE][i][square] = white.lo;
+        this.leaperPieceStateHi[colors.WHITE][i][square] = white.hi;
+        this.leaperPieceStateLo[colors.BLACK][i][square] = black.lo;
+        this.leaperPieceStateHi[colors.BLACK][i][square] = black.hi;
       }
     }
   }
 
-  /** Get leaper piece attacks */
-  getAttacks(pos: number, occupancy: bigint, color: number, moveIndex: number): bigint {
-    return this.leaperPieceState[color][moveIndex][pos];
-  }
-
-  /** Low 32 bits of the leaper attack table (Number path). */
+  /** Low 32 bits of the leaper attack table. */
   getLeaperPieceStateLo(): Uint32Array[][] {
     return this.leaperPieceStateLo;
   }
 
-  /** High 32 bits of the leaper attack table (Number path). */
+  /** High 32 bits of the leaper attack table. */
   getLeaperPieceStateHi(): Uint32Array[][] {
     return this.leaperPieceStateHi;
   }
 
-  /** Mask leaper attacks */
-  private maskLeaperAttacks(pos: number, offsets: number[][], color: number): bigint {
-    let currentAttacks = 0n;
-    let currentBitboard = 0n;
-    currentBitboard = setBit(currentBitboard, pos, true);
-    const isBlack = color === colors.BLACK;
-
-    for (let [fileOffset, rankOffset] of offsets) {
-      if (isBlack) {
-        fileOffset = -fileOffset;
-        rankOffset = -rankOffset;
-      }
-
-      const shift = BigInt(rankOffset * 8 - fileOffset);
-      const fileConstraint = getFileConstraint(fileOffset);
-
-      if (shift > 0n) {
-        if (((currentBitboard >> shift) & fileConstraint) !== 0n) {
-          const shiftedBitboard = currentBitboard >> shift;
-          currentAttacks |= shiftedBitboard & fileConstraint;
-        }
-      } else {
-        if (((currentBitboard << -shift) & fileConstraint) !== 0n) {
-          const shiftedBitboard = currentBitboard << -shift;
-          currentAttacks |= shiftedBitboard & fileConstraint;
-        }
-      }
+  /** Compute a leaper's attack set as {lo, hi} via direct file/rank target squares. */
+  private maskLeaperAttacks(pos: number, offsets: number[][], color: number): { lo: number; hi: number } {
+    let lo = 0;
+    let hi = 0;
+    const rankTop = pos >> 3;
+    const file = pos & 7;
+    const sign = color === colors.BLACK ? -1 : 1;
+    for (let o = 0; o < offsets.length; o++) {
+      const df = offsets[o][0];
+      const dr = offsets[o][1];
+      const nf = file + sign * df;
+      const nrt = rankTop - sign * dr;
+      if (nf < 0 || nf > 7 || nrt < 0 || nrt > 7) continue;
+      const sq = nrt * 8 + nf;
+      if (sq < 32) lo |= 1 << sq;
+      else hi |= 1 << (sq - 32);
     }
-
-    return currentAttacks;
+    return { lo, hi };
   }
 
   // Getters
@@ -98,89 +70,64 @@ export class LeaperMoveBehavior implements MoveBehavior {
     return this.leaperOffsets;
   }
 
-  getLeaperPieceState(): BigUint64Array[][] {
-    return this.leaperPieceState;
-  }
-
   // Setters
   setLeaperOffsets(offsets: number[][][]): void {
     this.leaperOffsets = offsets;
-  }
-
-  setLeaperPieceState(state: BigUint64Array[][]): void {
-    this.leaperPieceState = state;
   }
 }
 
 // Pawn move behavior
 export class PawnMoveBehavior implements MoveBehavior {
-  private pawnPieceState: BigUint64Array[];
   private pawnPieceStateLo: Uint32Array[];
   private pawnPieceStateHi: Uint32Array[];
 
   constructor() {
-    this.pawnPieceState = Array.from({ length: 2 }, () => new BigUint64Array(64));
     this.pawnPieceStateLo = Array.from({ length: 2 }, () => new Uint32Array(64));
     this.pawnPieceStateHi = Array.from({ length: 2 }, () => new Uint32Array(64));
   }
 
-  /** Initialize pawn piece attacks */
+  /** Initialize pawn piece attacks (direct target-square computation, no bigint). */
   initializeAttacks(): void {
     for (let square = 0; square < 64; square++) {
       const white = this.maskPawnAttacks(colors.WHITE, square);
       const black = this.maskPawnAttacks(colors.BLACK, square);
-      this.pawnPieceState[colors.WHITE][square] = white;
-      this.pawnPieceState[colors.BLACK][square] = black;
-      this.pawnPieceStateLo[colors.WHITE][square] = Number(white & 0xffffffffn) >>> 0;
-      this.pawnPieceStateHi[colors.WHITE][square] = Number(white >> 32n) >>> 0;
-      this.pawnPieceStateLo[colors.BLACK][square] = Number(black & 0xffffffffn) >>> 0;
-      this.pawnPieceStateHi[colors.BLACK][square] = Number(black >> 32n) >>> 0;
+      this.pawnPieceStateLo[colors.WHITE][square] = white.lo;
+      this.pawnPieceStateHi[colors.WHITE][square] = white.hi;
+      this.pawnPieceStateLo[colors.BLACK][square] = black.lo;
+      this.pawnPieceStateHi[colors.BLACK][square] = black.hi;
     }
   }
 
-  /**
-   * Get pawn piece attacks. We know occupancy and moveIndex isn't required but is part of the interface.
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getAttacks(pos: number, occupancy: bigint, color: number, moveIndex: number): bigint {
-    return this.pawnPieceState[color][pos];
-  }
-
-  /** Low 32 bits of the pawn attack table (Number path). */
+  /** Low 32 bits of the pawn attack table. */
   getPawnPieceStateLo(): Uint32Array[] {
     return this.pawnPieceStateLo;
   }
 
-  /** High 32 bits of the pawn attack table (Number path). */
+  /** High 32 bits of the pawn attack table. */
   getPawnPieceStateHi(): Uint32Array[] {
     return this.pawnPieceStateHi;
   }
 
-  /** Mask pawn attacks */
-  private maskPawnAttacks(color: number, pos: number): bigint {
-    let currentAttacks = 0n;
-    let currentBitboard = 0n;
-    currentBitboard = setBit(currentBitboard, pos, true);
-
-    if (color === colors.WHITE) {
-      if (((currentBitboard >> 7n) & notAFile) !== 0n) currentAttacks |= currentBitboard >> 7n;
-      if (((currentBitboard >> 9n) & notHFile) !== 0n) currentAttacks |= currentBitboard >> 9n;
-    } else if (color === colors.BLACK) {
-      if (((currentBitboard << 7n) & notHFile) !== 0n) currentAttacks |= currentBitboard << 7n;
-      if (((currentBitboard << 9n) & notAFile) !== 0n) currentAttacks |= currentBitboard << 9n;
+  /** Compute a pawn's capture set as {lo, hi} via direct diagonal target squares. */
+  private maskPawnAttacks(color: number, pos: number): { lo: number; hi: number } {
+    let lo = 0;
+    let hi = 0;
+    const rankTop = pos >> 3;
+    const file = pos & 7;
+    // white captures toward rankTop - 1, black toward rankTop + 1
+    const nrt = color === colors.WHITE ? rankTop - 1 : rankTop + 1;
+    if (nrt < 0 || nrt > 7) return { lo, hi };
+    if (file - 1 >= 0) {
+      const sq = nrt * 8 + (file - 1);
+      if (sq < 32) lo |= 1 << sq;
+      else hi |= 1 << (sq - 32);
     }
-
-    return currentAttacks;
-  }
-
-  // Getters
-  getPawnPieceState(): BigUint64Array[] {
-    return this.pawnPieceState;
-  }
-
-  // Setters
-  setPawnPieceState(state: BigUint64Array[]): void {
-    this.pawnPieceState = state;
+    if (file + 1 <= 7) {
+      const sq = nrt * 8 + (file + 1);
+      if (sq < 32) lo |= 1 << sq;
+      else hi |= 1 << (sq - 32);
+    }
+    return { lo, hi };
   }
 }
 
@@ -235,13 +182,6 @@ export class SlidingMoveBehavior implements MoveBehavior {
   /** Initialize sliding piece attacks (tables are assigned externally). */
   initializeAttacks(): void {
     // no-op
-  }
-
-  /** Interface implementation: reconstructs a bigint attack set via the Number path. */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getAttacks(pos: number, occupancy: bigint, _color: number, _moveIndex: number): bigint {
-    const r = this.getSliderAttacksLoHi(pos, loOf(occupancy), hiOf(occupancy));
-    return BigInt(r.lo) | (BigInt(r.hi) << 32n);
   }
 
   /** Number-path sliding attacks via PEXT-indexed lo/hi tables — no bigint. */
@@ -332,11 +272,6 @@ abstract class Piece {
     this.rotationalMoveType = rotationalMoveType;
     this.reverse = new Map<number, number>();
     this.moveBehavior.initializeAttacks();
-  }
-
-  /** Get piece attacks */
-  getAttacks(pos: number, occupancy: bigint, moveIndex: number = 0): bigint {
-    return this.moveBehavior.getAttacks(pos, occupancy, this.color, moveIndex);
   }
 
   // Getters

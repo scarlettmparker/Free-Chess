@@ -109,15 +109,9 @@ export const unicodePieces = [
 export const whitePromotions = [charPieces.Q, charPieces.R, charPieces.B, charPieces.N];
 export const blackPromotions = [charPieces.q, charPieces.r, charPieces.b, charPieces.n];
 
-// bit board
-export const notAFile: bigint = 18374403900871474942n;
-export const notABFile: bigint = 18229723555195321596n;
-export const notHFile: bigint = 9187201950435737471n;
-export const notHGFile: bigint = 4557430888798830399n;
-
 export const getBitboard = (
   pieceId: number,
   bitboards: BitboardData[] = gameState.bitboards,
 ): BitboardData => {
-  return bitboards[pieceId] ?? { pieceId, bitboard: 0n };
+  return bitboards[pieceId] ?? { pieceId, lo: 0, hi: 0 };
 };
