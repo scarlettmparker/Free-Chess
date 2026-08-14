@@ -77,7 +77,7 @@ function preloadUrl(url: string): Promise<void> {
       audio.removeEventListener('error', onError);
     };
 
-    // some browsers fire loadedmetadata earlier than canplaythrough — accept either
+    // some browsers fire loadedmetadata earlier than canplaythrough, accept either
     audio.addEventListener('canplaythrough', onSuccess, { once: true });
     audio.addEventListener('loadedmetadata', onSuccess, { once: true });
     audio.addEventListener('error', onError, { once: true });
