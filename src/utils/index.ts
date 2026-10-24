@@ -18,7 +18,7 @@ import type { PieceDefinition } from '~/game/piece/piece-definition';
 import type { BoardPlacement } from '~/game/board/validate-layout';
 
 const startPosition =
-  '[17][3][5][15][11][5][3][17]/[1][1][1][13][13][13][1][1]/8/8/8/8/[0][0][12][12][12][0][0][0]/[16][2][4][14][10][4][2][16] w KQkq - 0 1';
+  '[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1';
 
 /**
  * Layout Mounted When Reset Without An Explicit Board Choice.

@@ -3,6 +3,7 @@ import { useTranslation } from '@sun/i18n';
 import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
 import { Button } from '@sun/components';
 import ConfirmGameActionDialog from '~/components/admin/confirm-game-action-dialog';
+import BoardPickerDialog from '~/components/admin/board-picker-dialog';
 import RoleCheck from '~/utils/role-check';
 import type { AdminColor } from '~/utils/admin-command';
 import styles from './admin-bar.module.css';
@@ -27,6 +28,7 @@ const AdminBar = () => {
   const { t } = useTranslation('admin');
   const [pending, setPending] = useState<GameAction | null>(null);
   const [confirming, setConfirming] = useState<GameAction | null>(null);
+  const [pickingBoard, setPickingBoard] = useState(false);
   const busy = pending !== null;
 
   const runAction = async (action: GameAction) => {
@@ -55,7 +57,11 @@ const AdminBar = () => {
   };
 
   const requestAction = (action: GameAction) => {
-    if (action === 'reset' || action === 'clear-all') {
+    if (action === 'reset') {
+      setPickingBoard(true);
+      return;
+    }
+    if (action === 'clear-all') {
       setConfirming(action);
       return;
     }
@@ -117,6 +123,14 @@ const AdminBar = () => {
           onClose={() => setConfirming(null)}
           onConfirm={() => {
             if (confirming) void runAction(confirming);
+          }}
+        />
+        <BoardPickerDialog
+          open={pickingBoard}
+          onClose={() => setPickingBoard(false)}
+          onReset={() => {
+            setPickingBoard(false);
+            revalidatePageData([makeCacheKey('adminSessions', {})]);
           }}
         />
       </div>

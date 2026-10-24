@@ -1,0 +1,42 @@
+.split {
+  display: flex;
+  gap: var(--lg);
+  flex-wrap: wrap;
+}
+
+.list_scroll {
+  min-width: 12rem;
+  max-width: 16rem;
+  flex-grow: 1;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lg);
+}
+
+.layout_button {
+  display: flex;
+  align-items: center;
+  gap: var(--lg);
+  width: 100%;
+}
+
+.layout_name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.preview_panel {
+  display: flex;
+  justify-content: center;
+  flex-grow: 1;
+  min-width: 16rem;
+}
+
+.empty {
+  margin: 0;
+}

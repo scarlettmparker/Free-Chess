@@ -1,0 +1,9 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lg);
+}
+
+.error {
+  margin: 0;
+}

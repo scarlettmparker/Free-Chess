@@ -7,7 +7,7 @@ import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
 import { openGameDatabase, resolveGameDbPath } from '~/server/game-db';
 
 const STARTING_FEN =
-  '[17][3][5][15][11][5][3][17]/[1][1][1][13][13][13][1][1]/8/8/8/8/[0][0][12][12][12][0][0][0]/[16][2][4][14][10][4][2][16] w KQkq - 0 1';
+  '[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1';
 
 const db = openGameDatabase();
 const now = new Date().toISOString();
@@ -131,7 +131,7 @@ if (standard) {
   db.run(
     `INSERT INTO piece_sets (name, description, starting_fen, created_by, created_at, is_system)
      VALUES (?, ?, ?, ?, ?, 1)`,
-    ['Standard', 'Standard chess plus fairy pieces', STARTING_FEN, null, now],
+    ['Standard', 'Standard chess starting position', STARTING_FEN, null, now],
   );
   standardId = Number((db.query('SELECT last_insert_rowid() AS id').get() as { id: number }).id);
 }
@@ -241,7 +241,7 @@ if (!standardLayout) {
     [
       'standard',
       'Standard',
-      'Standard chess plus fairy pieces',
+      'Standard chess starting position',
       JSON.stringify(standardPlacements()),
       null,
       now,

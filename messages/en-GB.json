@@ -178,6 +178,9 @@
     "layout-error-bare-kings": "Each side needs at least one piece besides the king.",
     "board-name-placeholder": "My layout",
     "board-description-placeholder": "Starting position for...",
-    "piece-name-placeholder": "My piece"
+    "piece-name-placeholder": "My piece",
+    "reset-board-title": "Reset game board",
+    "start-game": "Start",
+    "no-layouts": "No board layouts yet"
   }
 }

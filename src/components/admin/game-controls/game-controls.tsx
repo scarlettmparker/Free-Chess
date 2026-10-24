@@ -3,6 +3,7 @@ import { useTranslation } from '@sun/i18n';
 import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
 import { Button, Card, CardBody, CardDescription, CardHeader, CardTitle } from '@sun/components';
 import ConfirmGameActionDialog from '~/components/admin/confirm-game-action-dialog';
+import BoardPickerDialog from '~/components/admin/board-picker-dialog';
 import RoleCheck from '~/utils/role-check';
 import type { AdminColor } from '~/utils/admin-command';
 import styles from './game-controls.module.css';
@@ -35,6 +36,7 @@ const GameControls = () => {
   const { t } = useTranslation('admin');
   const [pending, setPending] = useState<GameAction | null>(null);
   const [confirming, setConfirming] = useState<GameAction | null>(null);
+  const [pickingBoard, setPickingBoard] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const busy = pending !== null;
 
@@ -59,7 +61,11 @@ const GameControls = () => {
   };
 
   const requestAction = (action: GameAction) => {
-    if (action === 'reset' || action === 'clear-all') {
+    if (action === 'reset') {
+      setPickingBoard(true);
+      return;
+    }
+    if (action === 'clear-all') {
       setConfirming(action);
       return;
     }
@@ -124,6 +130,15 @@ const GameControls = () => {
         onClose={() => setConfirming(null)}
         onConfirm={() => {
           if (confirming) void runAction(confirming);
+        }}
+      />
+      <BoardPickerDialog
+        open={pickingBoard}
+        onClose={() => setPickingBoard(false)}
+        onReset={() => {
+          setPickingBoard(false);
+          setMessage(t('action-complete'));
+          revalidatePageData([makeCacheKey('adminSessions', {})]);
         }}
       />
     </RoleCheck>
