@@ -10,6 +10,8 @@ import { createAccessControl } from 'better-auth/plugins/access';
  */
 export const statement = {
   game: ['reset', 'clear', 'list-sessions'],
+  piece: ['list', 'get', 'create', 'update', 'delete'],
+  pieceset: ['list', 'get', 'create', 'update', 'delete'],
   user: [
     'create',
     'list',
@@ -36,6 +38,8 @@ export const ac = createAccessControl(statement);
 export const roles = {
   admin: ac.newRole({
     game: [...statement.game],
+    piece: [...statement.piece],
+    pieceset: [...statement.pieceset],
     user: [...statement.user],
     session: [...statement.session],
     audit: [...statement.audit],
@@ -78,6 +82,14 @@ export type Permission = {
    * Game management actions.
    */
   game?: (typeof statement.game)[number][];
+  /**
+   * Piece management actions.
+   */
+  piece?: (typeof statement.piece)[number][];
+  /**
+   * Piece set management actions.
+   */
+  pieceset?: (typeof statement.pieceset)[number][];
   /**
    * User management actions.
    */
