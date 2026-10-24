@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ComponentType, SVGProps } from 'react';
 import { useTranslation } from '@sun/i18n';
 import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
 import { usePageData } from '@sun/ssr/react';
@@ -23,6 +24,11 @@ import { EllipsisVerticalOutline, TrashOutline } from 'preact-heroicons';
 import PieceForm from '~/components/piece-editor/piece-form';
 import type { PieceDefinitionDto } from '~/utils/piece-types';
 import styles from './piece-editor.module.css';
+
+type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+
+const EllipsisIcon = EllipsisVerticalOutline as unknown as IconComponent;
+const TrashIcon = TrashOutline as unknown as IconComponent;
 
 /**
  * Piece editor page.
@@ -76,14 +82,19 @@ const PieceEditor = () => {
                             event.preventDefault();
                           }}
                         >
-                          <EllipsisVerticalOutline width={16} height={16} />
+                          <EllipsisIcon
+                            className={styles.menu_trigger}
+                            width={16}
+                            height={16}
+                            aria-label={t('piece-actions')}
+                          />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                           <DropdownMenuItem
                             variant="destructive"
                             onClick={() => setDeleteTarget(piece)}
                           >
-                            <TrashOutline width={16} height={16} />
+                            <TrashIcon width={16} height={16} />
                             {t('delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>

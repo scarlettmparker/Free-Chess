@@ -154,6 +154,7 @@
     "new-piece": "New piece",
     "unnamed-piece": "Unnamed piece",
     "delete-piece-title": "Delete piece?",
-    "delete-piece-body": "Delete {{name}}? This cannot be undone."
+    "delete-piece-body": "Delete {{name}}? This cannot be undone.",
+    "piece-actions": "Piece actions"
   }
 }
