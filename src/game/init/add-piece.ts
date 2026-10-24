@@ -1,6 +1,5 @@
 import { gameState } from '~/game/consts/board';
 import { PieceFactory } from '~/game/piece/piece';
-import { preloadPieceSounds } from '~/game/sound/play';
 
 /**
  * Piece IDs
@@ -18,16 +17,12 @@ export const SPONGEBOB_ID = 16;
 
 /**
  * Helper functions to add pieces to the current game state
- * and preload their sounds
  */
 function addPiece(type: string, whiteId: number) {
   const blackId = whiteId + 1;
   const whitePiece = PieceFactory.createPiece(type, whiteId, 0);
   const blackPiece = PieceFactory.createPiece(type, blackId, 1);
   gameState.pieces.push(whitePiece, blackPiece);
-
-  preloadPieceSounds(whiteId);
-  preloadPieceSounds(blackId);
 }
 
 export const addPawn = () => addPiece('pawn', PAWN_ID);

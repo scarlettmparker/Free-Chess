@@ -109,7 +109,7 @@ export function clearColor(color: NonNullable<Color>): boolean {
   const sess = sessions.get(sid);
   try {
     sess?.ws?.close(1000, 'cleared-by-cli');
-  } catch (e) {
+  } catch (_e) {
     // ignore
   }
   colorMap.delete(color);

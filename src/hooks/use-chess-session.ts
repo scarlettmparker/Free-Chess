@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { colors, gameState, moveType, type PlayerColor } from '~/game/consts/board';
 import { makeMove } from '~/game/move/move';
 import { getMoveTarget } from '~/game/move/move-def';
-import { playMoveSound } from '~/game/sound/play';
+import { playMoveSound, preloadPieceSounds } from '~/game/sound/play';
 import { mountGame } from '~/utils';
 import { setStoredSession } from '~/utils/connect';
 import { deserializeGameState, type SerializedGameState } from '~/utils/game-serialize';
@@ -55,6 +55,12 @@ export function useChessSession() {
     setMounted(true);
     refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    const preload = () => preloadPieceSounds(0);
+    window.addEventListener('pointerdown', preload, { once: true });
+    return () => window.removeEventListener('pointerdown', preload);
+  }, []);
 
   const view = useMemo(
     () => (mounted ? buildBoardView(selectedSquare, playerColor) : emptyBoardView(playerColor)),

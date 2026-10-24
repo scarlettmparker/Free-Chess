@@ -40,7 +40,7 @@ export const connectWith = (
           settled = true;
           try {
             ws.close();
-          } catch (e) {
+          } catch (_e) {
             // do nothing
           }
           reject(new Error('timeout'));
@@ -65,7 +65,7 @@ export const connectWith = (
               settled = true;
               try {
                 ws.close();
-              } catch (e) {
+              } catch (_e) {
                 // do nothing
               }
               reject(new Error(msg.reason || 'rejected'));
@@ -82,7 +82,7 @@ export const connectWith = (
               resolve(ws);
             }
           }
-        } catch (e) {
+        } catch (_e) {
           // ignore non-json messages
         }
       };
@@ -104,7 +104,7 @@ export const connectWith = (
           reject(new Error(`closed-${ev.code}`));
         }
       };
-    } catch (e) {
+    } catch (_e) {
       reject(e);
     }
   });
@@ -119,20 +119,20 @@ export const tryConnectFlow = async (
   if (stored) {
     try {
       return await connectWith(baseUrl, null, stored, onSession);
-    } catch (e) {
+    } catch (_e) {
       // Continue to try new connections
     }
   }
 
   try {
     return await connectWith(baseUrl, 'white', undefined, onSession);
-  } catch (e) {
+  } catch (_e) {
     // try black
   }
 
   try {
     return await connectWith(baseUrl, 'black', undefined, onSession);
-  } catch (e) {
+  } catch (_e) {
     // try spectator
   }
 
@@ -140,7 +140,7 @@ export const tryConnectFlow = async (
     const ws = await connectWith(baseUrl, null, undefined, onSession);
     onSession({ type: 'session', status: 'spectator' });
     return ws;
-  } catch (e) {
+  } catch (_e) {
     onSession({ type: 'session', status: 'spectator' });
     return null;
   }

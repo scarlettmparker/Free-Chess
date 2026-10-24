@@ -5,15 +5,22 @@ type PieceProps = {
    * Piece id used by the sprite sheet.
    */
   pieceId: number;
+  /**
+   * Whether the king is in check.
+   */
+  checked: boolean;
 };
 
 /**
- * Piece sprite.
+ * Piece sprite and check glow.
  */
 const Piece = (props: PieceProps) => {
-  const { pieceId } = props;
+  const { pieceId, checked } = props;
   return (
-    <img className={styles.piece} src={`/piece/sprite/${pieceId}.png`} alt="" draggable={false} />
+    <>
+      {checked ? <span className={styles.checkGlow} aria-hidden="true" /> : null}
+      <img className={styles.piece} src={`/piece/sprite/${pieceId}.png`} alt="" draggable={false} />
+    </>
   );
 };
 
