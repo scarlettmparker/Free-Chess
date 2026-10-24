@@ -48,7 +48,6 @@ const NavAccount = () => {
 
   return (
     <div className={styles.account}>
-      <span className={styles.email}>{currentUser.email}</span>
       <RoleCheck roles={['admin', 'game-admin', 'user-admin']} match="any">
         <Link to="/admin" className={styles.link}>
           <Button variant="secondary" className={styles.button}>

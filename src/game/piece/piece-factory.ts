@@ -31,6 +31,7 @@ export class PieceFactory {
     );
 
     piece.setKing(builtin.isKing);
+    piece.setSprite(builtin.sprite);
     piece.setPawn(builtin.legacy.isPawn);
     piece.setLeaper(builtin.legacy.isLeaper);
     piece.setSlider(builtin.legacy.isSlider);

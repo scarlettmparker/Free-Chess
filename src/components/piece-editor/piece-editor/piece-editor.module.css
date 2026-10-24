@@ -1,47 +1,48 @@
-.layout {
+.page {
   display: flex;
+  flex-direction: column;
   gap: var(--lg);
+  padding: var(--xl);
+}
+
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--lg);
+}
+
+.list_panel {
+  min-width: 350px;
+  max-width: 28rem;
+  flex-grow: 1;
+}
+
+.editor_panel {
+  min-width: 350px;
+  max-width: 44rem;
+  flex-grow: 1;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--sm);
-  min-width: 12rem;
+  gap: var(--md);
 }
 
 .editor {
   display: flex;
   flex-direction: column;
-  gap: var(--sm);
-  flex: 1;
+  gap: var(--md);
 }
 
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sm);
+.save_button {
+  align-self: flex-start;
 }
 
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: var(--sm);
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(15, 1fr);
-  gap: 2px;
-}
-
-.cell {
-  aspect-ratio: 1;
-  min-width: 1.5rem;
-}
-
-.center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.scroll_area {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }

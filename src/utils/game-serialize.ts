@@ -7,6 +7,7 @@ type SerializedPiece = {
   id: number;
   definitionId: number;
   color: number;
+  sprite: { headKey: string; bodyKey: string; footKey: string };
   pieceMask: string[];
   move: number;
   globalEffect: boolean;
@@ -72,6 +73,7 @@ export function serializeGameState(gs: GameState): SerializedGameState {
       id: piece.getId(),
       definitionId: piece.getDefinitionId(),
       color: piece.getColor(),
+      sprite: piece.getSprite(),
       pieceMask: Array.from(piece.getPieceMask()).map((b) => b.toString()),
       move: piece.getMove(),
       globalEffect: piece.getGlobalEffect(),
@@ -155,6 +157,9 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     piece.setRotationalMoveType(serialized.rotationalMoveType);
     piece.setReverse(new Map(serialized.reverse));
     piece.setDefinitionId(serialized.definitionId);
+    if (serialized.sprite) {
+      piece.setSprite(serialized.sprite);
+    }
     return piece;
   }
 

@@ -1,4 +1,4 @@
-import { peekPageData } from '@sun/ssr';
+import { gameState } from '~/game/consts/board';
 import { useTranslation } from '@sun/i18n';
 import styles from './piece.module.css';
 
@@ -29,15 +29,16 @@ export function partUrl(key: string): string {
 const Piece = (props: PieceProps) => {
   const { pieceId, checked } = props;
   const { t } = useTranslation('chess');
-  const data = peekPageData<{
-    pieces: { id: number; sprite: { headKey: string; bodyKey: string; footKey: string } }[];
-  }>('pieces', 'pieces', {});
-  const piece = data?.pieces?.find((p) => p.id === pieceId);
-  const sprite = piece?.sprite ?? { headKey: '', bodyKey: '', footKey: '' };
+  const enginePiece = gameState.pieces.find((piece) => piece.getId() === pieceId);
+  const rawSprite = enginePiece?.getSprite();
+  const sprite =
+    rawSprite && rawSprite.headKey && rawSprite.bodyKey && rawSprite.footKey
+      ? rawSprite
+      : { headKey: 'king-head', bodyKey: 'king-body', footKey: 'king-foot' };
 
   return (
     <span className={styles.composite_piece} aria-label={t('piece')}>
-      {checked ? <span className={styles.checkGlow} aria-hidden="true" /> : null}
+      {checked ? <span className={styles.check_glow} aria-hidden="true" /> : null}
       <img
         className={styles.part_head}
         src={partUrl(sprite.headKey)}

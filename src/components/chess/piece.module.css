@@ -1,11 +1,34 @@
 .composite_piece {
-  display: inline-flex;
   position: relative;
+  z-index: 1;
+  width: calc(var(--square-size) - 4px);
+  height: calc(var(--square-size) - 4px);
+  pointer-events: none;
 }
 
-.part_head,
-.part_body,
+.part_head {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 34%;
+  object-fit: contain;
+}
+
+.part_body {
+  position: absolute;
+  top: 33%;
+  left: 0;
+  width: 100%;
+  height: 34%;
+  object-fit: contain;
+}
+
 .part_foot {
   position: absolute;
-  inset: 0;
+  top: 66%;
+  left: 0;
+  width: 100%;
+  height: 34%;
+  object-fit: contain;
 }

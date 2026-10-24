@@ -27,7 +27,7 @@ const Game = () => {
         {status === 'connected' ? null : <span>{t(status)}</span>}
       </div>
       <Board view={view} onSelect={selectSquare} />
-      {view.gameOver ? <p className={styles.gameOver}>{t('game-over')}</p> : null}
+      {view.gameOver ? <p className={styles.game_over}>{t('game-over')}</p> : null}
     </div>
   );
 };

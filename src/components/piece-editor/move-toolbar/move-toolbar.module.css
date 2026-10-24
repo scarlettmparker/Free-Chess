@@ -1,0 +1,10 @@
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md);
+}
+
+.group {
+  display: flex;
+  gap: var(--md);
+}

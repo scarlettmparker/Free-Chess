@@ -1,10 +1,58 @@
 .grid {
+  --square-size: 2.5rem;
   display: grid;
-  grid-template-columns: repeat(15, 1fr);
-  gap: 2px;
+  grid-template-columns: repeat(15, var(--square-size));
+  grid-auto-rows: var(--square-size);
+  width: max-content;
 }
 
 .cell {
-  aspect-ratio: 1;
-  min-width: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.light {
+  background-color: var(--square-light);
+}
+
+.dark {
+  background-color: var(--square-dark);
+}
+
+.centre_piece {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.centre_piece img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 34%;
+  object-fit: contain;
+}
+
+.centre_piece img:nth-child(2) {
+  top: 33%;
+}
+
+.centre_piece img:nth-child(3) {
+  top: 66%;
+}
+
+.cell_step {
+  background-color: var(--blue-9);
+}
+
+.cell_slide {
+  background-color: var(--green-9);
+}
+
+.cell_hop {
+  background-color: var(--orange-9);
 }

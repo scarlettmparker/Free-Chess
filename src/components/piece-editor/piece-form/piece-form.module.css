@@ -1,11 +1,23 @@
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--sm);
+  gap: var(--md);
+  max-width: 40rem;
+  margin-inline: auto;
 }
 
 .checkbox {
+  gap: var(--sm);
+}
+
+.checkbox_row {
   display: flex;
   align-items: center;
-  gap: var(--sm);
+  gap: var(--xl);
+}
+
+.field_row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--md);
 }

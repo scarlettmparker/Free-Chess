@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from '@sun/i18n';
 import { executeMutation } from '@sun/ssr';
 import {
-  Button,
   Checkbox,
   Form,
   FormField,
@@ -13,6 +12,9 @@ import {
   SelectOption,
 } from '@sun/components';
 import MoveGrid from '~/components/piece-editor/move-grid';
+import MoveToolbar from '~/components/piece-editor/move-toolbar';
+import SpriteComposer from '~/components/piece-editor/sprite-composer';
+import StateTabs from '~/components/piece-editor/state-tabs';
 import type { PieceDefinitionDto } from '~/utils/piece-types';
 import type { PieceInput } from '~/server/game-pieces';
 import styles from './piece-form.module.css';
@@ -41,140 +43,163 @@ const PieceForm = (props: PieceFormProps) => {
     moveStates: piece?.moveStates ?? [{ index: 0, vectors: [] }],
     stateTransition: piece?.stateTransition ?? 'none',
     edgeReset: piece?.edgeReset ?? false,
-    sprite: piece?.sprite ?? { headKey: '', bodyKey: '', footKey: '' },
+    sprite: piece?.sprite ?? { headKey: 'king-head', bodyKey: 'king-body', footKey: 'king-foot' },
   }));
-  const [saving, setSaving] = useState(false);
+  const [stateIndex, setStateIndex] = useState(0);
+  const [moveType, setMoveType] = useState<'step' | 'slide' | 'hop'>('step');
+  const [capture, setCapture] = useState<'optional' | 'required' | 'forbidden'>('optional');
+  const [canPromote, setCanPromote] = useState((piece?.promotionTargets.length ?? 0) > 0);
 
   const states = (form.moveStates.length ? form.moveStates : [{ index: 0, vectors: [] }]) as {
     index: number;
     vectors: { dx: number; dy: number; range: string; capture: string }[];
   }[];
-  const current = states[0];
+  const current = states[stateIndex] ?? states[0];
   const vectors = current?.vectors ?? [];
 
-  /**
-   * Toggle a move vector for the current state.
-   *
-   * @param dx Horizontal offset.
-   * @param dy Vertical offset.
-   */
-  const toggleCell = (dx: number, dy: number) => {
-    const typedVectors = current.vectors;
-    const existing = typedVectors.find((v) => v.dx === dx && v.dy === dy);
-    const newVectors = existing
-      ? typedVectors.filter((v) => v.dx !== dx || v.dy !== dy)
-      : [...typedVectors, { dx, dy, range: 'step', capture: 'optional' }];
-    const nextStates = states.map((state, index) =>
-      index === 0 ? { ...state, vectors: newVectors } : state,
-    );
-    setForm({ ...form, moveStates: nextStates });
+  const updateVectors = (
+    newVectors: { dx: number; dy: number; range: string; capture: string }[],
+  ) => {
+    setForm((prev) => {
+      const prevStates = (
+        prev.moveStates.length ? prev.moveStates : [{ index: 0, vectors: [] }]
+      ) as {
+        index: number;
+        vectors: { dx: number; dy: number; range: string; capture: string }[];
+      }[];
+      const nextStates = prevStates.map((state, index) =>
+        index === stateIndex ? { ...state, vectors: newVectors } : state,
+      );
+      return { ...prev, moveStates: nextStates };
+    });
   };
 
-  /**
-   * Save the piece.
-   *
-   * @param event Form event.
-   */
+  const toggleCell = useCallback(
+    (dx: number, dy: number) => {
+      const typedVectors = current.vectors;
+      const existing = typedVectors.find((v) => v.dx === dx && v.dy === dy);
+      const newVectors = existing
+        ? typedVectors.filter((v) => v.dx !== dx || v.dy !== dy)
+        : [...typedVectors, { dx, dy, range: moveType, capture }];
+      updateVectors(newVectors);
+    },
+    [current, moveType, capture, updateVectors],
+  );
+
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
-    setSaving(true);
-    try {
-      await executeMutation('pieces/save', form);
-    } finally {
-      setSaving(false);
-    }
+    const slug = form.name.toLowerCase().replace(/\s+/g, '-');
+    await executeMutation('pieces/save', {
+      ...form,
+      slug,
+      promotionTargets: canPromote ? form.promotionTargets : [],
+    });
   };
 
+  const handlePartChange = useCallback((part: 'head' | 'body' | 'foot', key: string) => {
+    setForm((prev) => ({ ...prev, sprite: { ...prev.sprite, [`${part}Key`]: key } }));
+  }, []);
+
+  const handleAddState = useCallback(() => {
+    setForm((prev) => {
+      const prevStates = (
+        prev.moveStates.length ? prev.moveStates : [{ index: 0, vectors: [] }]
+      ) as {
+        index: number;
+        vectors: { dx: number; dy: number; range: string; capture: string }[];
+      }[];
+      const next = [...prevStates, { index: prevStates.length, vectors: [] }];
+      setStateIndex(next.length - 1);
+      return { ...prev, moveStates: next };
+    });
+  }, []);
+
+  const handleDeleteState = useCallback(() => {
+    setForm((prev) => {
+      const prevStates = (
+        prev.moveStates.length ? prev.moveStates : [{ index: 0, vectors: [] }]
+      ) as {
+        index: number;
+        vectors: { dx: number; dy: number; range: string; capture: string }[];
+      }[];
+      if (prevStates.length <= 1) return prev;
+      const next = prevStates.filter((_, index) => index !== stateIndex);
+      setStateIndex(Math.max(0, stateIndex - 1));
+      return { ...prev, moveStates: next };
+    });
+  }, [stateIndex]);
+
   return (
-    <Form className={styles.form} onSubmit={handleSave}>
-      <FormField name="name">
-        <FormLabel>{t('piece-name')}</FormLabel>
-        <FormItem>
-          <Input
-            value={form.name}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setForm({ ...form, name: event.currentTarget.value })
-            }
-            required
-          />
-        </FormItem>
-      </FormField>
-      <FormField name="slug">
-        <FormLabel>{t('piece-slug')}</FormLabel>
-        <FormItem>
-          <Input
-            value={form.slug}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setForm({ ...form, slug: event.currentTarget.value })
-            }
-            required
-          />
-        </FormItem>
-      </FormField>
-      <FormField name="isKing">
-        <FormLabel>{t('piece-king')}</FormLabel>
-        <FormItem>
-          <Checkbox
-            checked={form.isKing}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setForm({ ...form, isKing: event.currentTarget.checked })
-            }
-          />
-        </FormItem>
-      </FormField>
-      <FormField name="stateTransition">
-        <FormLabel>{t('state-transition')}</FormLabel>
-        <FormItem>
-          <Select
-            value={form.stateTransition}
-            onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-              setForm({ ...form, stateTransition: event.currentTarget.value })
-            }
-          >
-            <SelectOption value="none">{t('state-none')}</SelectOption>
-            <SelectOption value="advance">{t('state-advance')}</SelectOption>
-            <SelectOption value="advanceReverseAtEdge">{t('state-advance-reverse')}</SelectOption>
-            <SelectOption value="cycle">{t('state-cycle')}</SelectOption>
-          </Select>
-        </FormItem>
-      </FormField>
-      <FormField name="headKey">
-        <FormLabel>{t('head-key')}</FormLabel>
-        <FormItem>
-          <Input
-            value={form.sprite.headKey}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setForm({ ...form, sprite: { ...form.sprite, headKey: event.currentTarget.value } })
-            }
-          />
-        </FormItem>
-      </FormField>
-      <FormField name="bodyKey">
-        <FormLabel>{t('body-key')}</FormLabel>
-        <FormItem>
-          <Input
-            value={form.sprite.bodyKey}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setForm({ ...form, sprite: { ...form.sprite, bodyKey: event.currentTarget.value } })
-            }
-          />
-        </FormItem>
-      </FormField>
-      <FormField name="footKey">
-        <FormLabel>{t('foot-key')}</FormLabel>
-        <FormItem>
-          <Input
-            value={form.sprite.footKey}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-              setForm({ ...form, sprite: { ...form.sprite, footKey: event.currentTarget.value } })
-            }
-          />
-        </FormItem>
-      </FormField>
-      <MoveGrid vectors={vectors} onToggle={toggleCell} />
-      <Button type="submit" disabled={saving}>
-        {saving ? t('saving') : t('save')}
-      </Button>
+    <Form id="piece-form" className={styles.form} onSubmit={handleSave}>
+      <div className={styles.field_row}>
+        <FormField name="name">
+          <FormLabel>{t('piece-name')}</FormLabel>
+          <FormItem>
+            <Input
+              value={form.name}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setForm({ ...form, name: event.currentTarget.value })
+              }
+            />
+          </FormItem>
+        </FormField>
+        <FormField name="stateTransition">
+          <FormLabel>{t('state-transition')}</FormLabel>
+          <FormItem>
+            <Select
+              value={form.stateTransition}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                setForm({ ...form, stateTransition: event.currentTarget.value })
+              }
+            >
+              <SelectOption value="none">{t('state-none')}</SelectOption>
+              <SelectOption value="advance">{t('state-advance')}</SelectOption>
+              <SelectOption value="advanceReverseAtEdge">{t('state-advance-reverse')}</SelectOption>
+              <SelectOption value="cycle">{t('state-cycle')}</SelectOption>
+            </Select>
+          </FormItem>
+        </FormField>
+      </div>
+      <div className={styles.checkbox_row}>
+        <Checkbox
+          id="isKing"
+          name="isKing"
+          className={styles.checkbox}
+          label={t('piece-king')}
+          checked={form.isKing}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+            setForm({ ...form, isKing: event.currentTarget.checked })
+          }
+        />
+        <Checkbox
+          id="canPromote"
+          name="canPromote"
+          className={styles.checkbox}
+          label={t('can-promote')}
+          checked={canPromote}
+          onChange={(event) => setCanPromote(event.currentTarget.checked)}
+        />
+      </div>
+      <SpriteComposer
+        headKey={form.sprite.headKey}
+        bodyKey={form.sprite.bodyKey}
+        footKey={form.sprite.footKey}
+        onChange={handlePartChange}
+      />
+      <StateTabs
+        count={states.length}
+        active={stateIndex}
+        onSelect={setStateIndex}
+        onAdd={handleAddState}
+        onDelete={handleDeleteState}
+      />
+      <MoveToolbar
+        moveType={moveType}
+        capture={capture}
+        onMoveTypeChange={setMoveType}
+        onCaptureChange={setCapture}
+      />
+      <MoveGrid vectors={vectors} sprite={form.sprite} onToggle={toggleCell} />
     </Form>
   );
 };

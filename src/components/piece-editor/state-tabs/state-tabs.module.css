@@ -1,0 +1,16 @@
+.tabs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md);
+}
+
+.tab_group {
+  display: flex;
+  gap: var(--md);
+}
+
+.actions {
+  display: flex;
+  gap: var(--md);
+}

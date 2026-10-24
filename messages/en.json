@@ -141,6 +141,16 @@
     "state-none": "none",
     "state-advance": "advance",
     "state-advance-reverse": "advanceReverseAtEdge",
-    "state-cycle": "cycle"
+    "state-cycle": "cycle",
+    "move-step": "step",
+    "move-slide": "slide",
+    "move-hop": "hop",
+    "capture-optional": "optional",
+    "capture-required": "required",
+    "capture-forbidden": "forbidden",
+    "add-state": "Add state",
+    "can-promote": "Can promote",
+    "delete-state": "Delete state",
+    "new-piece": "New piece"
   }
 }

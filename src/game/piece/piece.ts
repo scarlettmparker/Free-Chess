@@ -266,6 +266,7 @@ class Piece {
   private reverse: Map<number, number>;
   private definitionId: number;
   private type: string;
+  private sprite: { headKey: string; bodyKey: string; footKey: string };
 
   constructor(
     id: number,
@@ -292,6 +293,7 @@ class Piece {
     this.reverse = new Map<number, number>();
     this.definitionId = definitionId;
     this.type = type;
+    this.sprite = { headKey: '', bodyKey: '', footKey: '' };
     this.moveBehavior.initializeAttacks();
   }
 
@@ -374,6 +376,10 @@ class Piece {
     return this.type;
   }
 
+  getSprite(): { headKey: string; bodyKey: string; footKey: string } {
+    return this.sprite;
+  }
+
   // Setters
   setId(id: number): void {
     this.id = id;
@@ -451,6 +457,10 @@ class Piece {
    */
   setType(type: string): void {
     this.type = type;
+  }
+
+  setSprite(sprite: { headKey: string; bodyKey: string; footKey: string }): void {
+    this.sprite = sprite;
   }
 }
 
