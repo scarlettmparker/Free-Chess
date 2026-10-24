@@ -12,9 +12,9 @@ export type SquareView = {
    */
   key: number;
   /**
-   * Whether the square is dark.
+   * Whether the square is light.
    */
-  isDark: boolean;
+  isLight: boolean;
   /**
    * Piece on the square, if any.
    */
@@ -81,7 +81,7 @@ export function emptyBoardView(playerColor: PlayerColor | null = null): BoardVie
   return {
     squares: Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, key) => ({
       key,
-      isDark: (Math.floor(key / BOARD_SIZE) + (key % BOARD_SIZE)) % 2 === 0,
+      isLight: (Math.floor(key / BOARD_SIZE) + (key % BOARD_SIZE)) % 2 === 0,
       pieceId: null,
       moves: EMPTY_MOVE_LIST,
       highlight: 'none',
@@ -184,7 +184,7 @@ export function buildBoardView(
 
     return {
       key,
-      isDark: (Math.floor(key / BOARD_SIZE) + (key % BOARD_SIZE)) % 2 === 0,
+      isLight: (Math.floor(key / BOARD_SIZE) + (key % BOARD_SIZE)) % 2 === 0,
       pieceId,
       moves:
         pieceId == null

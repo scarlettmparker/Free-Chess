@@ -1,0 +1,17 @@
+{
+  "chess": {
+    "title": "Free Chess",
+    "board": "Chess board",
+    "white-to-move": "White to move",
+    "black-to-move": "Black to move",
+    "you-are-white": "You are white",
+    "you-are-black": "You are black",
+    "spectator": "Spectator",
+    "game-over": "Game over",
+    "connecting": "Connecting…",
+    "connected": "Connected",
+    "reconnecting": "Reconnecting…",
+    "disconnected": "Disconnected",
+    "not-found": "Page not found"
+  }
+}

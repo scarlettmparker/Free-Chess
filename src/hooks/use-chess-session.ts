@@ -4,6 +4,7 @@ import { makeMove } from '~/game/move/move';
 import { getMoveTarget } from '~/game/move/move-def';
 import { playMoveSound } from '~/game/sound/play';
 import { mountGame } from '~/utils';
+import { setStoredSession } from '~/utils/connect';
 import { deserializeGameState, type SerializedGameState } from '~/utils/game-serialize';
 import { buildBoardView, emptyBoardView } from '~/utils/game-view';
 import { useMatchmakingSocket } from './use-matchmaking-socket';
@@ -40,6 +41,7 @@ export function useChessSession() {
 
   const { status, sendMove } = useMatchmakingSocket({
     onSession(msg) {
+      if (msg.sessionId) setStoredSession(msg.sessionId);
       if (msg.color === 'white') setPlayerColor(colors.WHITE);
       else if (msg.color === 'black') setPlayerColor(colors.BLACK);
       else setPlayerColor(null);

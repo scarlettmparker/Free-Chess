@@ -1,0 +1,100 @@
+.game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lg);
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--md);
+}
+
+.board {
+  --square-size: 64px;
+  display: grid;
+  grid-template-columns: repeat(8, var(--square-size));
+  grid-auto-rows: var(--square-size);
+  width: max-content;
+  user-select: none;
+}
+
+.square {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+}
+
+.light {
+  background-color: #f0d9b5;
+}
+
+.dark {
+  background-color: #b58863;
+}
+
+.selected {
+  background-color: #cdcdcd;
+}
+
+.target {
+  background-color: #fca5a5;
+}
+
+.latest {
+  background-color: #fca5a5;
+}
+
+.checked {
+  box-shadow: inset 0 0 0 4px rgba(239, 68, 68, 0.85);
+}
+
+.piece {
+  width: calc(var(--square-size) - 4px);
+  height: calc(var(--square-size) - 4px);
+  pointer-events: none;
+}
+
+.file,
+.rank {
+  position: absolute;
+  font-size: 10px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.file {
+  bottom: 3px;
+  left: 3px;
+}
+
+.rank {
+  top: 3px;
+  right: 3px;
+}
+
+.light .file,
+.light .rank {
+  color: #6b4f33;
+}
+
+.dark .file,
+.dark .rank {
+  color: #f7f0e6;
+}
+
+.gameOver {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .board {
+    --square-size: 40px;
+  }
+}

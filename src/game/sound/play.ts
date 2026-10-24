@@ -133,19 +133,17 @@ async function preloadCategoryForPiece(category: string, pieceId?: number) {
 }
 
 /**
- * Preload sounds for a piece ID (fires off the preload attempts, returns immediately)
+ * Preload the fallback sounds for a piece. Piece-specific files are resolved
+ * on demand otherwise a missing sprite sound just spams the console.
  */
-export function preloadPieceSounds(pieceId: number) {
+export function preloadPieceSounds(_pieceId: number) {
   if (!isBrowser) return;
 
   for (const category of SOUND_CATEGORIES) {
-    preloadCategoryForPiece(category, pieceId).catch(() => {});
+    preloadCategoryForPiece(category).catch(() => {});
   }
 
-  // ensure special sounds are queued
-  for (const special of OTHER_SOUNDS) {
-    preloadCategoryForPiece(special).catch(() => {});
-  }
+  preloadSpecials();
 }
 
 /**

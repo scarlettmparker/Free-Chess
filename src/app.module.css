@@ -1,0 +1,12 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lg);
+  min-height: 100vh;
+  padding: var(--xl) var(--lg);
+}
+
+.title {
+  margin: 0;
+}

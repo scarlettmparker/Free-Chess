@@ -7,7 +7,10 @@ export function resolveWebSocketUrl(): string {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
   if (!configured) {
-    return `${protocol}//${window.location.host}/ws`;
+    if (import.meta.env.DEV) {
+      return `${protocol}//${window.location.host}/ws`;
+    }
+    return 'wss://chess-server.int.scarlettparker.co.uk';
   }
 
   if (/^wss?:\/\//.test(configured)) {

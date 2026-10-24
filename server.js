@@ -39,7 +39,11 @@ function registerWebSocketProxy(app) {
     });
 
     wss.on('connection', (client, request) => {
-      const upstream = new WebSocket(upstreamUrl + (request.url ?? '/'));
+      const origin = request.headers.origin;
+      const upstream = new WebSocket(
+        upstreamUrl + (request.url ?? '/'),
+        origin ? { origin } : undefined,
+      );
       const pending = [];
       let open = false;
 
@@ -100,6 +104,20 @@ const configure = async (app) => {
     global: true,
     threshold: 1024,
     encodings: ['gzip', 'br'],
+  });
+
+  app.addHook('onSend', async (_request, reply, payload) => {
+    const csp = reply.getHeader('content-security-policy');
+    if (typeof csp === 'string' && !csp.includes('wss://')) {
+      reply.header(
+        'Content-Security-Policy',
+        csp.replace(
+          "connect-src 'self' https://*.scarlettparker.co.uk",
+          "connect-src 'self' https://*.scarlettparker.co.uk wss://*.scarlettparker.co.uk",
+        ),
+      );
+    }
+    return payload;
   });
 
   await registerWebSocketProxy(app);
