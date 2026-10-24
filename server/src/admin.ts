@@ -6,6 +6,8 @@
 import { Buffer } from 'node:buffer';
 import { timingSafeEqual } from 'node:crypto';
 import { mountGame } from '~/utils/index.ts';
+import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
+import { getSet, listPieces } from '~/server/game-pieces';
 import { gameState } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';
 import { clearColor, sessions } from './sessions.ts';
@@ -101,7 +103,21 @@ export function runCommand(cmd: string, broadcast: Broadcast = () => {}): Comman
     }
 
     case 'reset':
-      mountGame();
+      {
+        const set = getSet(1);
+        const pieces = listPieces();
+        const defs: (typeof BUILTIN_DEFINITIONS)[number][] = [];
+        if (set) {
+          for (const member of set.members) {
+            const piece = pieces.find((candidate) => candidate.id === member.pieceDefinitionId);
+            const builtin = piece
+              ? BUILTIN_DEFINITIONS.find((definition) => definition.slug === piece.slug)
+              : undefined;
+            if (builtin) defs.push(builtin);
+          }
+        }
+        mountGame(undefined, defs.length ? defs : undefined);
+      }
       gameState.moveHistory = [];
       broadcast({ type: 'state', state: serializeGameState(gameState) });
       return { ok: true, message: 'Game state reset and broadcast' };

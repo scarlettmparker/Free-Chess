@@ -1,5 +1,5 @@
-import { openGameDatabase } from './game-db';
-import type { PieceDefinitionDto, PieceSetDto, PieceSpriteDto } from '../utils/piece-types';
+import { openGameDatabase } from '~/server/game-db';
+import type { PieceDefinitionDto, PieceSetDto, PieceSpriteDto } from '~/utils/piece-types';
 
 type PieceRow = {
   /**

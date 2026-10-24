@@ -4,6 +4,8 @@ import { checkedForSideToMove, isEncodedMove } from './rules.ts';
 import { adminCommands, isAdminAuthorized, runCommand } from './admin.ts';
 import { adminToken } from '../../config.js';
 import { mountGame } from '~/utils/index.ts';
+import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
+import { getSet, listPieces } from '~/server/game-pieces';
 import { gameState, moveType } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';
 import { makeMove } from '~/game/move/move.ts';
@@ -51,6 +53,12 @@ if (process.env.NODE_ENV === 'production' && !adminToken) {
   throw new Error('ADMIN_TOKEN is required in production');
 }
 
+/**
+ * Check whether an origin is allowed.
+ *
+ * @param origin Origin header.
+ * @returns True if allowed.
+ */
 function isOriginAllowed(origin: string | null) {
   if (!allowedOrigins.length) return true;
   if (!origin) return false;
@@ -62,7 +70,28 @@ function isOriginAllowed(origin: string | null) {
 }
 
 // initialize game state on server startup
-mountGame();
+/**
+ * Load built-in definitions for a piece set.
+ *
+ * @param setId Set id.
+ * @returns Built-in definitions.
+ */
+function loadPieceSetDefs(setId: number) {
+  const set = getSet(setId);
+  if (!set) return [];
+  const pieces = listPieces();
+  const defs: (typeof BUILTIN_DEFINITIONS)[number][] = [];
+  for (const member of set.members) {
+    const piece = pieces.find((candidate) => candidate.id === member.pieceDefinitionId);
+    const builtin = piece
+      ? BUILTIN_DEFINITIONS.find((definition) => definition.slug === piece.slug)
+      : undefined;
+    if (builtin) defs.push(builtin);
+  }
+  return defs;
+}
+
+mountGame(undefined, loadPieceSetDefs(1));
 
 /**
  * Send a JSON object safely over a WebSocket.

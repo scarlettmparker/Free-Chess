@@ -20,6 +20,11 @@ export class PieceRegistry {
    * @returns The engine base id assigned to the definition.
    */
   register(definition: PieceDefinition, engineBaseId?: number): number {
+    const existing = this.engineBaseIdByDefinition.get(definition.id);
+    if (existing !== undefined) {
+      return existing;
+    }
+
     const baseId = engineBaseId !== undefined ? engineBaseId : this.allocateBaseId();
 
     this.definitions.set(definition.id, definition);
