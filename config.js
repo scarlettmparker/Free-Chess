@@ -31,9 +31,25 @@ export const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .map((value) => value.trim())
   .filter(Boolean);
 
+/**
+ * HMAC key for Sun's CSRF tokens. Empty disables CSRF protection.
+ */
+export const clientSecret = process.env.CSRF_SECRET || process.env.BETTER_AUTH_SECRET || '';
+
 export const manifestPath = './dist/client/.vite/manifest.json';
 
 /**
  * Upstream URL of the matchmaking service. The web app proxies /ws to it.
  */
 export const matchmakingUrl = process.env.MATCHMAKING_URL || 'http://127.0.0.1:4001';
+
+/**
+ * Loopback URL of the matchmaking admin API.
+ */
+export const matchmakingAdminUrl =
+  process.env.MATCHMAKING_ADMIN_URL || 'http://127.0.0.1:4002';
+
+/**
+ * Bearer token for the matchmaking admin API.
+ */
+export const adminToken = process.env.ADMIN_TOKEN || '';

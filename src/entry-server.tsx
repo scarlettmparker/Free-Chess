@@ -2,12 +2,15 @@ import React, { Suspense } from 'react';
 import { StaticRouter } from 'react-router-dom/server';
 import { matchRoutes } from 'react-router-dom';
 import { createRenderer } from '@sun/ssr/renderer';
+import { autoDiscoverRegistrations } from '@sun/ssr/server';
 import { setI18n } from '@sun/i18n';
 import { Router, routes } from './router';
 import Layout from './components/layout';
 import NotFound from './routes/not-found';
 import { createI18nInstance } from './utils/i18n';
 import './utils/configure-framework';
+
+autoDiscoverRegistrations(import.meta.glob('./**/*-data.ts', { eager: true }));
 
 const renderer = createRenderer({
   title: 'Free Chess',

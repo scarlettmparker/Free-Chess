@@ -4,6 +4,9 @@
  */
 import { renderApp } from '@sun/ssr/server';
 import { base, isProduction, manifestPath } from '../config.js';
+import { auth } from '../src/server/auth-instance.ts';
+import { registerAuthRoutes } from '../src/server/auth-routes.ts';
+import { getSession } from '../src/server/session.ts';
 
 /**
  * Sets up routes for the Fastify application.
@@ -12,6 +15,8 @@ import { base, isProduction, manifestPath } from '../config.js';
  * @param {object} vite - The Vite dev server instance (optional, only in development).
  */
 export function setupRoutes(app, vite) {
+  registerAuthRoutes(app, auth);
+
   /**
    * Catch-all route for server-side rendering of pages.
    *
@@ -23,6 +28,11 @@ export function setupRoutes(app, vite) {
     const pathname = requestUrl.pathname;
     if (/\.[^/]+$/.test(pathname)) {
       return reply.callNotFound();
+    }
+
+    if (pathname === '/login') {
+      const session = await getSession(auth, request.headers.cookie);
+      if (session) return reply.redirect('/');
     }
 
     let url = pathname.replace(base, '');

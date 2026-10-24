@@ -13,5 +13,22 @@
     "reconnecting": "Reconnecting…",
     "disconnected": "Disconnected",
     "not-found": "Page not found"
+  },
+  "login": {
+    "title": "Free Chess",
+    "subtitle": "Sign in to admin.",
+    "email": "Email",
+    "email-placeholder": "Enter email",
+    "password": "Password",
+    "password-placeholder": "Enter password",
+    "sign-in-label": "Sign in",
+    "sign-in-title": "Sign in",
+    "error-default": "Invalid credentials",
+    "error-rate": "Too many attempts. Try again later."
+  },
+  "nav": {
+    "sign-in": "Sign in",
+    "logout": "Sign out",
+    "admin": "Admin"
   }
 }

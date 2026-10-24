@@ -13,6 +13,7 @@ import {
   backendHost,
   backendPort,
   allowedOrigins,
+  clientSecret,
   matchmakingUrl,
 } from './config.js';
 import { setupRoutes } from './routes/index.js';
@@ -99,6 +100,11 @@ function registerWebSocketProxy(app) {
 }
 
 const configure = async (app) => {
+  if (!isProduction) {
+    const { default: formbody } = await import('@fastify/formbody');
+    await app.register(formbody);
+  }
+
   const { default: compress } = await import('@fastify/compress');
   await app.register(compress, {
     global: true,
@@ -132,6 +138,7 @@ await createServer({
     backendHost,
     backendPort,
     allowedOrigins,
+    clientSecret,
   },
   setupRoutes,
   configure,

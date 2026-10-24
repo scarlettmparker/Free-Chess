@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Nav from '~/components/nav';
 
 type LayoutProps = {
   /**
@@ -12,7 +13,12 @@ type LayoutProps = {
  */
 const Layout = (props: LayoutProps) => {
   const { children } = props;
-  return <>{children}</>;
+  return (
+    <>
+      <Nav />
+      {children}
+    </>
+  );
 };
 
 export default Layout;

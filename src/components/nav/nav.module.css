@@ -1,0 +1,33 @@
+.nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sm);
+  padding: var(--lg);
+}
+
+.link {
+  text-decoration: none;
+}
+
+.button {
+  padding: var(--sm) var(--lg);
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--md);
+  margin-left: auto;
+}
+
+.email {
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin {
+  margin-left: var(--sm);
+}

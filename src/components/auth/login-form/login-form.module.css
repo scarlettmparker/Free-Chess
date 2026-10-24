@@ -1,0 +1,8 @@
+.error {
+  color: var(--destructive);
+  margin-block: var(--sm);
+}
+
+.form_footer {
+  margin: var(--md) auto;
+}

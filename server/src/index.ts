@@ -3,9 +3,10 @@ import {
   sessions,
   assignColor,
   attachSession as openSession,
-  clearColor,
   detachSession,
 } from './sessions.ts';
+import { adminCommands, isAdminAuthorized, runCommand } from './admin.ts';
+import { adminToken } from '../../config.js';
 import { mountGame } from '~/utils/index.ts';
 import { charPieces, colors, gameState, getBitboard, moveType } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';

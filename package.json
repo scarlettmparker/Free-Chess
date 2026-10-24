@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@fastify/compress": "^8.3.1",
+    "@fastify/formbody": "^9.0.1",
     "@fastify/middie": "^9.3.2",
     "@fastify/static": "^9.1.3",
     "@sun/components": "^0.12.14",

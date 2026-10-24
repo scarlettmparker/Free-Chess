@@ -56,7 +56,8 @@ curl -X POST http://127.0.0.1:4002/reset   # reset the game
 
 Admins live in a SQLite database managed by better-auth. Email and password
 sign-in is enabled, public sign-up is disabled, and the first admin is created
-with `auth:create-admin`.
+with `auth:create-admin`. `/login` is public; the chess board stays public for
+guests.
 
 The database defaults to `$XDG_DATA_HOME/free-chess/auth.db`, then
 `~/.local/share/free-chess/auth.db`. Set `AUTH_DB_PATH` to override it.
@@ -66,6 +67,7 @@ Environment:
 - `BETTER_AUTH_SECRET` - required in production.
 - `BETTER_AUTH_URL` - public origin, for example `https://chess.int.scarlettparker.co.uk`.
 - `BETTER_AUTH_TRUSTED_ORIGINS` - extra comma-separated origins.
+- `CSRF_SECRET` - HMAC key for native form CSRF tokens. Falls back to `BETTER_AUTH_SECRET`.
 
 Roles are defined in `src/server/permissions.ts`:
 
