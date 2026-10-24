@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react';
-import { StaticRouter } from 'react-router-dom/server';
-import { matchRoutes } from 'react-router-dom';
+import { matchRoutes, StaticRouter } from 'react-router-dom';
 import { createRenderer } from '@sun/ssr/renderer';
 import { autoDiscoverRegistrations } from '@sun/ssr/server';
 import { setI18n } from '@sun/i18n';

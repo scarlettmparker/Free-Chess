@@ -25,6 +25,7 @@ const LoginForm = (props: LoginFormProps) => {
     mail: t('error-mail'),
     link: t('error-link'),
     banned: t('error-banned'),
+    google: t('error-google'),
   };
   const message = error ? (errorMessages[error] ?? t('error-default')) : null;
 

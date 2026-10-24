@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--xl);
-  min-height: 100vh;
+  min-height: calc(100vh - var(--xl) * 2);
 }
 
 .card {

@@ -1,0 +1,24 @@
+/**
+ * @fileoverview Login page options.
+ * @module utils/login-data
+ */
+
+import { defineLoader } from '@sun/ssr';
+import { isGoogleConfigured } from '~/server/auth';
+
+/**
+ * Sign-in providers available on the login page.
+ */
+export type LoginOptions = {
+  /**
+   * Whether Google sign-in has credentials configured.
+   */
+  google: boolean;
+};
+
+defineLoader({
+  pattern: 'loginOptions',
+  async loader() {
+    return { loginOptions: { google: isGoogleConfigured() } };
+  },
+});

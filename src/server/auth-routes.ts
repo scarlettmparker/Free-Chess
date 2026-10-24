@@ -4,6 +4,7 @@
  */
 
 import type { SunApp, SunReply, SunRequest } from '@sun/ssr/server';
+import { isGoogleConfigured } from './auth.ts';
 import { recordAudit } from './audit.ts';
 import { isMailerConfigured } from './mailer.ts';
 import { rateLimit } from './rate-limit.ts';
@@ -87,13 +88,27 @@ function magicLinkSent(reply: SunReply, redirectTo: string) {
 }
 
 /**
- * Extracts the session cookie from a better-auth response.
+ * Extracts every Set-Cookie value from a better-auth response.
  *
  * @param response Response returned by better-auth.
- * @returns The first `Set-Cookie` value, or undefined.
+ * @returns Cookie values, or an empty array.
  */
-function sessionCookie(response: Response) {
-  return response.headers.getSetCookie?.()[0] ?? response.headers.get('set-cookie') ?? undefined;
+function cookiesOf(response: Response) {
+  const list = response.headers.getSetCookie?.() ?? [];
+  if (list.length) return list;
+  const single = response.headers.get('set-cookie');
+  return single ? [single] : [];
+}
+
+/**
+ * Picks the session cookie, falling back to the first cookie.
+ *
+ * @param response Response returned by better-auth.
+ * @returns The session `Set-Cookie` value, or undefined.
+ */
+function authCookie(response: Response) {
+  const cookies = cookiesOf(response);
+  return cookies.find((cookie) => cookie.includes('session_token')) ?? cookies[0];
 }
 
 /**
@@ -134,7 +149,7 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
         headers: requestHeaders(request),
         asResponse: true,
       });
-      const cookie = sessionCookie(response);
+      const cookie = authCookie(response);
       if (!response.ok || !cookie) {
         recordAudit({
           action: 'auth.login',
@@ -178,7 +193,7 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
         headers: new Headers({ cookie: request.headers.cookie ?? '' }),
         asResponse: true,
       });
-      const cookie = sessionCookie(response);
+      const cookie = authCookie(response);
       if (cookie) {
         reply.header('Set-Cookie', cookie);
       }
@@ -316,7 +331,7 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
         headers: requestHeaders(request),
         asResponse: true,
       });
-      const cookie = sessionCookie(response);
+      const cookie = authCookie(response);
 
       if (!response.ok || !cookie) {
         const banned = await isBannedResponse(response);
@@ -340,7 +355,7 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
             headers: new Headers({ cookie: cookie.split(';')[0] }),
             asResponse: true,
           });
-          const cleared = sessionCookie(signOutResponse);
+          const cleared = authCookie(signOutResponse);
           if (cleared) reply.header('Set-Cookie', cleared);
         } catch {
           // A banned account stays locked out even if the session lingers.
@@ -388,5 +403,135 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
       });
       loginError(reply, 'link', redirectTo);
     }
+  });
+
+  app.post('/__google', async (request, reply) => {
+    const body = (request.body ?? {}) as Record<string, unknown>;
+    const redirectTo = safeRedirect(body.redirect ?? request.query.redirect);
+
+    if (!isGoogleConfigured()) {
+      loginError(reply, 'google', redirectTo);
+      return;
+    }
+
+    try {
+      const response = await auth.api.signInSocial({
+        body: {
+          provider: 'google',
+          callbackURL: `/__google/verify?redirect=${encodeURIComponent(redirectTo)}`,
+          errorCallbackURL: '/__google/error',
+          newUserCallbackURL: '/__google/error',
+          disableRedirect: true,
+        },
+        headers: requestHeaders(request),
+        asResponse: true,
+      });
+      const result = (await response.json()) as { url?: string };
+      const cookie = authCookie(response);
+
+      if (!response.ok || !result.url) {
+        throw new Error('Google sign-in did not return an authorization URL');
+      }
+
+      if (cookie) reply.header('Set-Cookie', cookie);
+      reply.redirect(result.url);
+    } catch (error) {
+      console.error('Google sign-in failed:', error);
+      recordAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        detail: 'google',
+        ip: request.ip,
+      });
+      loginError(reply, 'google', redirectTo);
+    }
+  });
+
+  app.get('/api/auth/callback/google', async (request, reply) => {
+    try {
+      const response = await auth.api.callbackOAuth({
+        params: { id: 'google' },
+        query: (request.query ?? {}) as Record<string, string>,
+        headers: requestHeaders(request),
+        asResponse: true,
+      });
+      const cookie = authCookie(response);
+      const location = response.headers.get('location') ?? '';
+
+      if (cookie) reply.header('Set-Cookie', cookie);
+      reply.redirect(location.startsWith('/__google/') ? location : '/login?error=google');
+    } catch (error) {
+      console.error('Google callback failed:', error);
+      recordAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        detail: 'google',
+        ip: request.ip,
+      });
+      loginError(reply, 'google', '/');
+    }
+  });
+
+  app.get('/__google/verify', async (request, reply) => {
+    const query = (request.query ?? {}) as Record<string, unknown>;
+    const redirectTo = safeRedirect(query.redirect);
+    const session = await getSession(auth, request.headers.cookie);
+
+    if (!session) {
+      recordAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        detail: 'google-session',
+        ip: request.ip,
+      });
+      loginError(reply, 'google', redirectTo);
+      return;
+    }
+
+    if ((session.user as { banned?: boolean | null }).banned) {
+      try {
+        const response = await auth.api.signOut({
+          headers: new Headers({ cookie: request.headers.cookie ?? '' }),
+          asResponse: true,
+        });
+        const cleared = authCookie(response);
+        if (cleared) reply.header('Set-Cookie', cleared);
+      } catch {
+        // A banned account stays locked out even if the session lingers.
+      }
+
+      recordAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        target: session.user.email,
+        detail: 'banned',
+        ip: request.ip,
+      });
+      loginError(reply, 'banned', redirectTo);
+      return;
+    }
+
+    recordAudit({
+      action: 'auth.login',
+      outcome: 'success',
+      target: session.user.email,
+      actor: session.user,
+      ip: request.ip,
+    });
+    reply.redirect(redirectTo);
+  });
+
+  app.get('/__google/error', async (request, reply) => {
+    const query = (request.query ?? {}) as Record<string, unknown>;
+    const code = typeof query.error === 'string' ? query.error : 'google';
+    const banned = code === 'BANNED_USER';
+
+    recordAudit({
+      action: 'auth.login',
+      outcome: 'failure',
+      detail: banned ? 'banned' : 'google',
+      ip: request.ip,
+    });
+    loginError(reply, banned ? 'banned' : 'google', '/');
   });
 }

@@ -1,13 +1,12 @@
 import type { ServerWebSocket } from 'bun';
 import { sessions, assignColor, attachSession as openSession, detachSession } from './sessions.ts';
+import { checkedForSideToMove, isEncodedMove } from './rules.ts';
 import { adminCommands, isAdminAuthorized, runCommand } from './admin.ts';
 import { adminToken } from '../../config.js';
 import { mountGame } from '~/utils/index.ts';
-import { charPieces, colors, gameState, getBitboard, moveType } from '~/game/consts/board.ts';
+import { gameState, moveType } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';
 import { makeMove } from '~/game/move/move.ts';
-import { isSquareAttacked } from '~/game/board/attacks.ts';
-import { lsbIndex } from '~/game/board/bb.ts';
 
 type Color = 'white' | 'black' | null;
 
@@ -42,6 +41,11 @@ const allowedOrigins = (Bun.env.ALLOWED_WS_ORIGINS || '')
  * Loopback-only admin port. Not reverse-proxied.
  */
 const adminPort = Number(Bun.env.ADMIN_PORT) || port + 1;
+
+/**
+ * Largest client message accepted by the websocket.
+ */
+const maxPayloadLength = 16 * 1024;
 
 if (process.env.NODE_ENV === 'production' && !adminToken) {
   throw new Error('ADMIN_TOKEN is required in production');
@@ -124,32 +128,47 @@ function attachSession(ws: ServerWebSocket<SocketData>) {
  * Handle a client message.
  */
 function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
-  let parsed: any = raw.toString();
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(parsed);
+    parsed = JSON.parse(raw.toString());
   } catch {
     return; // ignore non-json
   }
+
+  if (!parsed || typeof parsed !== 'object') {
+    return;
+  }
+
+  const message = parsed as { type?: unknown; color?: unknown; move?: unknown };
 
   console.log(
     'Received message from client (color=%s, session=%s):',
     ws.data.clientColor,
     ws.data.sessionId,
-    parsed,
+    message,
   );
 
-  if (parsed?.type === 'hello' && parsed.color) {
-    const ok = ws.data.sessionId ? assignColor(ws.data.sessionId, parsed.color) : false;
+  if (message.type === 'hello') {
+    if (message.color !== 'white' && message.color !== 'black') {
+      return;
+    }
+    const ok = ws.data.sessionId ? assignColor(ws.data.sessionId, message.color) : false;
     if (!ok) {
       reject(ws, 'color-taken');
       return;
     }
-    ws.data.clientColor = parsed.color;
-    safeSend(ws, { type: 'ack', message: 'color set', color: parsed.color });
+    ws.data.clientColor = message.color;
+    safeSend(ws, { type: 'ack', message: 'color set', color: message.color });
     return;
   }
 
-  if (parsed?.type === 'move' && parsed.move !== undefined) {
+  if (message.type === 'move') {
+    if (!isEncodedMove(message.move)) {
+      sendGameState(ws);
+      return;
+    }
+
+    const move = message.move;
     const color = ws.data.clientColor;
     const oldStateJson = serializeGameState(gameState);
 
@@ -159,28 +178,17 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
       return;
     }
 
-    const accepted = makeMove(parsed.move, moveType.ALL_MOVES, 0);
+    const accepted = makeMove(move, moveType.ALL_MOVES, 0);
     if (accepted === 1) {
       console.log('Move accepted, updating state');
-      gameState.moveHistory.push(parsed.move);
-      gameState.checked = [false, false];
-
-      // check if king is in check
-      const sideToMove = gameState.side;
-      const opponent = sideToMove ^ 1;
-
-      // we probably shouldn't care about this server side
-      const whiteKing =
-        sideToMove === colors.WHITE ? getBitboard(charPieces.K) : getBitboard(charPieces.k);
-      const kingSquare = lsbIndex(whiteKing.lo, whiteKing.hi);
-
-      gameState.checked[gameState.side] = isSquareAttacked(kingSquare, opponent);
+      gameState.moveHistory.push(move);
+      gameState.checked = checkedForSideToMove();
 
       // Notify opponent of the move
       const oppColor = color === 'white' ? 'black' : 'white';
       const oppSess = Array.from(sessions.values()).find((s) => s.color === oppColor && s.ws);
       if (oppSess?.ws) {
-        safeSend(oppSess.ws, { type: 'opponent_move', move: parsed.move });
+        safeSend(oppSess.ws, { type: 'opponent_move', move });
       }
 
       // Broadcast updated state
@@ -236,6 +244,7 @@ Bun.serve<SocketData>({
     return new Response('Expected a WebSocket upgrade', { status: 400 });
   },
   websocket: {
+    maxPayloadLength,
     open(ws) {
       console.log('Client connected');
       attachSession(ws);

@@ -69,6 +69,12 @@ Links go out through Gmail SMTP. Set `SMTP_USER` to the Gmail address and
 development the link is printed to the server log; in production the request
 returns an email-unavailable error and password login keeps working.
 
+Google sign-in is available for existing accounts when `GOOGLE_CLIENT_ID` and
+`GOOGLE_CLIENT_SECRET` are set. It uses the app-owned callback at
+`/api/auth/callback/google`, so that exact URL must be registered as an
+authorised redirect URI on the Google client. Unknown emails cannot create an
+account; existing accounts are linked by verified email.
+
 The database defaults to `$XDG_DATA_HOME/free-chess/auth.db`, then
 `~/.local/share/free-chess/auth.db`. Set `AUTH_DB_PATH` to override it.
 
@@ -85,6 +91,8 @@ Environment:
 - `SMTP_USER` - Gmail address used to send magic links.
 - `SMTP_PASSWORD` - Gmail app password for `SMTP_USER`.
 - `MAIL_FROM` - From header, default `SMTP_USER`.
+- `GOOGLE_CLIENT_ID` - Google OAuth web client id. Google sign-in is hidden when unset.
+- `GOOGLE_CLIENT_SECRET` - Google OAuth web client secret.
 
 Roles are defined in `src/server/permissions.ts`:
 
@@ -106,10 +114,8 @@ number of days. The default is 180.
 - `SMTP_USER` and `SMTP_PASSWORD` are set when magic-link sign-in should work.
 - Run `bun run db:migrate` after deploy, then `bun run db:backup` on a timer.
 - Run `bun run db:prune-audit 180` on a timer so the audit table stays bounded.
-- Check both units: `sun-app@free-chess` and
+- Check both units, `sun-app@free-chess` and
   `sun-worker@free-chess-matchmaking`.
-- `bun audit` reports advisories in `@fastify/static`, `react-router`, and the
-  Vitest toolchain. Each needs a major upgrade and is tracked separately.
 
 ## Layout
 

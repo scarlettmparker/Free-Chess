@@ -114,14 +114,20 @@ const configure = async (app) => {
 
   app.addHook('onSend', async (_request, reply, payload) => {
     const csp = reply.getHeader('content-security-policy');
-    if (typeof csp === 'string' && !csp.includes('wss://')) {
-      reply.header(
-        'Content-Security-Policy',
-        csp.replace(
+    if (typeof csp === 'string') {
+      let next = csp;
+      if (!next.includes('wss://')) {
+        next = next.replace(
           "connect-src 'self' https://*.scarlettparker.co.uk",
           "connect-src 'self' https://*.scarlettparker.co.uk wss://*.scarlettparker.co.uk",
-        ),
-      );
+        );
+      }
+      if (!next.includes('accounts.google.com')) {
+        next = next.replace("form-action 'self'", "form-action 'self' https://accounts.google.com");
+      }
+      if (next !== csp) {
+        reply.header('Content-Security-Policy', next);
+      }
     }
     return payload;
   });

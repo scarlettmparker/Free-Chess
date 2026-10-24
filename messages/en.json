@@ -34,7 +34,10 @@
     "sent-body": "The link works once and expires in 15 minutes.",
     "error-mail": "Email sign-in isn't available right now.",
     "error-link": "That link is invalid or has expired.",
-    "error-banned": "This account is banned."
+    "error-banned": "This account is banned.",
+    "google-label": "Continue with Google",
+    "google-title": "Sign in with Google",
+    "error-google": "Google sign-in failed. Try again or use another method."
   },
   "nav": {
     "sign-in": "Sign in",

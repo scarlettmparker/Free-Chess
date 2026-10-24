@@ -43,10 +43,10 @@ export const sessions: Map<string, Session> = new Map();
 export const colorMap: Map<NonNullable<Color>, string> = new Map();
 
 /**
- * Generate a short random id.
+ * Generate an unguessable session id.
  */
 export function makeId(): string {
-  return Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
 
 /**
