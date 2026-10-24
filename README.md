@@ -1,82 +1,37 @@
-## Usage
+# Free Chess
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+A bitboard chess engine with a Sun-stack front-end and a Bun matchmaking
+service. No Spring, no GraphQL.
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
+## Stack
 
-```bash
-$ npm install # or pnpm install or yarn install
-```
+- Front-end: Preact via `@sun/*`, Fastify SSR, CSS modules, Vite.
+- Engine: TypeScript, shared by the front-end and the matchmaking server.
+- Matchmaking: Bun + websockets, in-memory sessions.
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
-
-## Available Scripts
-
-In the project directory, you can run:
-
-### `npm run dev` or `npm start`
-
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br>
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
-
-## Linting & Formatting
-
-Run the code formatter across the project:
-
-```
-npm run pretty
-```
-
-Run ESLint (TypeScript + Solid) across source files:
-
-```
-npm run lint
-```
-
-## Server (TypeScript)
-
----
-
-The server now lives in `server/` as TypeScript sources. Quick commands:
+## Scripts
 
 ```bash
-# install deps
-npm install
-
-# run tests
-npm run jest
+bun install
+bun run dev          # Fastify dev server on :5177
+bun run dev:server   # matchmaking service on :4001
+bun run test
+bun run lint
+bun run fmt
+bun run build
+bun run preview
 ```
 
-## Server (Express + WebSocket)
+## Layout
 
-A lightweight Express + WebSocket server is provided under `server/index.js` for pairing two clients.
+- `src/game/**` — engine, FEN, move generation, perft.
+- `src/_components/**` — board UI.
+- `src/entry-client.tsx`, `src/entry-server.tsx` — hydration and SSR entry.
+- `routes/index.js` — Fastify catch-all render route.
+- `server/src/**` — matchmaking service.
+- `public/piece/**` — sprites and move sounds.
 
-Install dependencies and run the server:
+## Migration state
 
-```bash
-npm install
-npm run dev:server
-```
-
-By default the server reads `PORT` from the project `.env` file. The front-end can use the Vite environment variable `import.meta.env.VITE_PUBLIC_API_URL` to obtain the WebSocket URL (the project includes a `.env` with `VITE_PUBLIC_API_URL=ws://localhost:4000`).
-
-Client behaviour:
-
-- Clients may connect with a query parameter to declare their colour: `ws://localhost:4000/?color=white`.
-- Or clients may send a JSON hello message after connecting: `{ type: 'hello', color: 'black' }`.
-
-The server logs client connections and announced colours to the console.
+Scaffold and tooling are on the Sun stack. The board still needs porting from
+Solid to Preact, and the matchmaking service still needs porting to `Bun.serve`.

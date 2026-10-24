@@ -1,0 +1,5 @@
+[install]
+registry = "https://registry.npmjs.org/"
+
+[install.scopes]
+"@sun" = { url = "https://registry.int.scarlettparker.co.uk/" }
