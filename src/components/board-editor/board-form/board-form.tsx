@@ -82,7 +82,7 @@ const BoardForm = (props: BoardFormProps) => {
    */
   const paintCell = useCallback(
     (square: number, add: boolean) => {
-      if (!add || !sprites.has(selection.definitionId)) {
+      if (!add) {
         setForm((prev) => {
           if (!prev.placements.some((placement) => placement.square === square)) return prev;
           return {
@@ -92,6 +92,7 @@ const BoardForm = (props: BoardFormProps) => {
         });
         return;
       }
+      if (!sprites.has(selection.definitionId)) return;
       const placement: BoardPlacement = {
         definitionId: selection.definitionId,
         color: selection.color,

@@ -23,18 +23,15 @@ type BoardGridProps = {
 };
 
 /**
- * Eight by eight board grid with drag painting. Right click erases.
+ * Eight by eight board grid with drag painting. Left click paints, right click erases.
  */
 const BoardGrid = (props: BoardGridProps) => {
   const { placements, sprites, onPaint } = props;
   const dragAdd = useRef<boolean | null>(null);
-  const dragErase = useRef(false);
-  const dragCells = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     const stopDragging = () => {
       dragAdd.current = null;
-      dragCells.current.clear();
     };
     window.addEventListener('pointerup', stopDragging);
     window.addEventListener('pointercancel', stopDragging);
@@ -47,7 +44,7 @@ const BoardGrid = (props: BoardGridProps) => {
   const bySquare = new Map(placements.map((placement) => [placement.square, placement]));
 
   /**
-   * Starts a paint stroke on one square. Right click erases instead.
+   * Starts a paint stroke on one square. Left click paints, right click erases.
    *
    * @param event Pointer event.
    * @param square Square index.
@@ -55,27 +52,19 @@ const BoardGrid = (props: BoardGridProps) => {
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>, square: number) => {
     if (event.button !== 0 && event.button !== 2) return;
     event.preventDefault();
-    const erase = event.button === 2;
-    dragErase.current = erase;
-    dragAdd.current = !erase;
-    dragCells.current = new Set([square]);
-    onPaint(square, !erase);
+    const add = event.button === 0;
+    dragAdd.current = add;
+    onPaint(square, add);
   };
 
   /**
-   * Continues a paint stroke, toggling squares the stroke crosses twice.
+   * Continues a paint stroke in the mode it started with.
    *
    * @param square Square index.
    */
   const handlePointerEnter = (square: number) => {
     if (dragAdd.current === null) return;
-    const changed = dragCells.current.has(square);
-    if (changed) {
-      dragCells.current.delete(square);
-    } else {
-      dragCells.current.add(square);
-    }
-    onPaint(square, dragErase.current ? false : changed ? !dragAdd.current : dragAdd.current);
+    onPaint(square, dragAdd.current);
   };
 
   /**

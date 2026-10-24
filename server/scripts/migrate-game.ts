@@ -77,9 +77,23 @@ const upsertSprite = db.prepare(`
 `);
 
 for (const def of BUILTIN_DEFINITIONS) {
-  const existing = db.query('SELECT id FROM piece_definitions WHERE slug = ?').get(def.slug) as {
-    id: number;
-  } | null;
+  const existing = db
+    .query('SELECT id, is_system FROM piece_definitions WHERE slug = ?')
+    .get(def.slug) as { id: number; is_system: number } | null;
+
+  const system = !['pogo', 'balloon', 'spongebob'].includes(def.slug);
+
+  if (existing && !system) {
+    if (existing.is_system) {
+      db.run('UPDATE piece_definitions SET is_system = 0, updated_at = ? WHERE slug = ?', [
+        now,
+        def.slug,
+      ]);
+    }
+    const row = { id: existing.id };
+    upsertSprite.run(row.id, def.sprite.headKey, def.sprite.bodyKey, def.sprite.footKey);
+    continue;
+  }
 
   const values = [
     def.name,
@@ -93,7 +107,7 @@ for (const def of BUILTIN_DEFINITIONS) {
     null,
     now,
     now,
-    1,
+    system ? 1 : 0,
   ];
 
   if (existing) {

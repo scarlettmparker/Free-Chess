@@ -1,6 +1,14 @@
 import { Suspense } from 'react';
 import { useTranslation } from '@sun/i18n';
-import { Card, CardBody, CardDescription, CardHeader, CardTitle, Skeleton } from '@sun/components';
+import {
+  Card,
+  CardBody,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  ScrollArea,
+  Skeleton,
+} from '@sun/components';
 import AuditLog from '~/components/admin/audit-log';
 import styles from './audit.module.css';
 
@@ -18,9 +26,11 @@ const Audit = () => {
           <CardDescription>{t('audit-description')}</CardDescription>
         </CardHeader>
         <CardBody>
-          <Suspense fallback={<Skeleton />}>
-            <AuditLog />
-          </Suspense>
+          <ScrollArea maxHeight="80vh">
+            <Suspense fallback={<Skeleton />}>
+              <AuditLog />
+            </Suspense>
+          </ScrollArea>
         </CardBody>
       </Card>
     </div>

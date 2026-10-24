@@ -48,32 +48,22 @@ const MoveGrid = (props: MoveGridProps) => {
     };
   }, []);
 
-  const cellKey = (dx: number, dy: number) => `${dx},${dy}`;
-
   const canPaint = (dx: number, dy: number, add: boolean) =>
     !add || moveType !== 'slide' || isCompassDirection(dx, dy);
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>, dx: number, dy: number) => {
-    if (event.button !== 0) return;
+    if (event.button !== 0 && event.button !== 2) return;
     event.preventDefault();
-    const add = !vectors.some((vector) => vector.dx === dx && vector.dy === dy);
+    const add = event.button === 0;
     if (!canPaint(dx, dy, add)) return;
     dragAdd.current = add;
-    dragCells.current = new Set([cellKey(dx, dy)]);
     onPaint(dx, dy, add);
   };
 
   const handlePointerEnter = (dx: number, dy: number) => {
     if (dragAdd.current === null) return;
     if (!canPaint(dx, dy, dragAdd.current)) return;
-    const key = cellKey(dx, dy);
-    const changed = dragCells.current.has(key);
-    if (changed) {
-      dragCells.current.delete(key);
-    } else {
-      dragCells.current.add(key);
-    }
-    onPaint(dx, dy, changed ? !dragAdd.current : dragAdd.current);
+    onPaint(dx, dy, dragAdd.current);
   };
 
   const cells = [];
