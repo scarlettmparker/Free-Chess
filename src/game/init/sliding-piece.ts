@@ -30,9 +30,18 @@ const bitsOf = (bb: LoHi): number[] => {
 };
 
 /**
- * Initialize piece attacks for sliding pieces.
+ * Initialize piece attacks for sliding pieces. Tables are board constants,
+ * so they are built once and shared by every caller.
  */
-export const initSlidingPieces = () => {
+export const initSlidingPieces = (() => {
+  let cache: ReturnType<typeof buildSlidingTables> | null = null;
+  return () => (cache ??= buildSlidingTables());
+})();
+
+/**
+ * Build fresh sliding attack tables.
+ */
+const buildSlidingTables = () => {
   const straightLo: Uint32Array[] = [];
   const straightHi: Uint32Array[] = [];
   const straightBits: number[][] = [];

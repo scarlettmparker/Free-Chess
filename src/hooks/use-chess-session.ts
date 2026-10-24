@@ -31,7 +31,9 @@ export function useChessSession() {
 
   const handleOpponentMove = useCallback(
     (move: number) => {
-      makeMove(move, moveType.ALL_MOVES, 0);
+      if (makeMove(move, moveType.ALL_MOVES, 0)) {
+        gameState.moveHistory.push(move);
+      }
       playMoveSound(move);
       setSelectedSquare(null);
       refresh();
@@ -77,6 +79,7 @@ export function useChessSession() {
           (candidate) => getMoveTarget(candidate) === key,
         );
         if (move !== undefined && makeMove(move, moveType.ALL_MOVES, 0)) {
+          gameState.moveHistory.push(move);
           setSelectedSquare(null);
           sendMove(move);
           playMoveSound(move);

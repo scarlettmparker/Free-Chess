@@ -6,6 +6,7 @@
     "dev": "sun-dev free-chess bun --hot --preload ./css-plugin.ts server.js",
     "dev:server": "sun-dev free-chess-matchmaking bun --hot server/src/index.ts",
     "restart:server": "command -v sun-notify >/dev/null 2>&1 && sun-notify worker:free-chess-matchmaking || true",
+    "deploy": "bun run build && systemctl --user restart sun-app@free-chess.service && systemctl --user restart sun-worker@free-chess-matchmaking.service && command -v sun-notify >/dev/null 2>&1 && sun-notify worker:free-chess-matchmaking || true",
     "build": "bun run build:client && bun run build:server",
     "postbuild": "command -v sun-notify >/dev/null 2>&1 && sun-notify free-chess || true",
     "build:client": "bunx vite build --ssrManifest --outDir dist/client",

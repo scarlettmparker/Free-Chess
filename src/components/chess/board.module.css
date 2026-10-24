@@ -52,14 +52,20 @@
   background-color: #909090;
 }
 
-.light.target,
-.light.latest {
+.light.target {
   background-color: #fca5a5;
 }
 
-.dark.target,
-.dark.latest {
+.dark.target {
   background-color: #ef4444;
+}
+
+.light.latest {
+  background-color: color-mix(in srgb, var(--green-9) 75%, #f0d9b5);
+}
+
+.dark.latest {
+  background-color: color-mix(in srgb, var(--green-9) 75%, #b58863);
 }
 
 .square:hover {

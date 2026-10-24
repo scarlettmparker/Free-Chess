@@ -1,11 +1,15 @@
-import { Piece } from '~/game/piece/piece';
+import { Piece, SlidingMoveBehavior } from '~/game/piece/piece';
 import { PieceFactory } from '~/game/piece/piece-factory';
+import type { PieceDefinition } from '~/game/piece/piece-definition';
+import { pieceRegistry } from '~/game/piece/piece-registry';
+import { initSlidingPieces } from '~/game/init/sliding-piece';
 import { gameState, GameState, Moves } from '~/game/consts/board';
 
 type SerializedPiece = {
   pieceType: string;
   id: number;
   definitionId: number;
+  definition: PieceDefinition | null;
   color: number;
   sprite: { headKey: string; bodyKey: string; footKey: string };
   pieceMask: string[];
@@ -72,6 +76,7 @@ export function serializeGameState(gs: GameState): SerializedGameState {
       pieceType,
       id: piece.getId(),
       definitionId: piece.getDefinitionId(),
+      definition: pieceRegistry.getDefinition(piece.getDefinitionId()) ?? null,
       color: piece.getColor(),
       sprite: piece.getSprite(),
       pieceMask: Array.from(piece.getPieceMask()).map((b) => b.toString()),
@@ -129,8 +134,15 @@ export function deserializeGameState(json: SerializedGameState): GameState {
   function deserializePiece(serialized: SerializedPiece, currentPieces: Piece[]): Piece {
     const existing = currentPieces.find((p) => p.getId() === serialized.id);
 
+    if (serialized.definition) {
+      pieceRegistry.register(serialized.definition);
+    }
+
     const piece =
-      existing ?? PieceFactory.createPiece(serialized.pieceType, serialized.id, serialized.color);
+      existing ??
+      (serialized.definition
+        ? PieceFactory.createGenericPiece(serialized.definition, serialized.id, serialized.color)
+        : PieceFactory.createPiece(serialized.pieceType, serialized.id, serialized.color));
 
     // Reassign attributes (don’t recreate attacks)
     piece.setPieceMask(
@@ -191,6 +203,20 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     nodes: json.nodes,
     moveHistory: json.moveHistory,
   };
+
+  const { straightLo, straightHi, straightBits, diagonalLo, diagonalHi, diagonalBits } =
+    initSlidingPieces();
+  for (const piece of gs.pieces) {
+    const behavior = piece.getMoveBehavior();
+    if (behavior instanceof SlidingMoveBehavior) {
+      if (behavior.getStraight()) {
+        behavior.setStraightAttackTables(straightLo, straightHi, straightBits);
+      }
+      if (behavior.getDiagonal()) {
+        behavior.setDiagonalAttackTables(diagonalLo, diagonalHi, diagonalBits);
+      }
+    }
+  }
 
   return gs;
 }

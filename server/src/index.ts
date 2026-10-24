@@ -188,11 +188,16 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
 
     const move = message.move;
     const color = ws.data.clientColor;
-    const oldStateJson = serializeGameState(gameState);
+    let oldState: ReturnType<typeof serializeGameState> | null = null;
+
+    /**
+     * Serialize the pre-move state, only when a reject path needs it.
+     */
+    const getOldState = () => (oldState ??= serializeGameState(gameState));
 
     if (!color || gameState.side !== (color === 'white' ? 0 : 1)) {
       console.log("Ignoring move: not player's turn or no color");
-      broadcast({ type: 'state', state: oldStateJson });
+      broadcast({ type: 'state', state: getOldState() });
       return;
     }
 
@@ -213,7 +218,7 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
       broadcast({ type: 'state', state: serializeGameState(gameState) });
     } else {
       console.log('Move rejected, sending old state');
-      broadcast({ type: 'state', state: oldStateJson });
+      broadcast({ type: 'state', state: getOldState() });
     }
   }
 }
