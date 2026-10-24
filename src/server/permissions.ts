@@ -42,7 +42,17 @@ export const roles = {
     game: [...statement.game],
   }),
   'user-admin': ac.newRole({
-    user: ['create', 'list', 'set-role', 'set-password', 'ban', 'delete', 'get', 'update'],
+    user: [
+      'create',
+      'list',
+      'set-role',
+      'set-password',
+      'ban',
+      'delete',
+      'get',
+      'update',
+      'set-email',
+    ],
     session: ['list', 'revoke'],
   }),
   user: ac.newRole({}),

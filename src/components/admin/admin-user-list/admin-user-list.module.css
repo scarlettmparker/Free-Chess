@@ -1,0 +1,12 @@
+.toolbar {
+  display: flex;
+  gap: var(--md);
+  align-items: center;
+  margin-bottom: var(--lg);
+}
+
+.skeleton {
+  display: block;
+  width: 100%;
+  height: 20rem;
+}

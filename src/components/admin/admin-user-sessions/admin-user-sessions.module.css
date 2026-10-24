@@ -1,0 +1,42 @@
+.list_body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--md);
+}
+
+.session {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+  min-width: 0;
+}
+
+.meta,
+.dates {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no_items {
+  margin: 0;
+}
+
+.error {
+  margin: 0;
+}

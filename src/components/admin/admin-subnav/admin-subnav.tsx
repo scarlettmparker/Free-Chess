@@ -1,9 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
 import { Button } from '@sun/components';
+import RoleCheck from '~/utils/role-check';
 import styles from './admin-subnav.module.css';
 
-const NAV_ITEMS = [{ labelKey: 'game', href: '/admin' }] as const;
+const NAV_ITEMS = [
+  { labelKey: 'game', href: '/admin', roles: ['admin', 'game-admin'] },
+  { labelKey: 'users', href: '/admin/users', roles: ['admin', 'user-admin'] },
+] as const;
 
 /**
  * Finds the most specific nav item matching the current pathname.
@@ -28,11 +32,13 @@ const AdminSubnav = () => {
   return (
     <nav className={styles.nav}>
       {NAV_ITEMS.map((item) => (
-        <Link key={item.href} to={item.href} className={styles.link}>
-          <Button variant={item.href === activeHref ? 'default' : 'secondary'}>
-            {t(item.labelKey)}
-          </Button>
-        </Link>
+        <RoleCheck key={item.href} roles={[...item.roles]} match="any">
+          <Link to={item.href} className={styles.link}>
+            <Button variant={item.href === activeHref ? 'default' : 'secondary'}>
+              {t(item.labelKey)}
+            </Button>
+          </Link>
+        </RoleCheck>
       ))}
     </nav>
   );
