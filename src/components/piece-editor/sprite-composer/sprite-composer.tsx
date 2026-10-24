@@ -1,5 +1,6 @@
 import { Button } from '@sun/components';
 import { useTranslation } from '@sun/i18n';
+import { partUrl } from '~/components/chess/piece';
 import styles from './sprite-composer.module.css';
 
 type SpriteComposerProps = {
@@ -40,9 +41,9 @@ const SpriteComposer = (props: SpriteComposerProps) => {
   return (
     <div className={styles.composer}>
       <div className={styles.preview}>
-        <img src={`/piece/parts/${headKey}.png`} alt={t('piece-head')} />
-        <img src={`/piece/parts/${bodyKey}.png`} alt={t('piece-body')} />
-        <img src={`/piece/parts/${footKey}.png`} alt={t('piece-foot')} />
+        <img src={partUrl(headKey, 0)} alt={t('piece-head')} />
+        <img src={partUrl(bodyKey, 0)} alt={t('piece-body')} />
+        <img src={partUrl(footKey, 0)} alt={t('piece-foot')} />
       </div>
       <div className={styles.controls}>
         {(['head', 'body', 'foot'] as const).map((part) => {
