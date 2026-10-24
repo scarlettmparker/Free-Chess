@@ -49,6 +49,7 @@ const MoveToolbar = (props: MoveToolbarProps) => {
           <Button
             key={value}
             variant={value === capture ? 'default' : 'secondary'}
+            disabled={moveType === 'step'}
             onClick={() => onCaptureChange(value)}
           >
             {t(`capture-${value}`)}

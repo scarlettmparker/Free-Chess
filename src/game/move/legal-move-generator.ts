@@ -307,20 +307,14 @@ function addVectorMoves(
   // step
   const target = offsetSquare(source, tdx, tdy);
   if (target === -1) return;
-  if (isOwn(target)) return;
-  const enemy = isEnemy(target);
-  if (enemy && v.capture === 'forbidden') return;
-  if (!enemy && v.capture === 'required') return;
+  if (isOwn(target) || isEnemy(target)) return;
 
   if (v.promotes && isPromotionTarget(target) && promotedTargets.length) {
     for (const promoted of promotedTargets) {
-      addMove(
-        movesCopy,
-        encodeMove(source, target, piece.getId(), promoted, enemy ? 1 : 0, 0, 0, 0),
-      );
+      addMove(movesCopy, encodeMove(source, target, piece.getId(), promoted, 0, 0, 0, 0));
     }
   } else {
-    addMove(movesCopy, encodeMove(source, target, piece.getId(), 0, enemy ? 1 : 0, 0, 0, 0));
+    addMove(movesCopy, encodeMove(source, target, piece.getId(), 0, 0, 0, 0, 0));
   }
 }
 

@@ -26,6 +26,46 @@ type PieceFormProps = {
   piece: PieceDefinitionDto | null;
 };
 
+type FormVector = {
+  /**
+   * Horizontal offset.
+   */
+  dx: number;
+  /**
+   * Vertical offset.
+   */
+  dy: number;
+  /**
+   * Reach of the vector.
+   */
+  range: string;
+  /**
+   * Take policy of the vector.
+   */
+  capture: string;
+};
+
+type FormState = {
+  /**
+   * Zero based state index.
+   */
+  index: number;
+  /**
+   * Vectors in this state.
+   */
+  vectors: FormVector[];
+};
+
+/**
+ * Raw move states as typed vectors with a fallback empty state.
+ *
+ * @param moveStates Raw move states.
+ * @returns Typed move states.
+ */
+function normalizeStates(moveStates: unknown[]): FormState[] {
+  return (moveStates.length ? moveStates : [{ index: 0, vectors: [] }]) as FormState[];
+}
+
 /**
  * Piece editing form.
  */
@@ -51,30 +91,32 @@ const PieceForm = (props: PieceFormProps) => {
   const [canPromote, setCanPromote] = useState((piece?.promotionTargets.length ?? 0) > 0);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const states = (form.moveStates.length ? form.moveStates : [{ index: 0, vectors: [] }]) as {
-    index: number;
-    vectors: { dx: number; dy: number; range: string; capture: string }[];
-  }[];
+  const states = normalizeStates(form.moveStates);
   const current = states[stateIndex] ?? states[0];
   const vectors = current?.vectors ?? [];
 
+  /**
+   * Paints or erases one vector with the active tool.
+   *
+   * @param dx Horizontal offset.
+   * @param dy Vertical offset.
+   * @param add Whether to paint or erase.
+   */
   const paintCell = useCallback(
     (dx: number, dy: number, add: boolean) => {
       setForm((prev) => {
-        const prevStates = (
-          prev.moveStates.length ? prev.moveStates : [{ index: 0, vectors: [] }]
-        ) as {
-          index: number;
-          vectors: { dx: number; dy: number; range: string; capture: string }[];
-        }[];
+        const prevStates = normalizeStates(prev.moveStates);
         const typedVectors = prevStates[stateIndex]?.vectors ?? [];
         const existing = typedVectors.find((v) => v.dx === dx && v.dy === dy);
         if (!add && !existing) return prev;
-        if (add && existing?.range === moveType && existing?.capture === capture) return prev;
+        if (add && existing?.range === moveType) {
+          const want = moveType === 'step' ? 'forbidden' : capture;
+          if (existing?.capture === want) return prev;
+        }
         const nextVectors = add
           ? [
               ...typedVectors.filter((v) => v.dx !== dx || v.dy !== dy),
-              { dx, dy, range: moveType, capture },
+              { dx, dy, range: moveType, capture: moveType === 'step' ? 'forbidden' : capture },
             ]
           : typedVectors.filter((v) => v.dx !== dx || v.dy !== dy);
         const nextStates = prevStates.map((state, index) =>
@@ -86,6 +128,11 @@ const PieceForm = (props: PieceFormProps) => {
     [stateIndex, moveType, capture],
   );
 
+  /**
+   * Saves the piece and revalidates the piece list.
+   *
+   * @param event Form submit event.
+   */
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     setSaveError(null);
@@ -103,32 +150,34 @@ const PieceForm = (props: PieceFormProps) => {
     }
   };
 
+  /**
+   * Swaps one sprite part.
+   *
+   * @param part Part slot to change.
+   * @param key New part key.
+   */
   const handlePartChange = useCallback((part: 'head' | 'body' | 'foot', key: string) => {
     setForm((prev) => ({ ...prev, sprite: { ...prev.sprite, [`${part}Key`]: key } }));
   }, []);
 
+  /**
+   * Appends an empty move state and selects it.
+   */
   const handleAddState = useCallback(() => {
     setForm((prev) => {
-      const prevStates = (
-        prev.moveStates.length ? prev.moveStates : [{ index: 0, vectors: [] }]
-      ) as {
-        index: number;
-        vectors: { dx: number; dy: number; range: string; capture: string }[];
-      }[];
+      const prevStates = normalizeStates(prev.moveStates);
       const next = [...prevStates, { index: prevStates.length, vectors: [] }];
       setStateIndex(next.length - 1);
       return { ...prev, moveStates: next };
     });
   }, []);
 
+  /**
+   * Removes the active move state when more than one exists.
+   */
   const handleDeleteState = useCallback(() => {
     setForm((prev) => {
-      const prevStates = (
-        prev.moveStates.length ? prev.moveStates : [{ index: 0, vectors: [] }]
-      ) as {
-        index: number;
-        vectors: { dx: number; dy: number; range: string; capture: string }[];
-      }[];
+      const prevStates = normalizeStates(prev.moveStates);
       if (prevStates.length <= 1) return prev;
       const next = prevStates.filter((_, index) => index !== stateIndex);
       setStateIndex(Math.max(0, stateIndex - 1));

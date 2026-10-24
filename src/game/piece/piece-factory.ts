@@ -86,7 +86,7 @@ export class PieceFactory {
           slider = true;
           if (vector.dx === 0 || vector.dy === 0) straight = true;
           else if (Math.abs(vector.dx) === Math.abs(vector.dy)) diagonal = true;
-        } else {
+        } else if (vector.range !== 'step') {
           leaper = true;
           offsets.push([vector.dx, vector.dy]);
         }

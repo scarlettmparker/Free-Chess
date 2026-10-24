@@ -27,16 +27,16 @@ const V = (
 });
 
 /**
- * Build step vectors for a set of directions.
+ * Build hop vectors for a set of directions.
  *
  * @param dirs Direction list.
  * @param capture Capture policy.
- * @returns Step move vectors.
+ * @returns Hop move vectors.
  */
-const stepDirs = (
+const hopDirs = (
   dirs: Array<[number, number]>,
   capture: 'optional' | 'required' | 'forbidden' = 'optional',
-) => dirs.map(([dx, dy]) => V(dx, dy, 'step', capture));
+) => dirs.map(([dx, dy]) => V(dx, dy, 'hop', capture));
 
 /**
  * Build slide vectors for a set of directions.
@@ -61,8 +61,8 @@ const DIAG: Array<[number, number]> = [
 ];
 const ALL8: Array<[number, number]> = [...ORTH, ...DIAG];
 
-const kingVectors = stepDirs(ALL8);
-const knightVectors = stepDirs([
+const kingVectors = hopDirs(ALL8);
+const knightVectors = hopDirs([
   [-2, 1],
   [-1, 2],
   [1, 2],
@@ -73,7 +73,7 @@ const knightVectors = stepDirs([
   [2, -1],
 ]);
 
-const balloonState0 = stepDirs([
+const balloonState0 = hopDirs([
   [0, 2],
   [0, -2],
   [1, 1],
@@ -81,7 +81,7 @@ const balloonState0 = stepDirs([
   [-1, 1],
   [-1, -1],
 ]);
-const balloonState1 = stepDirs([
+const balloonState1 = hopDirs([
   [0, 2],
   [0, -2],
   [1, 2],
@@ -95,7 +95,7 @@ const balloonState1 = stepDirs([
 ]);
 
 const spongebobStates = [
-  stepDirs([
+  hopDirs([
     [1, 0],
     [-1, 0],
     [0, 1],
@@ -105,7 +105,7 @@ const spongebobStates = [
     [-1, 1],
     [-1, -1],
   ]),
-  stepDirs([
+  hopDirs([
     [2, 0],
     [-2, 0],
     [0, 2],
@@ -115,7 +115,7 @@ const spongebobStates = [
     [-2, 2],
     [-2, -2],
   ]),
-  stepDirs([
+  hopDirs([
     [3, 0],
     [-3, 0],
     [0, 3],
@@ -125,7 +125,7 @@ const spongebobStates = [
     [-3, 3],
     [-3, -3],
   ]),
-  stepDirs([
+  hopDirs([
     [2, 0],
     [-2, 0],
     [0, 2],
@@ -138,17 +138,17 @@ const spongebobStates = [
 ];
 
 const pogoStates = [
-  [V(0, 2, 'step', 'optional')],
-  [V(0, -1, 'step', 'optional')],
-  [V(0, 1, 'step', 'optional')],
-  [V(0, -2, 'step', 'optional')],
+  [V(0, 2, 'hop', 'optional')],
+  [V(0, -1, 'hop', 'optional')],
+  [V(0, 1, 'hop', 'optional')],
+  [V(0, -2, 'hop', 'optional')],
 ];
 
 const pawnVectors = [
   V(0, 1, 'step', 'forbidden', { firstMoveOnly: false, promotes: true }),
   V(0, 2, 'step', 'forbidden', { firstMoveOnly: true, doubleStep: true, promotes: true }),
-  V(-1, 1, 'step', 'required', { enPassant: true, promotes: true }),
-  V(1, 1, 'step', 'required', { enPassant: true, promotes: true }),
+  V(-1, 1, 'hop', 'required', { enPassant: true, promotes: true }),
+  V(1, 1, 'hop', 'required', { enPassant: true, promotes: true }),
 ];
 
 const queenVectors = slideDirs(ALL8);
