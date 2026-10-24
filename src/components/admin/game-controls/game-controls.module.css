@@ -1,0 +1,9 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--md);
+}
+
+.message {
+  margin: 0;
+}

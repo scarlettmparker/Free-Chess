@@ -1,0 +1,13 @@
+.layout {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--lg);
+  padding: var(--xl);
+}
+
+.panel {
+  min-width: 350px;
+  max-width: 32rem;
+  flex-grow: 1;
+}

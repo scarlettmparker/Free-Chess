@@ -42,6 +42,19 @@ export function rolesOf(user: { role?: string | null } | null | undefined) {
 }
 
 /**
+ * Checks whether the session holds any of the allowed roles.
+ *
+ * @param session Session payload, or null for a guest.
+ * @param allowed Role names that may pass.
+ * @returns True when the session holds at least one role.
+ */
+export function hasAnyRole(session: SessionData | null, allowed: string[]) {
+  if (!session) return false;
+  const held = new Set(rolesOf(session.user));
+  return allowed.some((role) => held.has(role));
+}
+
+/**
  * Checks whether the session has every requested permission.
  *
  * @param auth Auth instance to query.

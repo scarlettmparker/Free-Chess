@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
 import { Button, Form } from '@sun/components';
 import { usePageData } from '@sun/ssr/react';
-import { RoleCheck, CsrfField } from '~/utils/sun-ssr';
+import CsrfField from '~/utils/csrf-field';
+import RoleCheck from '~/utils/role-check';
 import type { CurrentUser } from '~/utils/global-data';
 import styles from './nav.module.css';
 
@@ -49,7 +50,11 @@ const NavAccount = () => {
     <div className={styles.account}>
       <span className={styles.email}>{currentUser.email}</span>
       <RoleCheck roles={['admin', 'game-admin', 'user-admin']} match="any">
-        <span className={styles.admin}>{t('admin')}</span>
+        <Link to="/admin" className={styles.link}>
+          <Button variant="secondary" className={styles.button}>
+            {t('admin')}
+          </Button>
+        </Link>
       </RoleCheck>
       <Form action="/__logout" method="post">
         <CsrfField />

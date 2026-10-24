@@ -8,7 +8,6 @@ declare const allowedOrigins: string[];
 declare const clientSecret: string;
 declare const manifestPath: string;
 declare const matchmakingUrl: string;
-declare const matchmakingAdminUrl: string;
 declare const adminToken: string;
 export {
   isProduction,
@@ -21,6 +20,5 @@ export {
   clientSecret,
   manifestPath,
   matchmakingUrl,
-  matchmakingAdminUrl,
   adminToken,
 };

@@ -30,5 +30,28 @@
     "sign-in": "Sign in",
     "logout": "Sign out",
     "admin": "Admin"
+  },
+  "admin": {
+    "game": "Game",
+    "game-title": "Game control",
+    "game-description": "Reset the board or release a colour without restarting the server.",
+    "reset": "Reset game",
+    "clear-white": "Clear white",
+    "clear-black": "Clear black",
+    "clear-all": "Clear all",
+    "action-complete": "Done",
+    "action-failed": "Action failed",
+    "confirm-reset-title": "Reset the game?",
+    "confirm-reset-body": "The current position and move history will be discarded.",
+    "confirm-clear-title": "Clear players?",
+    "confirm-clear-body": "Connected players will lose their colour and become spectators.",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "sessions-title": "Sessions",
+    "sessions-description": "Sessions known to the matchmaking worker.",
+    "no-sessions": "No sessions",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "refresh": "Refresh"
   }
 }

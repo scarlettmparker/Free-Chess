@@ -11,6 +11,7 @@ import { createI18nInstance } from './utils/i18n';
 import './utils/configure-framework';
 
 autoDiscoverRegistrations(import.meta.glob('./**/*-data.ts', { eager: true }));
+autoDiscoverRegistrations(import.meta.glob('./**/*-mutations.ts', { eager: true }));
 
 const renderer = createRenderer({
   title: 'Free Chess',

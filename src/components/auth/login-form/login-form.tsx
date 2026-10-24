@@ -1,7 +1,7 @@
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
 import { Form, FormField, FormLabel, FormItem, FormFooter, Input, Button } from '@sun/components';
-import { CsrfField } from '~/utils/sun-ssr';
+import CsrfField from '~/utils/csrf-field';
 import styles from './login-form.module.css';
 
 /**

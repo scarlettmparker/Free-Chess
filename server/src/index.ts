@@ -1,10 +1,5 @@
 import type { ServerWebSocket } from 'bun';
-import {
-  sessions,
-  assignColor,
-  attachSession as openSession,
-  detachSession,
-} from './sessions.ts';
+import { sessions, assignColor, attachSession as openSession, detachSession } from './sessions.ts';
 import { adminCommands, isAdminAuthorized, runCommand } from './admin.ts';
 import { adminToken } from '../../config.js';
 import { mountGame } from '~/utils/index.ts';
@@ -47,6 +42,10 @@ const allowedOrigins = (Bun.env.ALLOWED_WS_ORIGINS || '')
  * Loopback-only admin port. Not reverse-proxied.
  */
 const adminPort = Number(Bun.env.ADMIN_PORT) || port + 1;
+
+if (process.env.NODE_ENV === 'production' && !adminToken) {
+  throw new Error('ADMIN_TOKEN is required in production');
+}
 
 function isOriginAllowed(origin: string | null) {
   if (!allowedOrigins.length) return true;
@@ -248,99 +247,19 @@ Bun.serve<SocketData>({
 
 console.log(`Server listening on http://${host}:${port}`);
 
-type SessionSummary = {
-  /**
-   * Session id.
-   */
-  sessionId: string;
-  /**
-   * Colour held by the session, or "none".
-   */
-  color: string;
-  /**
-   * Whether a socket is currently attached.
-   */
-  connected: boolean;
-  /**
-   * Last disconnect time, if the session has dropped.
-   */
-  disconnectedAt: number | null;
-};
-
-type CommandResult = {
-  /**
-   * Whether the command did something.
-   */
-  ok: boolean;
-  /**
-   * Human-readable result.
-   */
-  message: string;
-  /**
-   * Session list for the `list` command.
-   */
-  sessions?: SessionSummary[];
-};
-
-/**
- * Run one admin/CLI command. Shared by stdin and the loopback HTTP server.
- */
-function runCommand(cmd: string): CommandResult {
-  switch (cmd) {
-    case 'cb':
-      return clearColor('black')
-        ? { ok: true, message: 'Cleared black' }
-        : { ok: false, message: 'No session for color black' };
-
-    case 'cw':
-      return clearColor('white')
-        ? { ok: true, message: 'Cleared white' }
-        : { ok: false, message: 'No session for color white' };
-
-    case 'clear': {
-      const white = clearColor('white');
-      const black = clearColor('black');
-      return white || black
-        ? { ok: true, message: `Cleared ${white ? 'white ' : ''}${black ? 'black' : ''}`.trim() }
-        : { ok: false, message: 'No colours to clear' };
-    }
-
-    case 'list': {
-      const list: SessionSummary[] = [];
-      for (const [sessionId, sess] of sessions.entries()) {
-        list.push({
-          sessionId,
-          color: sess.color || 'none',
-          connected: Boolean(sess.ws),
-          disconnectedAt: sess.disconnectedAt ?? null,
-        });
-      }
-      return { ok: true, message: `${list.length} session(s)`, sessions: list };
-    }
-
-    case 'reset':
-      mountGame();
-      gameState.moveHistory = [];
-      broadcast({ type: 'state', state: serializeGameState(gameState) });
-      return { ok: true, message: 'Game state reset and broadcast' };
-
-    default:
-      return {
-        ok: false,
-        message: 'Unknown command. Supported: cb, cw, clear, list, reset',
-      };
-  }
-}
-
 try {
   Bun.serve({
     hostname: '127.0.0.1',
     port: adminPort,
     fetch(req) {
+      if (!isAdminAuthorized(req.headers.get('authorization'), adminToken)) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
       const url = new URL(req.url);
       if (req.method === 'GET' && url.pathname === '/') {
         return Response.json({
-          commands: ['cw', 'cb', 'clear', 'list', 'reset'],
+          commands: adminCommands,
           usage: 'POST /<command>',
         });
       }
@@ -349,7 +268,7 @@ try {
       }
 
       const cmd = url.pathname.split('/').filter(Boolean).pop() || '';
-      const result = runCommand(cmd);
+      const result = runCommand(cmd, broadcast);
       return Response.json(result, { status: result.ok ? 200 : 400 });
     },
   });

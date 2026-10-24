@@ -6,7 +6,12 @@ import { renderApp } from '@sun/ssr/server';
 import { base, isProduction, manifestPath } from '../config.js';
 import { auth } from '../src/server/auth-instance.ts';
 import { registerAuthRoutes } from '../src/server/auth-routes.ts';
-import { getSession } from '../src/server/session.ts';
+import { getSession, hasAnyRole } from '../src/server/session.ts';
+
+/**
+ * Roles allowed into the admin area.
+ */
+const ADMIN_ROLES = ['admin', 'game-admin', 'user-admin'];
 
 /**
  * Sets up routes for the Fastify application.
@@ -33,6 +38,17 @@ export function setupRoutes(app, vite) {
     if (pathname === '/login') {
       const session = await getSession(auth, request.headers.cookie);
       if (session) return reply.redirect('/');
+    }
+
+    if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+      const session = await getSession(auth, request.headers.cookie);
+      if (!session) {
+        const target = `${pathname}${requestUrl.search}`;
+        return reply.redirect(`/login?redirect=${encodeURIComponent(target)}`);
+      }
+      if (!hasAnyRole(session, ADMIN_ROLES)) {
+        return reply.status(403).send('Forbidden');
+      }
     }
 
     let url = pathname.replace(base, '');

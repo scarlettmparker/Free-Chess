@@ -44,12 +44,6 @@ export const manifestPath = './dist/client/.vite/manifest.json';
 export const matchmakingUrl = process.env.MATCHMAKING_URL || 'http://127.0.0.1:4001';
 
 /**
- * Loopback URL of the matchmaking admin API.
- */
-export const matchmakingAdminUrl =
-  process.env.MATCHMAKING_ADMIN_URL || 'http://127.0.0.1:4002';
-
-/**
  * Bearer token for the matchmaking admin API.
  */
 export const adminToken = process.env.ADMIN_TOKEN || '';

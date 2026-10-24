@@ -1,0 +1,35 @@
+.list_body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--md);
+}
+
+.id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  white-space: nowrap;
+}
+
+.no_items {
+  margin: 0;
+}

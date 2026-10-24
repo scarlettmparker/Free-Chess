@@ -27,7 +27,3 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.admin {
-  margin-left: var(--sm);
-}

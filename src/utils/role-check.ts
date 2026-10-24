@@ -1,15 +1,10 @@
 import type { ComponentType, ReactNode } from 'react';
-import { CsrfField as CsrfFieldComponent, RoleCheck as RoleCheckComponent } from '@sun/ssr/react';
-
-/**
- * React-typed view of the Preact CSRF field.
- */
-export const CsrfField = CsrfFieldComponent as unknown as ComponentType;
+import { RoleCheck as RoleCheckComponent } from '@sun/ssr/react';
 
 /**
  * React-typed view of the Preact role gate.
  */
-export const RoleCheck = RoleCheckComponent as unknown as ComponentType<{
+const RoleCheck = RoleCheckComponent as unknown as ComponentType<{
   /**
    * Roles the user must hold.
    */
@@ -23,3 +18,5 @@ export const RoleCheck = RoleCheckComponent as unknown as ComponentType<{
    */
   children?: ReactNode;
 }>;
+
+export default RoleCheck;

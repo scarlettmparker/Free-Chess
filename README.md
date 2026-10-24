@@ -42,14 +42,15 @@ colour stays reserved for its session for five seconds after a disconnect
 colour takes it over.
 
 The matchmaking service also listens on `127.0.0.1:4002` (`ADMIN_PORT`) for
-local admin commands. That port is not reverse-proxied.
+local admin commands. That port is not reverse-proxied and requires
+`ADMIN_TOKEN`.
 
 ```bash
-curl -X POST http://127.0.0.1:4002/list
-curl -X POST http://127.0.0.1:4002/cw      # clear white
-curl -X POST http://127.0.0.1:4002/cb      # clear black
-curl -X POST http://127.0.0.1:4002/clear   # clear both
-curl -X POST http://127.0.0.1:4002/reset   # reset the game
+curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/list
+curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/cw      # clear white
+curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/cb      # clear black
+curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/clear   # clear both
+curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/reset   # reset the game
 ```
 
 ## Auth
@@ -68,6 +69,8 @@ Environment:
 - `BETTER_AUTH_URL` - public origin, for example `https://chess.int.scarlettparker.co.uk`.
 - `BETTER_AUTH_TRUSTED_ORIGINS` - extra comma-separated origins.
 - `CSRF_SECRET` - HMAC key for native form CSRF tokens. Falls back to `BETTER_AUTH_SECRET`.
+- `ADMIN_TOKEN` - bearer token shared by the web app and the matchmaking admin API. Required in production.
+- `MATCHMAKING_ADMIN_URL` - loopback admin API URL, default `http://127.0.0.1:4002`.
 
 Roles are defined in `src/server/permissions.ts`:
 
