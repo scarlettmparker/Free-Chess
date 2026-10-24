@@ -3,3 +3,17 @@
   flex-direction: column;
   gap: var(--lg);
 }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--md);
+}
+
+.divider_line {
+  flex: 1;
+}
+
+.divider_text {
+  flex-shrink: 0;
+}

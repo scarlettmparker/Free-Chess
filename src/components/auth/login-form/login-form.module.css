@@ -6,3 +6,9 @@
 .form_footer {
   margin: var(--md) auto;
 }
+
+.magic_link {
+  position: absolute;
+  top: var(--md);
+  right: var(--md);
+}

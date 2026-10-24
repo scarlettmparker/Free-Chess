@@ -35,6 +35,7 @@
     "error-mail": "Email sign-in isn't available right now.",
     "error-link": "That link is invalid or has expired.",
     "error-banned": "This account is banned.",
+    "or": "OR",
     "google-label": "Continue with Google",
     "google-title": "Sign in with Google",
     "error-google": "Google sign-in failed. Try again or use another method."

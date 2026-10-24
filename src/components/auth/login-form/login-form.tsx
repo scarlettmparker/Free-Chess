@@ -61,7 +61,12 @@ const LoginForm = (props: LoginFormProps) => {
         <Button type="submit" title={t('sign-in-title')}>
           {t('sign-in-label')}
         </Button>
-        <Button type="button" variant="secondary" onClick={onShowMagicLink}>
+        <Button
+          className={styles.magic_link}
+          type="button"
+          variant="secondary"
+          onClick={onShowMagicLink}
+        >
           {t('use-magic-link')}
         </Button>
       </FormFooter>
