@@ -32,19 +32,29 @@ type MoveGridProps = {
  */
 const MoveGrid = (props: MoveGridProps) => {
   const { vectors, sprite, moveType, onPaint } = props;
+  const gridRef = useRef<HTMLDivElement | null>(null);
   const dragAdd = useRef<boolean | null>(null);
-  const dragCells = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const stopDragging = () => {
       dragAdd.current = null;
-      dragCells.current.clear();
+    };
+    /**
+     * Kills the browser menu for presses inside the grid. Native capture
+     * fires where a React handler can miss, e.g. mid right-drag.
+     *
+     * @param event Context menu event.
+     */
+    const suppressMenu = (event: Event) => {
+      if (gridRef.current?.contains(event.target as Node)) event.preventDefault();
     };
     window.addEventListener('pointerup', stopDragging);
     window.addEventListener('pointercancel', stopDragging);
+    window.addEventListener('contextmenu', suppressMenu, true);
     return () => {
       window.removeEventListener('pointerup', stopDragging);
       window.removeEventListener('pointercancel', stopDragging);
+      window.removeEventListener('contextmenu', suppressMenu, true);
     };
   }, []);
 
@@ -57,12 +67,24 @@ const MoveGrid = (props: MoveGridProps) => {
     const add = event.button === 0;
     if (!canPaint(dx, dy, add)) return;
     dragAdd.current = add;
+    if (
+      add &&
+      (event.ctrlKey || event.metaKey) &&
+      vectors.some((vector) => vector.dx === dx && vector.dy === dy)
+    )
+      return;
     onPaint(dx, dy, add);
   };
 
-  const handlePointerEnter = (dx: number, dy: number) => {
+  const handlePointerEnter = (event: PointerEvent<HTMLDivElement>, dx: number, dy: number) => {
     if (dragAdd.current === null) return;
     if (!canPaint(dx, dy, dragAdd.current)) return;
+    if (
+      dragAdd.current &&
+      (event.ctrlKey || event.metaKey) &&
+      vectors.some((vector) => vector.dx === dx && vector.dy === dy)
+    )
+      return;
     onPaint(dx, dy, dragAdd.current);
   };
 
@@ -82,7 +104,7 @@ const MoveGrid = (props: MoveGridProps) => {
             isCentre ? styles.centre_cell : ''
           }`}
           onPointerDown={isCentre ? undefined : (event) => handlePointerDown(event, dx, dy)}
-          onPointerEnter={isCentre ? undefined : () => handlePointerEnter(dx, dy)}
+          onPointerEnter={isCentre ? undefined : (event) => handlePointerEnter(event, dx, dy)}
         >
           {isCentre ? (
             <span className={styles.centre_piece}>
@@ -95,7 +117,11 @@ const MoveGrid = (props: MoveGridProps) => {
       );
     }
   }
-  return <div className={styles.grid}>{cells}</div>;
+  return (
+    <div className={styles.grid} ref={gridRef}>
+      {cells}
+    </div>
+  );
 };
 
 export default MoveGrid;

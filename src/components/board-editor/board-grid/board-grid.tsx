@@ -27,17 +27,29 @@ type BoardGridProps = {
  */
 const BoardGrid = (props: BoardGridProps) => {
   const { placements, sprites, onPaint } = props;
+  const gridRef = useRef<HTMLDivElement | null>(null);
   const dragAdd = useRef<boolean | null>(null);
 
   useEffect(() => {
     const stopDragging = () => {
       dragAdd.current = null;
     };
+    /**
+     * Kills the browser menu for presses inside the grid. Native capture
+     * fires where the React handler can miss, e.g. mid right-drag.
+     *
+     * @param event Context menu event.
+     */
+    const suppressMenu = (event: Event) => {
+      if (gridRef.current?.contains(event.target as Node)) event.preventDefault();
+    };
     window.addEventListener('pointerup', stopDragging);
     window.addEventListener('pointercancel', stopDragging);
+    window.addEventListener('contextmenu', suppressMenu, true);
     return () => {
       window.removeEventListener('pointerup', stopDragging);
       window.removeEventListener('pointercancel', stopDragging);
+      window.removeEventListener('contextmenu', suppressMenu, true);
     };
   }, []);
 
@@ -45,6 +57,7 @@ const BoardGrid = (props: BoardGridProps) => {
 
   /**
    * Starts a paint stroke on one square. Left click paints, right click erases.
+   * Holding control or command paints only empty squares instead of overriding.
    *
    * @param event Pointer event.
    * @param square Square index.
@@ -54,26 +67,20 @@ const BoardGrid = (props: BoardGridProps) => {
     event.preventDefault();
     const add = event.button === 0;
     dragAdd.current = add;
+    if (add && (event.ctrlKey || event.metaKey) && bySquare.has(square)) return;
     onPaint(square, add);
   };
 
   /**
    * Continues a paint stroke in the mode it started with.
    *
+   * @param event Pointer event.
    * @param square Square index.
    */
-  const handlePointerEnter = (square: number) => {
+  const handlePointerEnter = (event: PointerEvent<HTMLDivElement>, square: number) => {
     if (dragAdd.current === null) return;
+    if (dragAdd.current && (event.ctrlKey || event.metaKey) && bySquare.has(square)) return;
     onPaint(square, dragAdd.current);
-  };
-
-  /**
-   * Suppresses the context menu so right click can erase.
-   *
-   * @param event Context menu event.
-   */
-  const handleContextMenu = (event: React.MouseEvent) => {
-    event.preventDefault();
   };
 
   const cells = [];
@@ -88,7 +95,7 @@ const BoardGrid = (props: BoardGridProps) => {
         key={square}
         className={`${styles.cell} ${isLight ? styles.light : styles.dark}`}
         onPointerDown={(event) => handlePointerDown(event, square)}
-        onPointerEnter={() => handlePointerEnter(square)}
+        onPointerEnter={(event) => handlePointerEnter(event, square)}
       >
         {sprite && placement ? (
           <span className={styles.piece}>
@@ -103,7 +110,7 @@ const BoardGrid = (props: BoardGridProps) => {
     );
   }
   return (
-    <div className={styles.grid} onContextMenu={handleContextMenu}>
+    <div className={styles.grid} ref={gridRef}>
       {cells}
     </div>
   );

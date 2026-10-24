@@ -69,10 +69,13 @@ const PieceForm = (props: PieceFormProps) => {
         }[];
         const typedVectors = prevStates[stateIndex]?.vectors ?? [];
         const existing = typedVectors.find((v) => v.dx === dx && v.dy === dy);
-        if (add && existing) return prev;
         if (!add && !existing) return prev;
+        if (add && existing?.range === moveType && existing?.capture === capture) return prev;
         const nextVectors = add
-          ? [...typedVectors, { dx, dy, range: moveType, capture }]
+          ? [
+              ...typedVectors.filter((v) => v.dx !== dx || v.dy !== dy),
+              { dx, dy, range: moveType, capture },
+            ]
           : typedVectors.filter((v) => v.dx !== dx || v.dy !== dy);
         const nextStates = prevStates.map((state, index) =>
           index === stateIndex ? { ...state, vectors: nextVectors } : state,

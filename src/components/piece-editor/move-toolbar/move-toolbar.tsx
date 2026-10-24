@@ -37,7 +37,10 @@ const MoveToolbar = (props: MoveToolbarProps) => {
             variant={value === moveType ? 'default' : 'secondary'}
             onClick={() => onMoveTypeChange(value)}
           >
-            {t(`move-${value}`)}
+            <span className={styles.label}>
+              <span className={styles[`swatch_${value}`]} aria-hidden="true" />
+              {t(`move-${value}`)}
+            </span>
           </Button>
         ))}
       </div>
