@@ -1,6 +1,7 @@
 import { Suspense, useTransition } from 'react';
 import { useOutlet, useSearchParams } from 'react-router-dom';
 import AdminCardSkeleton from '~/components/admin/admin-card-skeleton';
+
 import AdminUserList from '~/components/admin/admin-user-list';
 import AdminUserPlaceholder from '~/components/admin/admin-user-placeholder';
 import styles from './users.module.css';

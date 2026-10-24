@@ -1,0 +1,17 @@
+.bar {
+  position: fixed;
+  bottom: var(--lg);
+  right: var(--lg);
+  z-index: 100;
+  max-width: calc(100vw - var(--lg) * 2);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sm);
+}
+
+.message {
+  margin-top: var(--sm);
+}

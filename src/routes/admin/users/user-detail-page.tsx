@@ -1,6 +1,4 @@
-import { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
-import AdminCardSkeleton from '~/components/admin/admin-card-skeleton';
 import AdminUserDetail from '~/components/admin/admin-user-detail';
 
 /**
@@ -11,11 +9,7 @@ const UserDetailPage = () => {
 
   if (!id) return null;
 
-  return (
-    <Suspense fallback={<AdminCardSkeleton />}>
-      <AdminUserDetail userId={id} />
-    </Suspense>
-  );
+  return <AdminUserDetail userId={id} />;
 };
 
 export default UserDetailPage;

@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { useTranslation } from '@sun/i18n';
 import Game from '~/components/chess';
+import AdminBar from '~/components/chess/admin-bar';
 import styles from './app.module.css';
 
 /**
@@ -15,6 +16,7 @@ const App = () => {
       <Suspense fallback={null}>
         <Game />
       </Suspense>
+      <AdminBar />
     </main>
   );
 };

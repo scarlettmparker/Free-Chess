@@ -1,3 +1,26 @@
+.detail_layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lg);
+}
+
+.header_row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md);
+}
+
+.menu_trigger {
+  padding: var(--sm);
+  min-width: auto;
+}
+
+.menu_content {
+  left: auto !important;
+  right: var(--lg) !important;
+}
+
 .fields {
   display: flex;
   flex-direction: column;

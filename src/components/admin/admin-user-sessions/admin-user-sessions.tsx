@@ -9,6 +9,10 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@sun/components';
 import type { AdminUserSession } from '~/utils/admin-user-types';
 import styles from './admin-user-sessions.module.css';
@@ -88,14 +92,27 @@ const AdminUserSessions = (props: AdminUserSessionsProps) => {
                       {session.createdAt} → {session.expiresAt}
                     </span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    disabled={pending !== null}
-                    onClick={() => void revoke(session.token)}
-                  >
-                    {t('revoke')}
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className={styles.menu_trigger}
+                        disabled={pending !== null}
+                      >
+                        ⋮
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className={styles.menu_content}>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        disabled={pending !== null}
+                        onSelect={() => void revoke(session.token)}
+                      >
+                        {t('revoke')}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </li>
               ))}
             </ul>

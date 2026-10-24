@@ -8,9 +8,12 @@ import {
   Card,
   CardBody,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
   Select,
   SelectOption,
 } from '@sun/components';
@@ -138,95 +141,104 @@ const AdminUserDetail = (props: AdminUserDetailProps) => {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>{user.email}</CardTitle>
-          <CardDescription>{user.name}</CardDescription>
-        </CardHeader>
-        <CardBody>
-          <div className={styles.fields}>
-            <div className={styles.field}>
-              <span className={styles.label}>{t('role')}</span>
-              <span>{roles}</span>
-            </div>
-            <div className={styles.field}>
-              <span className={styles.label}>{t('status')}</span>
-              <span>{user.banned ? t('status-banned') : t('status-active')}</span>
-            </div>
-            {user.banned && (
-              <div className={styles.field}>
-                <span className={styles.label}>{t('ban-reason')}</span>
-                <span>{user.banReason ?? t('none')}</span>
+      <div className={styles.detail_layout}>
+        <Card>
+          <CardHeader>
+            <div className={styles.header_row}>
+              <div>
+                <CardTitle>{user.email}</CardTitle>
+                <CardDescription>{user.name}</CardDescription>
               </div>
-            )}
-            <div className={styles.field}>
-              <span className={styles.label}>{t('created')}</span>
-              <span>{user.createdAt}</span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="secondary" className={styles.menu_trigger}>
+                    ⋮
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className={styles.menu_content}>
+                  <DropdownMenuItem onSelect={() => setDialog('edit')}>
+                    {t('edit-user')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setDialog('password')}>
+                    {t('reset-password')}
+                  </DropdownMenuItem>
+                  {user.banned ? (
+                    <DropdownMenuItem
+                      disabled={busy}
+                      onSelect={() =>
+                        void run(() => executeMutation('user/unban', { userId }), t('unbanned'))
+                      }
+                    >
+                      {t('unban')}
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem variant="destructive" onSelect={() => setDialog('ban')}>
+                      {t('ban')}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem variant="destructive" onSelect={() => setDialog('delete')}>
+                    {t('delete')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <div className={styles.field}>
-              <span className={styles.label}>{t('updated')}</span>
-              <span>{user.updatedAt}</span>
+          </CardHeader>
+          <CardBody>
+            <div className={styles.fields}>
+              <div className={styles.field}>
+                <span className={styles.label}>{t('role')}</span>
+                <span>{roles}</span>
+              </div>
+              <div className={styles.field}>
+                <span className={styles.label}>{t('status')}</span>
+                <span>{user.banned ? t('status-banned') : t('status-active')}</span>
+              </div>
+              {user.banned && (
+                <div className={styles.field}>
+                  <span className={styles.label}>{t('ban-reason')}</span>
+                  <span>{user.banReason ?? t('none')}</span>
+                </div>
+              )}
+              <div className={styles.field}>
+                <span className={styles.label}>{t('created')}</span>
+                <span>{user.createdAt}</span>
+              </div>
+              <div className={styles.field}>
+                <span className={styles.label}>{t('updated')}</span>
+                <span>{user.updatedAt}</span>
+              </div>
+              <div className={styles.field}>
+                <span className={styles.label}>{t('user-id')}</span>
+                <span className={styles.mono}>{user.id}</span>
+              </div>
             </div>
-            <div className={styles.field}>
-              <span className={styles.label}>{t('user-id')}</span>
-              <span className={styles.mono}>{user.id}</span>
-            </div>
-          </div>
-          <div className={styles.role_row}>
-            <Select value={role} onChange={(event) => setRoleDraft(event.currentTarget.value)}>
-              {ROLE_OPTIONS.map((option) => (
-                <SelectOption key={option} value={option}>
-                  {t(`role-${option}`)}
-                </SelectOption>
-              ))}
-            </Select>
-            <Button
-              type="button"
-              disabled={busy || role === currentRole}
-              onClick={() =>
-                void run(async () => {
-                  await executeMutation<AdminUser>('user/set-role', { userId, role });
-                  setRoleDraft(null);
-                }, t('role-updated'))
-              }
-            >
-              {t('save-role')}
-            </Button>
-          </div>
-          {message && <p className={styles.message}>{message}</p>}
-          {error && <p className={styles.error}>{error}</p>}
-        </CardBody>
-        <CardFooter>
-          <div className={styles.actions}>
-            <Button type="button" variant="secondary" onClick={() => setDialog('edit')}>
-              {t('edit-user')}
-            </Button>
-            <Button type="button" variant="secondary" onClick={() => setDialog('password')}>
-              {t('reset-password')}
-            </Button>
-            {user.banned ? (
+            <div className={styles.role_row}>
+              <Select value={role} onChange={(event) => setRoleDraft(event.currentTarget.value)}>
+                {ROLE_OPTIONS.map((option) => (
+                  <SelectOption key={option} value={option}>
+                    {t(`role-${option}`)}
+                  </SelectOption>
+                ))}
+              </Select>
               <Button
                 type="button"
-                variant="secondary"
-                disabled={busy}
+                disabled={busy || role === currentRole}
                 onClick={() =>
-                  void run(() => executeMutation('user/unban', { userId }), t('unbanned'))
+                  void run(async () => {
+                    await executeMutation<AdminUser>('user/set-role', { userId, role });
+                    setRoleDraft(null);
+                  }, t('role-updated'))
                 }
               >
-                {t('unban')}
+                {t('save-role')}
               </Button>
-            ) : (
-              <Button type="button" variant="destructive" onClick={() => setDialog('ban')}>
-                {t('ban')}
-              </Button>
-            )}
-            <Button type="button" variant="destructive" onClick={() => setDialog('delete')}>
-              {t('delete')}
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-      <AdminUserSessions userId={userId} onRevoke={revokeSession} onRevokeAll={revokeAll} />
+            </div>
+            {message && <p className={styles.message}>{message}</p>}
+            {error && <p className={styles.error}>{error}</p>}
+          </CardBody>
+        </Card>
+        <AdminUserSessions userId={userId} onRevoke={revokeSession} onRevokeAll={revokeAll} />
+      </div>
       {dialog === 'edit' && (
         <EditUserDialog open user={user} onClose={() => setDialog(null)} onSubmit={saveDetails} />
       )}

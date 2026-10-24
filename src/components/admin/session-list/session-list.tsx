@@ -21,7 +21,7 @@ import styles from './session-list.module.css';
  * @returns Stable UTC label.
  */
 const formatDisconnectedAt = (value: number | null) => {
-  if (value === null) return '—';
+  if (value === null) return '-';
   return `${new Date(value).toISOString().replace('T', ' ').slice(0, 19)} UTC`;
 };
 

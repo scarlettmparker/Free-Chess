@@ -1,13 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
 import { Button } from '@sun/components';
-import RoleCheck from '~/utils/role-check';
 import styles from './admin-subnav.module.css';
 
 const NAV_ITEMS = [
-  { labelKey: 'game', href: '/admin', roles: ['admin', 'game-admin'] },
-  { labelKey: 'users', href: '/admin/users', roles: ['admin', 'user-admin'] },
-  { labelKey: 'audit', href: '/admin/audit', roles: ['admin'] },
+  { labelKey: 'game', href: '/admin' },
+  { labelKey: 'users', href: '/admin/users' },
+  { labelKey: 'audit', href: '/admin/audit' },
 ] as const;
 
 /**
@@ -33,13 +32,11 @@ const AdminSubnav = () => {
   return (
     <nav className={styles.nav}>
       {NAV_ITEMS.map((item) => (
-        <RoleCheck key={item.href} roles={[...item.roles]} match="any">
-          <Link to={item.href} className={styles.link}>
-            <Button variant={item.href === activeHref ? 'default' : 'secondary'}>
-              {t(item.labelKey)}
-            </Button>
-          </Link>
-        </RoleCheck>
+        <Link key={item.href} to={item.href} className={styles.link}>
+          <Button variant={item.href === activeHref ? 'default' : 'secondary'}>
+            {t(item.labelKey)}
+          </Button>
+        </Link>
       ))}
     </nav>
   );

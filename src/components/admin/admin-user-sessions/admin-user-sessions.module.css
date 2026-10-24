@@ -26,6 +26,16 @@
   min-width: 0;
 }
 
+.menu_trigger {
+  padding: var(--sm);
+  min-width: auto;
+}
+
+.menu_content {
+  left: auto !important;
+  right: var(--lg) !important;
+}
+
 .meta,
 .dates {
   overflow: hidden;
