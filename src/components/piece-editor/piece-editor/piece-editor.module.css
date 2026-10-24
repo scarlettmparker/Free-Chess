@@ -1,0 +1,47 @@
+.layout {
+  display: flex;
+  gap: var(--lg);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+  min-width: 12rem;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+  flex: 1;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--sm);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(15, 1fr);
+  gap: 2px;
+}
+
+.cell {
+  aspect-ratio: 1;
+  min-width: 1.5rem;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

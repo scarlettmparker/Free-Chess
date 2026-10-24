@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { labelKey: 'game', href: '/admin' },
   { labelKey: 'users', href: '/admin/users' },
   { labelKey: 'audit', href: '/admin/audit' },
+  { labelKey: 'pieces', href: '/admin/pieces' },
 ] as const;
 
 /**

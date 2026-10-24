@@ -124,6 +124,19 @@
     "user-sessions-description": "Signed-in devices for this account.",
     "no-user-sessions": "No active sessions",
     "revoke": "Revoke",
-    "revoke-all": "Revoke all"
+    "revoke-all": "Revoke all",
+    "pieces": "Pieces",
+    "piece-name": "Name",
+    "piece-slug": "Slug",
+    "piece-king": "King",
+    "state-transition": "State transition",
+    "head-key": "Head key",
+    "body-key": "Body key",
+    "foot-key": "Foot key",
+    "saving": "Saving...",
+    "state-none": "none",
+    "state-advance": "advance",
+    "state-advance-reverse": "advanceReverseAtEdge",
+    "state-cycle": "cycle"
   }
 }
