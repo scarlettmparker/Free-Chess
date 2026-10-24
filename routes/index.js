@@ -55,6 +55,12 @@ export function setupRoutes(app, vite) {
       ) {
         return reply.status(403).send('Forbidden');
       }
+      if (
+        (pathname === '/admin/audit' || pathname.startsWith('/admin/audit/')) &&
+        !hasAnyRole(session, ['admin'])
+      ) {
+        return reply.status(403).send('Forbidden');
+      }
     }
 
     let url = pathname.replace(base, '');
@@ -79,7 +85,9 @@ export function setupRoutes(app, vite) {
       );
     } catch (e) {
       console.error('Error during route handling:', e);
-      reply.status(500).send('Internal Server Error: ' + e.message);
+      reply
+        .status(500)
+        .send(isProduction ? 'Internal Server Error' : `Internal Server Error: ${e.message}`);
     }
   });
 }

@@ -21,6 +21,7 @@
     "test:coverage": "bun --bun x vitest run --coverage --passWithNoTests",
     "db:migrate": "bun server/scripts/migrate.ts",
     "db:backup": "bun server/scripts/backup.ts",
+    "db:prune-audit": "bun server/scripts/prune-audit.ts",
     "auth:create-admin": "bun server/scripts/create-admin.ts"
   },
   "dependencies": {

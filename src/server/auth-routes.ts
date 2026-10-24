@@ -4,9 +4,10 @@
  */
 
 import type { SunApp, SunReply, SunRequest } from '@sun/ssr/server';
+import { recordAudit } from './audit.ts';
 import { isMailerConfigured } from './mailer.ts';
 import { rateLimit } from './rate-limit.ts';
-import type { Auth } from './session.ts';
+import { getSession, type Auth } from './session.ts';
 import { safeRedirect } from './redirect.ts';
 
 /**
@@ -113,6 +114,20 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
       return;
     }
 
+    if (
+      !rateLimit(`login:${request.ip || 'unknown'}:${email}`, { windowMs: 15 * 60_000, max: 10 })
+    ) {
+      recordAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        target: email,
+        detail: 'rate-limited',
+        ip: request.ip,
+      });
+      loginError(reply, 'rate', redirectTo);
+      return;
+    }
+
     try {
       const response = await auth.api.signInEmail({
         body: { email, password },
@@ -121,19 +136,43 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
       });
       const cookie = sessionCookie(response);
       if (!response.ok || !cookie) {
+        recordAudit({
+          action: 'auth.login',
+          outcome: 'failure',
+          target: email,
+          detail: 'invalid',
+          ip: request.ip,
+        });
         loginError(reply, 'invalid', redirectTo);
         return;
       }
+
+      const session = await getSession(auth, cookie.split(';')[0]);
+      recordAudit({
+        action: 'auth.login',
+        outcome: 'success',
+        target: email,
+        actor: session?.user ?? null,
+        ip: request.ip,
+      });
 
       reply.header('Set-Cookie', cookie);
       reply.redirect(redirectTo);
     } catch (error) {
       const code = errorStatus(error) === 429 ? 'rate' : 'invalid';
+      recordAudit({
+        action: 'auth.login',
+        outcome: 'failure',
+        target: email,
+        detail: code,
+        ip: request.ip,
+      });
       loginError(reply, code, redirectTo);
     }
   });
 
   app.post('/__logout', async (request, reply) => {
+    const session = await getSession(auth, request.headers.cookie);
     try {
       const response = await auth.api.signOut({
         headers: new Headers({ cookie: request.headers.cookie ?? '' }),
@@ -147,6 +186,13 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
       // The cookie is cleared below even when the session is already gone.
     }
 
+    recordAudit({
+      action: 'auth.logout',
+      outcome: 'success',
+      actor: session?.user ?? null,
+      ip: request.ip,
+    });
+
     reply.redirect('/login');
   });
 
@@ -156,16 +202,36 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
     const redirectTo = safeRedirect(body.redirect ?? request.query.redirect);
 
     if (!email) {
+      recordAudit({
+        action: 'auth.magic-link.request',
+        outcome: 'failure',
+        detail: 'empty-email',
+        ip: request.ip,
+      });
       magicLinkSent(reply, redirectTo);
       return;
     }
 
     if (process.env.NODE_ENV === 'production' && !isMailerConfigured()) {
+      recordAudit({
+        action: 'auth.magic-link.request',
+        outcome: 'failure',
+        target: email,
+        detail: 'mail-unconfigured',
+        ip: request.ip,
+      });
       loginError(reply, 'mail', redirectTo);
       return;
     }
 
     if (!rateLimit(`${request.ip || 'unknown'}:${email}`, { windowMs: 15 * 60_000, max: 5 })) {
+      recordAudit({
+        action: 'auth.magic-link.request',
+        outcome: 'failure',
+        target: email,
+        detail: 'rate-limited',
+        ip: request.ip,
+      });
       magicLinkSent(reply, redirectTo);
       return;
     }
@@ -176,11 +242,25 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
         includeAccounts: false,
       });
       if (!existing || (existing.user as { banned?: boolean | null }).banned) {
+        recordAudit({
+          action: 'auth.magic-link.request',
+          outcome: 'failure',
+          target: email,
+          detail: existing ? 'banned' : 'unknown-account',
+          ip: request.ip,
+        });
         magicLinkSent(reply, redirectTo);
         return;
       }
     } catch (error) {
       console.error('Magic link lookup failed:', error);
+      recordAudit({
+        action: 'auth.magic-link.request',
+        outcome: 'failure',
+        target: email,
+        detail: 'lookup-failed',
+        ip: request.ip,
+      });
       magicLinkSent(reply, redirectTo);
       return;
     }
@@ -194,8 +274,21 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
         },
         headers: requestHeaders(request),
       });
+      recordAudit({
+        action: 'auth.magic-link.request',
+        outcome: 'success',
+        target: email,
+        ip: request.ip,
+      });
     } catch (error) {
       console.error('Magic link request failed:', error);
+      recordAudit({
+        action: 'auth.magic-link.request',
+        outcome: 'failure',
+        target: email,
+        detail: 'send-failed',
+        ip: request.ip,
+      });
     }
 
     magicLinkSent(reply, redirectTo);
@@ -207,6 +300,12 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
     const redirectTo = safeRedirect(query.redirect);
 
     if (!token) {
+      recordAudit({
+        action: 'auth.magic-link.verify',
+        outcome: 'failure',
+        detail: 'invalid-token',
+        ip: request.ip,
+      });
       loginError(reply, 'link', redirectTo);
       return;
     }
@@ -221,12 +320,18 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
 
       if (!response.ok || !cookie) {
         const banned = await isBannedResponse(response);
+        recordAudit({
+          action: 'auth.magic-link.verify',
+          outcome: 'failure',
+          detail: banned ? 'banned' : 'invalid-token',
+          ip: request.ip,
+        });
         loginError(reply, banned ? 'banned' : 'link', redirectTo);
         return;
       }
 
       const result = (await response.clone().json()) as {
-        user?: { banned?: boolean | null };
+        user?: { id?: string; email?: string; banned?: boolean | null };
       };
 
       if (result.user?.banned) {
@@ -241,19 +346,46 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
           // A banned account stays locked out even if the session lingers.
         }
 
+        recordAudit({
+          action: 'auth.magic-link.verify',
+          outcome: 'failure',
+          target: result.user.email ?? null,
+          detail: 'banned',
+          ip: request.ip,
+        });
         loginError(reply, 'banned', redirectTo);
         return;
       }
+
+      recordAudit({
+        action: 'auth.magic-link.verify',
+        outcome: 'success',
+        target: result.user?.email ?? null,
+        actor: result.user ?? null,
+        ip: request.ip,
+      });
 
       reply.header('Set-Cookie', cookie);
       reply.redirect(redirectTo);
     } catch (error) {
       if (isBannedError(error)) {
+        recordAudit({
+          action: 'auth.magic-link.verify',
+          outcome: 'failure',
+          detail: 'banned',
+          ip: request.ip,
+        });
         loginError(reply, 'banned', redirectTo);
         return;
       }
 
       console.error('Magic link verify failed:', error);
+      recordAudit({
+        action: 'auth.magic-link.verify',
+        outcome: 'failure',
+        detail: 'verify-failed',
+        ip: request.ip,
+      });
       loginError(reply, 'link', redirectTo);
     }
   });

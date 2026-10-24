@@ -2,6 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { mutationRegistry } from '@sun/ssr';
+import { listAudit } from '~/server/audit';
 import { createAuth, migrateAuth } from '~/server/auth';
 import { createUser } from '~/server/users';
 
@@ -95,6 +96,11 @@ test('game admins can reset the game', async () => {
       headers: { authorization: 'Bearer test-token' },
     }),
   );
+  expect(listAudit(1)[0]).toMatchObject({
+    action: 'game.reset',
+    outcome: 'success',
+    actorEmail: 'game@example.com',
+  });
 });
 
 test('game admins can clear a colour', async () => {

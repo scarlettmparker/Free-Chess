@@ -47,3 +47,7 @@ export const matchmakingUrl = process.env.MATCHMAKING_URL || 'http://127.0.0.1:4
  * Bearer token for the matchmaking admin API.
  */
 export const adminToken = process.env.ADMIN_TOKEN || '';
+
+if (isProduction && !adminToken) {
+  console.warn('ADMIN_TOKEN is empty; game admin actions will be rejected by the worker');
+}

@@ -7,6 +7,7 @@ import styles from './admin-subnav.module.css';
 const NAV_ITEMS = [
   { labelKey: 'game', href: '/admin', roles: ['admin', 'game-admin'] },
   { labelKey: 'users', href: '/admin/users', roles: ['admin', 'user-admin'] },
+  { labelKey: 'audit', href: '/admin/audit', roles: ['admin'] },
 ] as const;
 
 /**

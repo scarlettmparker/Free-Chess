@@ -44,6 +44,12 @@
   "admin": {
     "game": "Game",
     "users": "Users",
+    "audit": "Audit",
+    "audit-title": "Audit log",
+    "audit-description": "Recent admin and sign-in events.",
+    "audit-empty": "No events recorded yet.",
+    "audit-success": "Success",
+    "audit-failure": "Failure",
     "game-title": "Game control",
     "game-description": "Reset the board or release a colour without restarting the server.",
     "reset": "Reset game",

@@ -9,6 +9,7 @@ const AdminLayout = lazy(() => import('~/routes/admin/admin-layout'));
 const AdminPage = lazy(() => import('~/routes/admin'));
 const UsersPage = lazy(() => import('~/routes/admin/users'));
 const UserDetailPage = lazy(() => import('~/routes/admin/users/user-detail-page'));
+const AuditPage = lazy(() => import('~/routes/admin/audit'));
 const NotFound = lazy(() => import('~/routes/not-found'));
 
 /**
@@ -64,6 +65,14 @@ export const routes: RouteObject[] = [
             ),
           },
         ],
+      },
+      {
+        path: 'audit',
+        element: (
+          <Suspense fallback={<AdminPageSkeleton />}>
+            <AuditPage />
+          </Suspense>
+        ),
       },
     ],
   },

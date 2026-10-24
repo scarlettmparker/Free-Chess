@@ -22,6 +22,7 @@ export const statement = {
     'set-email',
   ],
   session: ['list', 'revoke', 'delete'],
+  audit: ['read'],
 } as const;
 
 /**
@@ -37,6 +38,7 @@ export const roles = {
     game: [...statement.game],
     user: [...statement.user],
     session: [...statement.session],
+    audit: [...statement.audit],
   }),
   'game-admin': ac.newRole({
     game: [...statement.game],
@@ -84,4 +86,8 @@ export type Permission = {
    * Session management actions.
    */
   session?: (typeof statement.session)[number][];
+  /**
+   * Audit log actions.
+   */
+  audit?: (typeof statement.audit)[number][];
 };

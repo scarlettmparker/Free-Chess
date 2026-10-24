@@ -46,6 +46,13 @@ export function buildAuthOptions(
 
   const baseURL =
     process.env.BETTER_AUTH_URL || `http://localhost:${process.env.SERVER_PORT || 5179}`;
+  if (isProduction) {
+    const url = new URL(baseURL);
+    const local = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    if (url.protocol !== 'https:' && !local) {
+      throw new Error('BETTER_AUTH_URL must use https in production');
+    }
+  }
   const configuredOrigins = (process.env.BETTER_AUTH_TRUSTED_ORIGINS || '')
     .split(',')
     .map((value) => value.trim())

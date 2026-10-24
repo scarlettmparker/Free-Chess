@@ -3,11 +3,12 @@
  * @module utils/admin-users-mutations
  */
 
-import { defineMutation, MutationError } from '@sun/ssr';
+import { defineMutation, getRequestIp, MutationError } from '@sun/ssr';
 import { asMutationError, callerHeaders } from '~/server/admin-auth';
+import { recordAudit } from '~/server/audit';
 import { auth } from '~/server/auth-instance';
 import type { Permission } from '~/server/permissions';
-import { getSession, requirePermission } from '~/server/session';
+import { getSession, requirePermission, type SessionData } from '~/server/session';
 import { toAdminUser } from './admin-user-types';
 import { ROLE_OPTIONS } from './roles';
 
@@ -137,30 +138,79 @@ function assertPassword(password: string) {
   }
 }
 
+/**
+ * Runs an admin action and records its outcome.
+ *
+ * @param session Caller session.
+ * @param action Audit action name.
+ * @param target Affected resource.
+ * @param run Action to run.
+ * @param successDetail Extra context for a successful action.
+ * @returns Action result.
+ */
+async function audited<T>(
+  session: SessionData,
+  action: string,
+  target: string,
+  run: () => Promise<T>,
+  successDetail?: string,
+) {
+  try {
+    const result = await run();
+    recordAudit({
+      action,
+      target,
+      outcome: 'success',
+      detail: successDetail,
+      actor: session.user,
+      ip: getRequestIp(),
+    });
+    return result;
+  } catch (error) {
+    recordAudit({
+      action,
+      target,
+      outcome: 'failure',
+      detail: error instanceof Error ? error.message : 'Action failed',
+      actor: session.user,
+      ip: getRequestIp(),
+    });
+    throw error;
+  }
+}
+
 defineMutation({
   path: 'user/create',
   async handler(body: CreateUserBody, context) {
-    await guard(context.cookie, { user: ['create', 'set-role'] });
+    const session = await guard(context.cookie, { user: ['create', 'set-role'] });
     if (!body.email.trim() || !body.name.trim()) {
       throw new MutationError('Email and name are required', 400);
     }
     assertPassword(body.password);
     assertRole(body.role);
 
-    try {
-      const result = await auth.api.createUser({
-        body: {
-          email: body.email.trim().toLowerCase(),
-          name: body.name.trim(),
-          password: body.password,
-          role: body.role as (typeof ROLE_OPTIONS)[number],
-        },
-        headers: callerHeaders(context.cookie),
-      });
-      return toAdminUser(result.user);
-    } catch (error) {
-      throw asMutationError(error);
-    }
+    return audited(
+      session,
+      'user.create',
+      body.email.trim().toLowerCase(),
+      async () => {
+        try {
+          const result = await auth.api.createUser({
+            body: {
+              email: body.email.trim().toLowerCase(),
+              name: body.name.trim(),
+              password: body.password,
+              role: body.role as (typeof ROLE_OPTIONS)[number],
+            },
+            headers: callerHeaders(context.cookie),
+          });
+          return toAdminUser(result.user);
+        } catch (error) {
+          throw asMutationError(error);
+        }
+      },
+      `role=${body.role}`,
+    );
   },
 });
 
@@ -173,33 +223,43 @@ defineMutation({
     }
     assertRole(body.role);
 
-    try {
-      const result = await auth.api.setRole({
-        body: { userId: body.userId, role: body.role as (typeof ROLE_OPTIONS)[number] },
-        headers: callerHeaders(context.cookie),
-      });
-      return toAdminUser(result.user);
-    } catch (error) {
-      throw asMutationError(error);
-    }
+    return audited(
+      session,
+      'user.set-role',
+      body.userId,
+      async () => {
+        try {
+          const result = await auth.api.setRole({
+            body: { userId: body.userId, role: body.role as (typeof ROLE_OPTIONS)[number] },
+            headers: callerHeaders(context.cookie),
+          });
+          return toAdminUser(result.user);
+        } catch (error) {
+          throw asMutationError(error);
+        }
+      },
+      `role=${body.role}`,
+    );
   },
 });
 
 defineMutation({
   path: 'user/set-password',
   async handler(body: SetPasswordBody, context) {
-    await guard(context.cookie, { user: ['set-password'] });
+    const session = await guard(context.cookie, { user: ['set-password'] });
     assertPassword(body.password);
 
-    try {
-      await auth.api.setUserPassword({
-        body: { userId: body.userId, newPassword: body.password },
-        headers: callerHeaders(context.cookie),
-      });
-      return { status: true };
-    } catch (error) {
-      throw asMutationError(error);
-    }
+    return audited(session, 'user.set-password', body.userId, async () => {
+      try {
+        await auth.api.setUserPassword({
+          body: { userId: body.userId, newPassword: body.password },
+          headers: callerHeaders(context.cookie),
+        });
+        return { status: true };
+      } catch (error) {
+        throw asMutationError(error);
+      }
+    });
   },
 });
 
@@ -215,36 +275,46 @@ defineMutation({
         ? body.expiresInDays
         : undefined;
 
-    try {
-      const result = await auth.api.banUser({
-        body: {
-          userId: body.userId,
-          banReason: body.reason?.trim() || undefined,
-          banExpiresIn: expiresInDays ? expiresInDays * 86_400 : undefined,
-        },
-        headers: callerHeaders(context.cookie),
-      });
-      return toAdminUser(result.user);
-    } catch (error) {
-      throw asMutationError(error);
-    }
+    return audited(
+      session,
+      'user.ban',
+      body.userId,
+      async () => {
+        try {
+          const result = await auth.api.banUser({
+            body: {
+              userId: body.userId,
+              banReason: body.reason?.trim() || undefined,
+              banExpiresIn: expiresInDays ? expiresInDays * 86_400 : undefined,
+            },
+            headers: callerHeaders(context.cookie),
+          });
+          return toAdminUser(result.user);
+        } catch (error) {
+          throw asMutationError(error);
+        }
+      },
+      expiresInDays ? `expiresIn=${expiresInDays}d` : 'indefinite',
+    );
   },
 });
 
 defineMutation({
   path: 'user/unban',
   async handler(body: UserIdBody, context) {
-    await guard(context.cookie, { user: ['ban'] });
+    const session = await guard(context.cookie, { user: ['ban'] });
 
-    try {
-      const result = await auth.api.unbanUser({
-        body: { userId: body.userId },
-        headers: callerHeaders(context.cookie),
-      });
-      return toAdminUser(result.user);
-    } catch (error) {
-      throw asMutationError(error);
-    }
+    return audited(session, 'user.unban', body.userId, async () => {
+      try {
+        const result = await auth.api.unbanUser({
+          body: { userId: body.userId },
+          headers: callerHeaders(context.cookie),
+        });
+        return toAdminUser(result.user);
+      } catch (error) {
+        throw asMutationError(error);
+      }
+    });
   },
 });
 
@@ -256,15 +326,17 @@ defineMutation({
       throw new MutationError('You cannot delete your own account', 400);
     }
 
-    try {
-      await auth.api.removeUser({
-        body: { userId: body.userId },
-        headers: callerHeaders(context.cookie),
-      });
-      return { success: true };
-    } catch (error) {
-      throw asMutationError(error);
-    }
+    return audited(session, 'user.delete', body.userId, async () => {
+      try {
+        await auth.api.removeUser({
+          body: { userId: body.userId },
+          headers: callerHeaders(context.cookie),
+        });
+        return { success: true };
+      } catch (error) {
+        throw asMutationError(error);
+      }
+    });
   },
 });
 
@@ -289,54 +361,60 @@ defineMutation({
       throw new MutationError('Forbidden', 403);
     }
 
-    try {
-      const result = await auth.api.adminUpdateUser({
-        body: {
-          userId: body.userId,
-          data: {
-            ...(name ? { name } : {}),
-            ...(email ? { email } : {}),
+    return audited(session, 'user.update', body.userId, async () => {
+      try {
+        const result = await auth.api.adminUpdateUser({
+          body: {
+            userId: body.userId,
+            data: {
+              ...(name ? { name } : {}),
+              ...(email ? { email } : {}),
+            },
           },
-        },
-        headers: callerHeaders(cookie),
-      });
-      return toAdminUser(result);
-    } catch (error) {
-      throw asMutationError(error);
-    }
+          headers: callerHeaders(cookie),
+        });
+        return toAdminUser(result);
+      } catch (error) {
+        throw asMutationError(error);
+      }
+    });
   },
 });
 
 defineMutation({
   path: 'session/revoke',
   async handler(body: RevokeSessionBody, context) {
-    await guard(context.cookie, { session: ['revoke'] });
+    const session = await guard(context.cookie, { session: ['revoke'] });
 
-    try {
-      await auth.api.revokeUserSession({
-        body: { sessionToken: body.sessionToken },
-        headers: callerHeaders(context.cookie),
-      });
-      return { success: true };
-    } catch (error) {
-      throw asMutationError(error);
-    }
+    return audited(session, 'session.revoke', 'session', async () => {
+      try {
+        await auth.api.revokeUserSession({
+          body: { sessionToken: body.sessionToken },
+          headers: callerHeaders(context.cookie),
+        });
+        return { success: true };
+      } catch (error) {
+        throw asMutationError(error);
+      }
+    });
   },
 });
 
 defineMutation({
   path: 'session/revoke-all',
   async handler(body: UserIdBody, context) {
-    await guard(context.cookie, { session: ['revoke'] });
+    const session = await guard(context.cookie, { session: ['revoke'] });
 
-    try {
-      await auth.api.revokeUserSessions({
-        body: { userId: body.userId },
-        headers: callerHeaders(context.cookie),
-      });
-      return { success: true };
-    } catch (error) {
-      throw asMutationError(error);
-    }
+    return audited(session, 'session.revoke-all', body.userId, async () => {
+      try {
+        await auth.api.revokeUserSessions({
+          body: { userId: body.userId },
+          headers: callerHeaders(context.cookie),
+        });
+        return { success: true };
+      } catch (error) {
+        throw asMutationError(error);
+      }
+    });
   },
 });

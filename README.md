@@ -24,6 +24,7 @@ bun run restart:server
 bun run db:migrate
 bun run auth:create-admin --email you@example.com --name "Your Name"
 bun run db:backup    # optional output path as the first argument
+bun run db:prune-audit 180
 ```
 
 Preview services:
@@ -91,6 +92,24 @@ Roles are defined in `src/server/permissions.ts`:
 - `game-admin` - reset, clear, list sessions.
 - `user-admin` - create, list, manage, and revoke users.
 - `user` - no admin permissions.
+
+Admin mutations and sign-in attempts append to `audit_log` in the auth
+database. `/admin/audit` shows the newest 200 entries and is limited to the
+`admin` role. `bun run db:prune-audit 180` removes entries older than the given
+number of days. The default is 180.
+
+## Deploy checklist
+
+- `BETTER_AUTH_SECRET`, `CSRF_SECRET`, and `ADMIN_TOKEN` are set. Keep `.env`
+  and `.env.production` at mode `600`.
+- `BETTER_AUTH_URL` uses `https`, and `ALLOWED_ORIGINS` lists every served host.
+- `SMTP_USER` and `SMTP_PASSWORD` are set when magic-link sign-in should work.
+- Run `bun run db:migrate` after deploy, then `bun run db:backup` on a timer.
+- Run `bun run db:prune-audit 180` on a timer so the audit table stays bounded.
+- Check both units: `sun-app@free-chess` and
+  `sun-worker@free-chess-matchmaking`.
+- `bun audit` reports advisories in `@fastify/static`, `react-router`, and the
+  Vitest toolchain. Each needs a major upgrade and is tracked separately.
 
 ## Layout
 

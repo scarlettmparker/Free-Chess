@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import type { SunApp, SunReply, SunRequest } from '@sun/ssr/server';
 import { createAuth, migrateAuth } from '~/server/auth';
 import { registerAuthRoutes } from '~/server/auth-routes';
+import { resetRateLimits } from '~/server/rate-limit';
 import { safeRedirect } from '~/server/redirect';
 import { createUser } from '~/server/users';
 
@@ -118,6 +119,7 @@ function captureReply() {
 beforeAll(async () => {
   directory = mkdtempSync(join(tmpdir(), 'free-chess-routes-'));
   const dbPath = join(directory, 'auth.db');
+  process.env.AUTH_DB_PATH = dbPath;
   await migrateAuth(dbPath);
   auth = createAuth(dbPath);
   await createUser(auth, {
@@ -134,7 +136,12 @@ beforeAll(async () => {
 });
 
 afterAll(() => {
+  delete process.env.AUTH_DB_PATH;
   rmSync(directory, { recursive: true, force: true });
+});
+
+beforeEach(() => {
+  resetRateLimits();
 });
 
 test('safeRedirect keeps paths and rejects off-site targets', () => {
@@ -198,4 +205,16 @@ test('logout clears the session cookie and returns to login', async () => {
 
   expect(state.redirectTo).toBe('/login');
   expect(headers.get('Set-Cookie')).toContain('better-auth.session_token=');
+});
+
+test('repeated failed logins are throttled', async () => {
+  for (let index = 0; index < 10; index += 1) {
+    const { reply } = captureReply();
+    await login(formRequest({ email: 'admin@example.com', password: 'wrong-password' }), reply);
+  }
+
+  const { reply, state } = captureReply();
+  await login(formRequest({ email: 'admin@example.com', password: 'wrong-password' }), reply);
+
+  expect(state.redirectTo).toContain('/login?error=rate');
 });
