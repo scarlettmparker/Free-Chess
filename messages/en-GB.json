@@ -151,6 +151,9 @@
     "add-state": "Add state",
     "can-promote": "Can promote",
     "delete-state": "Delete state",
-    "new-piece": "New piece"
+    "new-piece": "New piece",
+    "unnamed-piece": "Unnamed piece",
+    "delete-piece-title": "Delete piece?",
+    "delete-piece-body": "Delete {{name}}? This cannot be undone."
   }
 }

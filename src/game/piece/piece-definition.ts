@@ -57,6 +57,17 @@ export interface PieceMoveState {
 
 export type StateTransition = 'none' | 'advance' | 'advanceReverseAtEdge' | 'cycle';
 
+/**
+ * Check whether an offset lies on one of the eight compass directions.
+ *
+ * @param dx Horizontal offset.
+ * @param dy Vertical offset.
+ * @returns True for orthogonal or diagonal offsets.
+ */
+export function isCompassDirection(dx: number, dy: number): boolean {
+  return dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy);
+}
+
 export interface PieceDefinition {
   /**
    * Definition id.

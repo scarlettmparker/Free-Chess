@@ -31,6 +31,32 @@
   gap: var(--md);
 }
 
+.piece_button {
+  display: flex;
+  align-items: center;
+  gap: var(--md);
+  width: 100%;
+}
+
+.piece_name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 60%;
+}
+
+.piece_actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--md);
+}
+
+.error {
+  margin: 0;
+}
+
 .editor {
   display: flex;
   flex-direction: column;

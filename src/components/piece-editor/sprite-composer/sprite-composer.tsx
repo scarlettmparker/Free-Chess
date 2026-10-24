@@ -49,11 +49,10 @@ const SpriteComposer = (props: SpriteComposerProps) => {
           const value = part === 'head' ? headKey : part === 'body' ? bodyKey : footKey;
           return (
             <div key={part} className={styles.row}>
-              <span>{t(`${part}-key`)}</span>
               <Button variant="secondary" onClick={() => cycle(part, value, -1)}>
                 {'<'}
               </Button>
-              <span className={styles.value}>{value}</span>
+              <span className={styles.key}>{t(`${part}-key`)}</span>
               <Button variant="secondary" onClick={() => cycle(part, value, 1)}>
                 {'>'}
               </Button>

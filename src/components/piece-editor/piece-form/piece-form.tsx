@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from '@sun/i18n';
-import { executeMutation } from '@sun/ssr';
+import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
 import {
   Checkbox,
   Form,
@@ -49,6 +49,7 @@ const PieceForm = (props: PieceFormProps) => {
   const [moveType, setMoveType] = useState<'step' | 'slide' | 'hop'>('step');
   const [capture, setCapture] = useState<'optional' | 'required' | 'forbidden'>('optional');
   const [canPromote, setCanPromote] = useState((piece?.promotionTargets.length ?? 0) > 0);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const states = (form.moveStates.length ? form.moveStates : [{ index: 0, vectors: [] }]) as {
     index: number;
@@ -57,43 +58,46 @@ const PieceForm = (props: PieceFormProps) => {
   const current = states[stateIndex] ?? states[0];
   const vectors = current?.vectors ?? [];
 
-  const updateVectors = (
-    newVectors: { dx: number; dy: number; range: string; capture: string }[],
-  ) => {
-    setForm((prev) => {
-      const prevStates = (
-        prev.moveStates.length ? prev.moveStates : [{ index: 0, vectors: [] }]
-      ) as {
-        index: number;
-        vectors: { dx: number; dy: number; range: string; capture: string }[];
-      }[];
-      const nextStates = prevStates.map((state, index) =>
-        index === stateIndex ? { ...state, vectors: newVectors } : state,
-      );
-      return { ...prev, moveStates: nextStates };
-    });
-  };
-
-  const toggleCell = useCallback(
-    (dx: number, dy: number) => {
-      const typedVectors = current.vectors;
-      const existing = typedVectors.find((v) => v.dx === dx && v.dy === dy);
-      const newVectors = existing
-        ? typedVectors.filter((v) => v.dx !== dx || v.dy !== dy)
-        : [...typedVectors, { dx, dy, range: moveType, capture }];
-      updateVectors(newVectors);
+  const paintCell = useCallback(
+    (dx: number, dy: number, add: boolean) => {
+      setForm((prev) => {
+        const prevStates = (
+          prev.moveStates.length ? prev.moveStates : [{ index: 0, vectors: [] }]
+        ) as {
+          index: number;
+          vectors: { dx: number; dy: number; range: string; capture: string }[];
+        }[];
+        const typedVectors = prevStates[stateIndex]?.vectors ?? [];
+        const existing = typedVectors.find((v) => v.dx === dx && v.dy === dy);
+        if (add && existing) return prev;
+        if (!add && !existing) return prev;
+        const nextVectors = add
+          ? [...typedVectors, { dx, dy, range: moveType, capture }]
+          : typedVectors.filter((v) => v.dx !== dx || v.dy !== dy);
+        const nextStates = prevStates.map((state, index) =>
+          index === stateIndex ? { ...state, vectors: nextVectors } : state,
+        );
+        return { ...prev, moveStates: nextStates };
+      });
     },
-    [current, moveType, capture, updateVectors],
+    [stateIndex, moveType, capture],
   );
 
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
+    setSaveError(null);
     const slug = form.name.toLowerCase().replace(/\s+/g, '-');
-    await executeMutation('pieces/save', {
-      ...form,
-      slug,
-      promotionTargets: canPromote ? form.promotionTargets : [],
-    });
+    try {
+      const result = await executeMutation<{ id: number }>('pieces/save', {
+        ...form,
+        slug,
+        promotionTargets: canPromote ? form.promotionTargets : [],
+      });
+      setForm((prev) => ({ ...prev, id: result.id }));
+      revalidatePageData([makeCacheKey('pieces', {})]);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : t('action-failed'));
+    }
   };
 
   const handlePartChange = useCallback((part: 'head' | 'body' | 'foot', key: string) => {
@@ -199,7 +203,8 @@ const PieceForm = (props: PieceFormProps) => {
         onMoveTypeChange={setMoveType}
         onCaptureChange={setCapture}
       />
-      <MoveGrid vectors={vectors} sprite={form.sprite} onToggle={toggleCell} />
+      <MoveGrid vectors={vectors} sprite={form.sprite} moveType={moveType} onPaint={paintCell} />
+      {saveError ? <p className={styles.error}>{saveError}</p> : null}
     </Form>
   );
 };

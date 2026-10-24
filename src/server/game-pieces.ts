@@ -1,4 +1,6 @@
+import { MutationError } from '@sun/ssr';
 import { openGameDatabase } from '~/server/game-db';
+import { isCompassDirection } from '~/game/piece/piece-definition';
 import type { PieceDefinitionDto, PieceSetDto, PieceSpriteDto } from '~/utils/piece-types';
 
 type PieceRow = {
@@ -254,13 +256,50 @@ export function getPiece(id: number): PieceDefinitionDto | null {
 }
 
 /**
+ * Validate the move vectors in a piece's move states.
+ *
+ * @param moveStates Move states to inspect.
+ * @returns Error message, or null when every vector is valid.
+ */
+function validateMoveStates(moveStates: unknown[]): string | null {
+  for (const state of moveStates) {
+    if (typeof state !== 'object' || state === null) continue;
+    const vectors = (state as { vectors?: unknown }).vectors;
+    if (!Array.isArray(vectors)) continue;
+    for (const vector of vectors) {
+      if (typeof vector !== 'object' || vector === null) continue;
+      const { dx, dy, range } = vector as { dx?: unknown; dy?: unknown; range?: unknown };
+      if (typeof dx !== 'number' || typeof dy !== 'number') continue;
+      if (dx === 0 && dy === 0) {
+        return 'A piece cannot move to its own square';
+      }
+      if (range === 'slide' && !isCompassDirection(dx, dy)) {
+        return 'Slide moves must follow one of the eight compass directions';
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Save a piece definition.
  *
  * @param input Piece input.
  * @returns Saved piece id.
  */
 export function savePiece(input: PieceInput): number {
+  const validationError = validateMoveStates(input.moveStates);
+  if (validationError) {
+    throw new MutationError(validationError, 400);
+  }
   const db = openGameDatabase();
+  const slugOwner = db.query('SELECT id FROM piece_definitions WHERE slug = ?').get(input.slug) as {
+    id: number;
+  } | null;
+  if (slugOwner && slugOwner.id !== input.id) {
+    db.close();
+    throw new MutationError('A piece with that identifier already exists', 400);
+  }
   const now = new Date().toISOString();
   const targets = JSON.stringify(input.promotionTargets);
   const ranks = JSON.stringify(input.promotionRanks);
@@ -273,6 +312,10 @@ export function savePiece(input: PieceInput): number {
     if (!existing) {
       db.close();
       throw new Error('Piece not found');
+    }
+    if (existing.is_system) {
+      db.close();
+      throw new MutationError('System pieces cannot be edited', 400);
     }
     db.run(
       `UPDATE piece_definitions SET
