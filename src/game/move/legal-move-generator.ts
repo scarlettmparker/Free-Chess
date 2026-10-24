@@ -74,6 +74,36 @@ function isEnemy(square: number): boolean {
 }
 
 /**
+ * King square for a king piece.
+ *
+ * @param piece King piece.
+ * @returns Square holding the king.
+ */
+function kingSquareOf(piece: Piece): number {
+  const bb = getBitboard(piece.getId());
+  return lsbIndex(bb.lo, bb.hi);
+}
+
+/**
+ * Whether a friendly sliding piece holds a corner square, which castling
+ * needs in place of a slugged rook so custom layouts can castle.
+ *
+ * @param square Corner square.
+ * @param color Moving colour.
+ * @returns True when a friendly slider holds the square.
+ */
+function cornerSlider(square: number, color: number): boolean {
+  for (const piece of gameState.pieces) {
+    if (piece.getColor() !== color) continue;
+    const bb = getBitboard(piece.getId());
+    const has =
+      square < 32 ? ((bb.lo >>> square) & 1) !== 0 : ((bb.hi >>> (square - 32)) & 1) !== 0;
+    if (has) return piece.getSlider();
+  }
+  return false;
+}
+
+/**
  * Generate castling moves for a king piece.
  *
  * @param movesCopy Move list to append to.
@@ -83,8 +113,10 @@ function generateCastling(movesCopy: MoveList, piece: Piece): void {
   const color = piece.getColor();
 
   if (color === colors.WHITE && piece.getKing()) {
+    if (kingSquareOf(piece) !== notToRawPos['e1']) return;
     if (gameState.castle & 1) {
       if (
+        cornerSlider(notToRawPos['h1'], colors.WHITE) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['f1']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['g1'])
       ) {
@@ -101,6 +133,7 @@ function generateCastling(movesCopy: MoveList, piece: Piece): void {
     }
     if (gameState.castle & 2) {
       if (
+        cornerSlider(notToRawPos['a1'], colors.WHITE) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['d1']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['c1']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['b1'])
@@ -119,8 +152,10 @@ function generateCastling(movesCopy: MoveList, piece: Piece): void {
   }
 
   if (color === colors.BLACK && piece.getKing()) {
+    if (kingSquareOf(piece) !== notToRawPos['e8']) return;
     if (gameState.castle & 4) {
       if (
+        cornerSlider(notToRawPos['h8'], colors.BLACK) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['f8']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['g8'])
       ) {
@@ -137,6 +172,7 @@ function generateCastling(movesCopy: MoveList, piece: Piece): void {
     }
     if (gameState.castle & 8) {
       if (
+        cornerSlider(notToRawPos['a8'], colors.BLACK) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['d8']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['c8']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['b8'])

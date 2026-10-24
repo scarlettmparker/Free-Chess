@@ -35,6 +35,8 @@ beforeAll(async () => {
   process.env.AUTH_DB_PATH = dbPath;
   process.env.ADMIN_TOKEN = 'test-token';
   process.env.MATCHMAKING_ADMIN_URL = 'http://admin.test';
+  process.env.GAME_DB_PATH = join(directory, 'game.db');
+  await import('../scripts/migrate-game');
   await import('~/utils/admin-mutations');
 
   auth = createAuth(dbPath);
@@ -63,6 +65,7 @@ afterAll(() => {
   delete process.env.AUTH_DB_PATH;
   delete process.env.ADMIN_TOKEN;
   delete process.env.MATCHMAKING_ADMIN_URL;
+  delete process.env.GAME_DB_PATH;
   rmSync(directory, { recursive: true, force: true });
 });
 
@@ -140,5 +143,41 @@ test('game admins can list sessions', async () => {
   expect(fetchMock).toHaveBeenCalledWith(
     'http://admin.test/list',
     expect.objectContaining({ method: 'POST' }),
+  );
+});
+
+test('reset rejects unknown board layouts without calling the worker', async () => {
+  const fetchMock = vi.fn(async () => Response.json({ ok: true, message: 'reset' }));
+  vi.stubGlobal('fetch', fetchMock);
+
+  await expect(
+    mutationRegistry.executeMutation(
+      'game/reset',
+      { boardLayoutId: 9999 },
+      { cookie: gameAdminCookie },
+    ),
+  ).rejects.toMatchObject({ statusCode: 400 });
+  expect(fetchMock).not.toHaveBeenCalled();
+});
+
+test('reset with the standard layout forwards the layout id', async () => {
+  const fetchMock = vi.fn(async () => Response.json({ ok: true, message: 'reset' }));
+  vi.stubGlobal('fetch', fetchMock);
+  const { listLayouts } = await import('~/server/board-layouts');
+  const standard = listLayouts().find((layout) => layout.slug === 'standard');
+
+  const result = await mutationRegistry.executeMutation(
+    'game/reset',
+    { boardLayoutId: standard!.id },
+    { cookie: gameAdminCookie },
+  );
+
+  expect(result).toMatchObject({ ok: true, message: 'reset' });
+  expect(fetchMock).toHaveBeenCalledWith(
+    'http://admin.test/reset',
+    expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ boardLayoutId: standard!.id }),
+    }),
   );
 });

@@ -4,8 +4,7 @@ import { checkedForSideToMove, isEncodedMove } from './rules.ts';
 import { adminCommands, isAdminAuthorized, runCommand } from './admin.ts';
 import { adminToken } from '../../config.js';
 import { mountGame } from '~/utils/index.ts';
-import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
-import { getSet, listPieces } from '~/server/game-pieces';
+import { listLayouts, loadLayout } from '~/server/board-layouts';
 import { gameState, moveType } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';
 import { makeMove } from '~/game/move/move.ts';
@@ -71,27 +70,17 @@ function isOriginAllowed(origin: string | null) {
 
 // initialize game state on server startup
 /**
- * Load built-in definitions for a piece set.
- *
- * @param setId Set id.
- * @returns Built-in definitions.
+ * Mount the standard board layout, falling back to the default mount when
+ * the database has not been migrated yet.
  */
-function loadPieceSetDefs(setId: number) {
-  const set = getSet(setId);
-  if (!set) return [];
-  const pieces = listPieces();
-  const defs: (typeof BUILTIN_DEFINITIONS)[number][] = [];
-  for (const member of set.members) {
-    const piece = pieces.find((candidate) => candidate.id === member.pieceDefinitionId);
-    const builtin = piece
-      ? BUILTIN_DEFINITIONS.find((definition) => definition.slug === piece.slug)
-      : undefined;
-    if (builtin) defs.push(builtin);
-  }
-  return defs;
+function mountStandardLayout() {
+  const standard = listLayouts().find((layout) => layout.slug === 'standard');
+  const loaded = standard ? loadLayout(standard.id) : null;
+  if (loaded) mountGame(loaded);
+  else mountGame();
 }
 
-mountGame(undefined, loadPieceSetDefs(1));
+mountStandardLayout();
 
 /**
  * Send a JSON object safely over a WebSocket.
@@ -289,7 +278,7 @@ try {
   Bun.serve({
     hostname: '127.0.0.1',
     port: adminPort,
-    fetch(req) {
+    fetch: async (req) => {
       if (!isAdminAuthorized(req.headers.get('authorization'), adminToken)) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 });
       }
@@ -306,7 +295,18 @@ try {
       }
 
       const cmd = url.pathname.split('/').filter(Boolean).pop() || '';
-      const result = runCommand(cmd, broadcast);
+      let options: { boardLayoutId?: number } = {};
+      if (cmd === 'reset') {
+        try {
+          const body = (await req.json()) as { boardLayoutId?: unknown };
+          if (typeof body?.boardLayoutId === 'number') {
+            options = { boardLayoutId: body.boardLayoutId };
+          }
+        } catch {
+          options = {};
+        }
+      }
+      const result = runCommand(cmd, broadcast, options);
       return Response.json(result, { status: result.ok ? 200 : 400 });
     },
   });

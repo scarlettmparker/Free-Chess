@@ -6,8 +6,8 @@
 import { Buffer } from 'node:buffer';
 import { timingSafeEqual } from 'node:crypto';
 import { mountGame } from '~/utils/index.ts';
-import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
-import { getSet, listPieces } from '~/server/game-pieces';
+import { getLayout, loadLayout } from '~/server/board-layouts';
+import { validateBoardLayout } from '~/game/board/validate-layout';
 import { gameState } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';
 import { clearColor, sessions } from './sessions.ts';
@@ -67,9 +67,14 @@ export const adminCommands = ['cw', 'cb', 'clear', 'list', 'reset'] as const;
  *
  * @param cmd Command name.
  * @param broadcast State broadcaster used by reset.
+ * @param options Optional board layout id for reset.
  * @returns Command result.
  */
-export function runCommand(cmd: string, broadcast: Broadcast = () => {}): CommandResult {
+export function runCommand(
+  cmd: string,
+  broadcast: Broadcast = () => {},
+  options: { boardLayoutId?: number } = {},
+): CommandResult {
   switch (cmd) {
     case 'cb':
       return clearColor('black')
@@ -104,19 +109,23 @@ export function runCommand(cmd: string, broadcast: Broadcast = () => {}): Comman
 
     case 'reset':
       {
-        const set = getSet(1);
-        const pieces = listPieces();
-        const defs: (typeof BUILTIN_DEFINITIONS)[number][] = [];
-        if (set) {
-          for (const member of set.members) {
-            const piece = pieces.find((candidate) => candidate.id === member.pieceDefinitionId);
-            const builtin = piece
-              ? BUILTIN_DEFINITIONS.find((definition) => definition.slug === piece.slug)
-              : undefined;
-            if (builtin) defs.push(builtin);
+        const layoutId = options.boardLayoutId;
+        if (layoutId !== undefined) {
+          const layout = getLayout(layoutId);
+          if (!layout) return { ok: false, message: 'Board layout not found' };
+          const loaded = loadLayout(layoutId);
+          if (!loaded) return { ok: false, message: 'Board layout refers to unknown pieces' };
+          const validation = validateBoardLayout(loaded.placements, loaded.definitions);
+          if (!validation.ok) {
+            return {
+              ok: false,
+              message: `Illegal starting position: ${validation.errors.join(', ')}`,
+            };
           }
+          mountGame(loaded);
+        } else {
+          mountGame();
         }
-        mountGame(undefined, defs.length ? defs : undefined);
       }
       gameState.moveHistory = [];
       broadcast({ type: 'state', state: serializeGameState(gameState) });

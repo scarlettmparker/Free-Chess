@@ -12,6 +12,7 @@ export const statement = {
   game: ['reset', 'clear', 'list-sessions'],
   piece: ['list', 'get', 'create', 'update', 'delete'],
   pieceset: ['list', 'get', 'create', 'update', 'delete'],
+  board: ['list', 'get', 'create', 'update', 'delete'],
   user: [
     'create',
     'list',
@@ -40,6 +41,7 @@ export const roles = {
     game: [...statement.game],
     piece: [...statement.piece],
     pieceset: [...statement.pieceset],
+    board: [...statement.board],
     user: [...statement.user],
     session: [...statement.session],
     audit: [...statement.audit],
@@ -90,6 +92,10 @@ export type Permission = {
    * Piece set management actions.
    */
   pieceset?: (typeof statement.pieceset)[number][];
+  /**
+   * Board layout management actions.
+   */
+  board?: (typeof statement.board)[number][];
   /**
    * User management actions.
    */

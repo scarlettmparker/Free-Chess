@@ -17,6 +17,7 @@ import { castlingRights } from '~/game/consts/bits';
 import { isSquareAttacked } from '~/game/board/attacks';
 import { lsbIndex } from '~/game/board/bb';
 import { Piece, LeaperMoveBehavior } from '~/game/piece/piece';
+import { pieceRegistry } from '~/game/piece/piece-registry';
 
 /**
  * Adds a move to the move list.
@@ -35,6 +36,7 @@ export type Undo = {
   capturedPiece: number;
   enpassant: number;
   castle: number;
+  enpassantCaptured: number;
   // rotational piece bookkeeping
   mapKeySrc: number;
   mapHadSrc: boolean;
@@ -60,17 +62,24 @@ const BLACK = colors.BLACK;
  * @returns Undo record for undoMove.
  */
 /**
- * Find the engine piece id for a piece type and colour.
+ * Find the engine piece id for the piece of a colour on a square.
+ * Layouts can place custom pieces anywhere, so square occupants are resolved
+ * by bitboard instead of type slug.
  *
- * @param type Piece type slug.
+ * @param square Square to inspect.
  * @param color Piece colour.
  * @returns Engine piece id, or -1.
  */
-function findPieceId(type: string, color: number): number {
-  const piece = gameState.pieces.find(
-    (candidate) => candidate.getType() === type && candidate.getColor() === color,
-  );
-  return piece ? piece.getId() : -1;
+function findPieceIdOnSquare(square: number, color: number): number {
+  for (const piece of gameState.pieces) {
+    if (piece.getColor() !== color) continue;
+    const bb = gameState.bitboards[piece.getId()];
+    if (!bb) continue;
+    const has =
+      square < 32 ? ((bb.lo >>> square) & 1) !== 0 : ((bb.hi >>> (square - 32)) & 1) !== 0;
+    if (has) return piece.getId();
+  }
+  return -1;
 }
 
 export const applyMove = (move: number): Undo => {
@@ -93,6 +102,7 @@ export const applyMove = (move: number): Undo => {
     capturedPiece: -1,
     enpassant: gameState.enpassant,
     castle: gameState.castle,
+    enpassantCaptured: -1,
     mapKeySrc: 0,
     mapHadSrc: false,
     mapValSrc: 0,
@@ -160,9 +170,12 @@ export const applyMove = (move: number): Undo => {
 
   // en passant
   if (enpassantFlag) {
-    const capPawnId = findPieceId('pawn', opponent);
     const capSquare = mover == WHITE ? targetSquare + 8 : targetSquare - 8;
-    toggle(bitboards[capPawnId], opponent, capSquare);
+    const capPawnId = findPieceIdOnSquare(capSquare, opponent);
+    if (capPawnId !== -1) {
+      undo.enpassantCaptured = capPawnId;
+      toggle(bitboards[capPawnId], opponent, capSquare);
+    }
   }
 
   gameState.enpassant = double ? (mover == WHITE ? targetSquare + 8 : targetSquare - 8) : -1;
@@ -174,29 +187,28 @@ export const applyMove = (move: number): Undo => {
     let rookTo: number;
     switch (targetSquare) {
       case notToRawPos['g1']:
-        rookId = findPieceId('rook', mover);
         rookFrom = notToRawPos['h1'];
         rookTo = notToRawPos['f1'];
         break;
       case notToRawPos['c1']:
-        rookId = findPieceId('rook', mover);
         rookFrom = notToRawPos['a1'];
         rookTo = notToRawPos['d1'];
         break;
       case notToRawPos['g8']:
-        rookId = findPieceId('rook', mover);
         rookFrom = notToRawPos['h8'];
         rookTo = notToRawPos['f8'];
         break;
       default:
-        rookId = findPieceId('rook', mover);
         rookFrom = notToRawPos['a8'];
         rookTo = notToRawPos['d8'];
         break;
     }
-    const rookBB = bitboards[rookId];
-    toggle(rookBB, mover, rookFrom);
-    toggle(rookBB, mover, rookTo);
+    rookId = findPieceIdOnSquare(rookFrom, mover);
+    if (rookId !== -1) {
+      const rookBB = bitboards[rookId];
+      toggle(rookBB, mover, rookFrom);
+      toggle(rookBB, mover, rookTo);
+    }
   }
 
   // update castling rights
@@ -278,34 +290,32 @@ export const undoMove = (move: number, undo: Undo) => {
 
   // undo castling rook
   if (castling) {
-    let rookId: number;
     let rookFrom: number;
     let rookTo: number;
     switch (targetSquare) {
       case notToRawPos['g1']:
-        rookId = findPieceId('rook', mover);
         rookFrom = notToRawPos['h1'];
         rookTo = notToRawPos['f1'];
         break;
       case notToRawPos['c1']:
-        rookId = findPieceId('rook', mover);
         rookFrom = notToRawPos['a1'];
         rookTo = notToRawPos['d1'];
         break;
       case notToRawPos['g8']:
-        rookId = findPieceId('rook', mover);
         rookFrom = notToRawPos['h8'];
         rookTo = notToRawPos['f8'];
         break;
       default:
-        rookId = findPieceId('rook', mover);
         rookFrom = notToRawPos['a8'];
         rookTo = notToRawPos['d8'];
         break;
     }
-    const rookBB = bitboards[rookId];
-    toggle(rookBB, mover, rookFrom);
-    toggle(rookBB, mover, rookTo);
+    const rookId = findPieceIdOnSquare(rookTo, mover);
+    if (rookId !== -1) {
+      const rookBB = bitboards[rookId];
+      toggle(rookBB, mover, rookFrom);
+      toggle(rookBB, mover, rookTo);
+    }
   }
 
   // undo promotion
@@ -324,9 +334,10 @@ export const undoMove = (move: number, undo: Undo) => {
 
   // undo en passant capture
   if (enpassantFlag) {
-    const capPawnId = findPieceId('pawn', opponent);
     const capSquare = mover == WHITE ? targetSquare + 8 : targetSquare - 8;
-    toggle(bitboards[capPawnId], opponent, capSquare);
+    if (undo.enpassantCaptured !== -1) {
+      toggle(bitboards[undo.enpassantCaptured], opponent, capSquare);
+    }
   }
 
   // undo normal capture
@@ -375,9 +386,12 @@ export const undoMove = (move: number, undo: Undo) => {
 export const moverKingInCheck = () => {
   // gameState.side is now the opponent; the mover's king is the other colour's king.
   const kingColor = gameState.side === colors.WHITE ? colors.BLACK : colors.WHITE;
-  const kingId = findPieceId('king', kingColor);
-  if (kingId === -1) return false;
-  const kingBB = getBitboard(kingId);
+  const king = gameState.pieces.find((candidate) => {
+    if (candidate.getColor() !== kingColor) return false;
+    return pieceRegistry.getDefinition(candidate.getDefinitionId())?.isKing;
+  });
+  if (!king) return false;
+  const kingBB = getBitboard(king.getId());
   return isSquareAttacked(lsbIndex(kingBB.lo, kingBB.hi), gameState.side);
 };
 

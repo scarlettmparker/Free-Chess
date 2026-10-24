@@ -163,6 +163,93 @@ for (const def of BUILTIN_DEFINITIONS) {
   }
 }
 
+db.run(`CREATE TABLE IF NOT EXISTS board_layouts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL,
+    description TEXT,
+    placements TEXT NOT NULL,
+    created_by TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    is_system INTEGER NOT NULL DEFAULT 0
+  )`);
+
+const engineBaseToSlug: Record<number, string> = {
+  0: 'pawn',
+  2: 'knight',
+  4: 'bishop',
+  6: 'rook',
+  8: 'queen',
+  10: 'king',
+  12: 'pogo',
+  14: 'balloon',
+  16: 'spongebob',
+};
+
+/**
+ * Convert the standard piece id FEN board into layout placements.
+ * Engine ids are even for white and odd for black.
+ */
+function standardPlacements(): { definitionId: number; color: 0 | 1; square: number }[] {
+  const board = STARTING_FEN.split(' ')[0];
+  const idBySlug = new Map<string, number>();
+  const rows = db.query('SELECT id, slug FROM piece_definitions').all() as {
+    id: number;
+    slug: string;
+  }[];
+  for (const row of rows) idBySlug.set(row.slug, row.id);
+
+  const placements: { definitionId: number; color: 0 | 1; square: number }[] = [];
+  let rank = 0;
+  let file = 0;
+  for (let i = 0; i < board.length; i++) {
+    const char = board[i];
+    if (char === '/') {
+      rank++;
+      file = 0;
+      continue;
+    }
+    if (char >= '0' && char <= '9') {
+      file += Number(char);
+      continue;
+    }
+    if (char === '[') {
+      const end = board.indexOf(']', i);
+      const engineId = Number(board.slice(i + 1, end));
+      const color = engineId % 2 === 0 ? 0 : 1;
+      const slug = engineBaseToSlug[engineId - color];
+      const definitionId = slug ? (idBySlug.get(slug) ?? 0) : 0;
+      if (!definitionId)
+        throw new Error(`Cannot seed standard layout, unknown engine id ${engineId}`);
+      placements.push({ definitionId, color: color as 0 | 1, square: rank * 8 + file });
+      file++;
+      i = end;
+    }
+  }
+  return placements;
+}
+
+const standardLayout = db.query('SELECT id FROM board_layouts WHERE slug = ?').get('standard') as {
+  id: number;
+} | null;
+
+if (!standardLayout) {
+  db.run(
+    `INSERT INTO board_layouts (slug, name, description, placements, created_by, created_at, updated_at, is_system)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1)`,
+    [
+      'standard',
+      'Standard',
+      'Standard chess plus fairy pieces',
+      JSON.stringify(standardPlacements()),
+      null,
+      now,
+      now,
+    ],
+  );
+}
+
 db.close();
 console.log(`Game database ready: ${resolveGameDbPath()}`);
 console.log('Piece definitions and Standard set seeded.');

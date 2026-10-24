@@ -68,6 +68,10 @@ export type AdminCommandOptions = {
    */
   token?: string;
   /**
+   * JSON body sent with the command.
+   */
+  body?: unknown;
+  /**
    * Fetch implementation, used by tests.
    */
   fetchImpl?: typeof fetch;
@@ -77,7 +81,7 @@ export type AdminCommandOptions = {
  * Calls one loopback admin command.
  *
  * @param command Command to run.
- * @param options Base URL, token, and fetch override.
+ * @param options Base URL, token, body, and fetch override.
  * @returns Parsed command result.
  */
 export async function runAdminCommand(
@@ -91,12 +95,17 @@ export async function runAdminCommand(
   if (token) {
     headers.authorization = `Bearer ${token}`;
   }
+  const hasBody = options.body !== undefined;
+  if (hasBody) {
+    headers['content-type'] = 'application/json';
+  }
 
   let response: Response;
   try {
     response = await fetchImpl(`${baseUrl.replace(/\/$/, '')}/${command}`, {
       method: 'POST',
       headers,
+      body: hasBody ? JSON.stringify(options.body) : undefined,
       signal: AbortSignal.timeout(5_000),
     });
   } catch (error) {

@@ -8,7 +8,19 @@ import { recordAudit } from '~/server/audit';
 import type { Permission } from '~/server/permissions';
 import { auth } from '~/server/auth-instance';
 import { getSession, requirePermission } from '~/server/session';
+import { getLayout, loadLayout } from '~/server/board-layouts';
+import { validateBoardLayout } from '~/game/board/validate-layout';
 import { runAdminCommand, type AdminColor } from './admin-command';
+
+/**
+ * Body accepted by the reset mutation.
+ */
+type ResetBody = {
+  /**
+   * Board layout id to start with.
+   */
+  boardLayoutId?: number;
+};
 
 /**
  * Body accepted by the clear mutation.
@@ -46,13 +58,30 @@ async function requireGame(cookie: string | undefined, permission: Permission) {
 
 defineMutation({
   path: 'game/reset',
-  async handler(_body: Record<string, unknown>, context) {
+  async handler(body: ResetBody, context) {
     const session = await requireGame(context.cookie, { game: ['reset'] } satisfies Permission);
-    const result = await runAdminCommand('reset');
+    if (body.boardLayoutId !== undefined) {
+      const layout = getLayout(body.boardLayoutId);
+      if (!layout) {
+        throw new MutationError('Board layout not found', 400);
+      }
+      const loaded = loadLayout(body.boardLayoutId);
+      if (!loaded) {
+        throw new MutationError('Board layout refers to unknown pieces', 400);
+      }
+      const validation = validateBoardLayout(loaded.placements, loaded.definitions);
+      if (!validation.ok) {
+        throw new MutationError(`Illegal starting position: ${validation.errors.join(', ')}`, 400);
+      }
+    }
+    const result = await runAdminCommand('reset', body.boardLayoutId === undefined ? {} : { body });
     recordAudit({
       action: 'game.reset',
       outcome: result.ok ? 'success' : 'failure',
-      detail: result.message,
+      detail:
+        body.boardLayoutId === undefined
+          ? result.message
+          : `${result.message} (layout ${body.boardLayoutId})`,
       actor: session.user,
       ip: getRequestIp(),
     });
