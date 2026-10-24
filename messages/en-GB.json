@@ -12,7 +12,11 @@
     "connected": "Connected",
     "reconnecting": "Reconnecting…",
     "disconnected": "Disconnected",
-    "not-found": "Page not found"
+    "not-found": "Page not found",
+    "piece": "Piece",
+    "piece-head": "Piece head",
+    "piece-body": "Piece body",
+    "piece-foot": "Piece foot"
   },
   "login": {
     "title": "Free Chess",

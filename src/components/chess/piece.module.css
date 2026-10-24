@@ -1,0 +1,11 @@
+.composite_piece {
+  display: inline-flex;
+  position: relative;
+}
+
+.part_head,
+.part_body,
+.part_foot {
+  position: absolute;
+  inset: 0;
+}
