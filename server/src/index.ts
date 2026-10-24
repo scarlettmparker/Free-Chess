@@ -1,11 +1,10 @@
 import type { ServerWebSocket } from 'bun';
 import {
   sessions,
-  colorMap,
-  chooseColorForReattach,
-  createSession,
   assignColor,
+  attachSession as openSession,
   clearColor,
+  detachSession,
 } from './sessions.ts';
 import { mountGame } from '~/utils/index.ts';
 import { charPieces, colors, gameState, getBitboard, moveType } from '~/game/consts/board.ts';
@@ -17,8 +16,17 @@ import { lsbIndex } from '~/game/board/bb.ts';
 type Color = 'white' | 'black' | null;
 
 type SocketData = {
+  /**
+   * Session id supplied on the query string, if any.
+   */
   sessionId: string | null;
+  /**
+   * Colour currently assigned to this socket.
+   */
   clientColor: Color;
+  /**
+   * Colour requested on the query string.
+   */
   requestedColor: Color;
 };
 
@@ -33,6 +41,11 @@ const allowedOrigins = (Bun.env.ALLOWED_WS_ORIGINS || '')
   .split(',')
   .map((value) => value.trim())
   .filter(Boolean);
+
+/**
+ * Loopback-only admin port. Not reverse-proxied.
+ */
+const adminPort = Number(Bun.env.ADMIN_PORT) || port + 1;
 
 function isOriginAllowed(origin: string | null) {
   if (!allowedOrigins.length) return true;
@@ -88,38 +101,21 @@ function reject(ws: ServerWebSocket<SocketData>, reason: string) {
  * Assign a session on connect: reattach if known, create otherwise.
  */
 function attachSession(ws: ServerWebSocket<SocketData>) {
-  const { sessionId, requestedColor } = ws.data;
+  const result = openSession(ws.data.sessionId, ws.data.requestedColor, ws);
 
-  if (sessionId && sessions.has(sessionId)) {
-    const sess = sessions.get(sessionId)!;
-    const desired = chooseColorForReattach(sessionId, requestedColor || undefined);
-    if (desired === null && requestedColor) {
-      reject(ws, 'color-taken');
-      return;
-    }
-
-    sess.ws = ws;
-    ws.data.clientColor = sess.color;
-
-    safeSend(ws, { type: 'session', sessionId, color: sess.color, status: 'restored' });
-    sendGameState(ws);
+  if (result.status === 'rejected') {
+    reject(ws, result.reason);
     return;
   }
 
-  if (requestedColor && colorMap.has(requestedColor)) {
-    reject(ws, 'color-taken');
-    return;
-  }
-
-  const created = createSession(requestedColor, ws);
-  ws.data.sessionId = created.sessionId;
-  ws.data.clientColor = created.color;
+  ws.data.sessionId = result.sessionId;
+  ws.data.clientColor = result.color;
 
   safeSend(ws, {
     type: 'session',
-    sessionId: created.sessionId,
-    color: created.color,
-    status: 'accepted',
+    sessionId: result.sessionId,
+    color: result.color,
+    status: result.status,
   });
   sendGameState(ws);
 }
@@ -197,9 +193,12 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
 }
 
 /**
- * Log a client disconnect. Sessions are kept for reconnect.
+ * Log a client disconnect and start the session's grace period.
  */
 function handleClose(ws: ServerWebSocket<SocketData>) {
+  if (ws.data.sessionId) {
+    detachSession(ws.data.sessionId, ws);
+  }
   console.log('Client disconnected', 'color:', ws.data.clientColor, 'session:', ws.data.sessionId);
 }
 
@@ -248,39 +247,119 @@ Bun.serve<SocketData>({
 
 console.log(`Server listening on http://${host}:${port}`);
 
+type SessionSummary = {
+  /**
+   * Session id.
+   */
+  sessionId: string;
+  /**
+   * Colour held by the session, or "none".
+   */
+  color: string;
+  /**
+   * Whether a socket is currently attached.
+   */
+  connected: boolean;
+  /**
+   * Last disconnect time, if the session has dropped.
+   */
+  disconnectedAt: number | null;
+};
+
+type CommandResult = {
+  /**
+   * Whether the command did something.
+   */
+  ok: boolean;
+  /**
+   * Human-readable result.
+   */
+  message: string;
+  /**
+   * Session list for the `list` command.
+   */
+  sessions?: SessionSummary[];
+};
+
+/**
+ * Run one admin/CLI command. Shared by stdin and the loopback HTTP server.
+ */
+function runCommand(cmd: string): CommandResult {
+  switch (cmd) {
+    case 'cb':
+      return clearColor('black')
+        ? { ok: true, message: 'Cleared black' }
+        : { ok: false, message: 'No session for color black' };
+
+    case 'cw':
+      return clearColor('white')
+        ? { ok: true, message: 'Cleared white' }
+        : { ok: false, message: 'No session for color white' };
+
+    case 'clear': {
+      const white = clearColor('white');
+      const black = clearColor('black');
+      return white || black
+        ? { ok: true, message: `Cleared ${white ? 'white ' : ''}${black ? 'black' : ''}`.trim() }
+        : { ok: false, message: 'No colours to clear' };
+    }
+
+    case 'list': {
+      const list: SessionSummary[] = [];
+      for (const [sessionId, sess] of sessions.entries()) {
+        list.push({
+          sessionId,
+          color: sess.color || 'none',
+          connected: Boolean(sess.ws),
+          disconnectedAt: sess.disconnectedAt ?? null,
+        });
+      }
+      return { ok: true, message: `${list.length} session(s)`, sessions: list };
+    }
+
+    case 'reset':
+      mountGame();
+      gameState.moveHistory = [];
+      broadcast({ type: 'state', state: serializeGameState(gameState) });
+      return { ok: true, message: 'Game state reset and broadcast' };
+
+    default:
+      return {
+        ok: false,
+        message: 'Unknown command. Supported: cb, cw, clear, list, reset',
+      };
+  }
+}
+
+try {
+  Bun.serve({
+    hostname: '127.0.0.1',
+    port: adminPort,
+    fetch(req) {
+      const url = new URL(req.url);
+      if (req.method === 'GET' && url.pathname === '/') {
+        return Response.json({
+          commands: ['cw', 'cb', 'clear', 'list', 'reset'],
+          usage: 'POST /<command>',
+        });
+      }
+      if (req.method !== 'POST') {
+        return Response.json({ error: 'POST required' }, { status: 405 });
+      }
+
+      const cmd = url.pathname.split('/').filter(Boolean).pop() || '';
+      const result = runCommand(cmd);
+      return Response.json(result, { status: result.ok ? 200 : 400 });
+    },
+  });
+  console.log(`Admin listening on http://127.0.0.1:${adminPort}`);
+} catch (error) {
+  console.error('Admin server failed to start:', error);
+}
+
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (data) => {
   const cmd = String(data || '').trim();
   if (!cmd) return;
-
-  switch (cmd) {
-    case 'cb':
-      const cbOk = clearColor('black');
-      if (!cbOk) console.log('No session for color black');
-      break;
-
-    case 'cw':
-      const cwOk = clearColor('white');
-      if (!cwOk) console.log('No session for color white');
-      break;
-
-    case 'list':
-      console.log('Sessions:');
-      for (const [sid, s] of sessions.entries()) {
-        console.log(' ', sid, 'color:', s.color || '<none>', 'connected:', !!s.ws);
-      }
-      break;
-
-    case 'reset':
-      console.log('Resetting game state');
-      mountGame();
-      gameState.moveHistory = [];
-      console.log('Game state reset, broadcasting new state');
-      broadcast({ type: 'state', state: serializeGameState(gameState) });
-      break;
-
-    default:
-      console.log('Unknown command. Supported: cb (clear black), cw (clear white), list, reset');
-      break;
-  }
+  console.log(runCommand(cmd).message);
 });

@@ -31,6 +31,24 @@ Preview services:
 The browser connects to `wss://chess-server.int.scarlettparker.co.uk`. In dev it
 uses the same-origin `/ws` proxy on the Fastify server.
 
+## Sessions
+
+The browser keeps a `sessionId` in `localStorage` and reattaches with it. A
+colour stays reserved for its session for five seconds after a disconnect
+(`DEFAULT_RECONNECT_GRACE_MS`). After that, a new connection asking for the
+colour takes it over.
+
+The matchmaking service also listens on `127.0.0.1:4002` (`ADMIN_PORT`) for
+local admin commands. That port is not reverse-proxied.
+
+```bash
+curl -X POST http://127.0.0.1:4002/list
+curl -X POST http://127.0.0.1:4002/cw      # clear white
+curl -X POST http://127.0.0.1:4002/cb      # clear black
+curl -X POST http://127.0.0.1:4002/clear   # clear both
+curl -X POST http://127.0.0.1:4002/reset   # reset the game
+```
+
 ## Layout
 
 - `src/game/**` - engine, FEN, move generation, perft.

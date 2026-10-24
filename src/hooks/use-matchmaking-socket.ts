@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { tryConnectFlow, type SessionMsg } from '~/utils/connect';
+import { setStoredSession, tryConnectFlow, type SessionMsg } from '~/utils/connect';
 import { resolveWebSocketUrl } from '~/utils/ws-url';
 import type { SerializedGameState } from '~/utils/game-serialize';
 
@@ -75,9 +75,14 @@ export function useMatchmakingSocket(handlers: MatchmakingHandlers) {
 
       socketRef.current = socket;
       socket.onmessage = handleMessage;
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         socketRef.current = null;
         if (disposed) return;
+        if (event.code === 4001 || event.code === 4003) {
+          if (event.code === 4003) setStoredSession(null);
+          setStatus('disconnected');
+          return;
+        }
         setStatus('reconnecting');
         schedule();
       };

@@ -105,7 +105,7 @@ export const connectWith = (
         }
       };
     } catch (_e) {
-      reject(e);
+      reject(_e);
     }
   });
 };
