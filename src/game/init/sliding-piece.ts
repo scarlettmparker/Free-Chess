@@ -33,12 +33,12 @@ const bitsOf = (bb: LoHi): number[] => {
  * Initialize piece attacks for sliding pieces.
  */
 export const initSlidingPieces = () => {
-  const straightLo: Uint32Array[] = new Array(64);
-  const straightHi: Uint32Array[] = new Array(64);
-  const straightBits: number[][] = new Array(64);
-  const diagonalLo: Uint32Array[] = new Array(64);
-  const diagonalHi: Uint32Array[] = new Array(64);
-  const diagonalBits: number[][] = new Array(64);
+  const straightLo: Uint32Array[] = [];
+  const straightHi: Uint32Array[] = [];
+  const straightBits: number[][] = [];
+  const diagonalLo: Uint32Array[] = [];
+  const diagonalHi: Uint32Array[] = [];
+  const diagonalBits: number[][] = [];
 
   for (let square = 0; square < 64; square++) {
     // straight (rook) rays

@@ -100,7 +100,7 @@ describe('sessions module', () => {
     expect(rejected.status).toBe('rejected');
 
     const taken = attachSession(null, 'white', fakeSocket(), { now: 7000, graceMs: 5000 });
-    expect(taken.status).toBe('accepted');
+    if (taken.status !== 'accepted') throw new Error('expected accepted session');
     expect(taken.color).toBe('white');
     expect(sessions.has(old.sessionId)).toBe(false);
   });
@@ -131,7 +131,7 @@ describe('sessions module', () => {
       now: 8000,
       graceMs: 5000,
     });
-    expect(restored.status).toBe('restored');
+    if (restored.status !== 'restored') throw new Error('expected restored session');
     expect(restored.color).toBeNull();
   });
 

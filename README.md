@@ -21,6 +21,9 @@ bun run fmt
 bun run build        # build, then restart the preview unit
 bun run preview
 bun run restart:server
+bun run db:migrate
+bun run auth:create-admin --email you@example.com --name "Your Name"
+bun run db:backup    # optional output path as the first argument
 ```
 
 Preview services:
@@ -48,6 +51,28 @@ curl -X POST http://127.0.0.1:4002/cb      # clear black
 curl -X POST http://127.0.0.1:4002/clear   # clear both
 curl -X POST http://127.0.0.1:4002/reset   # reset the game
 ```
+
+## Auth
+
+Admins live in a SQLite database managed by better-auth. Email and password
+sign-in is enabled, public sign-up is disabled, and the first admin is created
+with `auth:create-admin`.
+
+The database defaults to `$XDG_DATA_HOME/free-chess/auth.db`, then
+`~/.local/share/free-chess/auth.db`. Set `AUTH_DB_PATH` to override it.
+
+Environment:
+
+- `BETTER_AUTH_SECRET` - required in production.
+- `BETTER_AUTH_URL` - public origin, for example `https://chess.int.scarlettparker.co.uk`.
+- `BETTER_AUTH_TRUSTED_ORIGINS` - extra comma-separated origins.
+
+Roles are defined in `src/server/permissions.ts`:
+
+- `admin` - everything.
+- `game-admin` - reset, clear, list sessions.
+- `user-admin` - create, list, manage, and revoke users.
+- `user` - no admin permissions.
 
 ## Layout
 

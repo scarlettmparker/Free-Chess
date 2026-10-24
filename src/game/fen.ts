@@ -116,7 +116,7 @@ export const parseFEN = (fen: string) => {
   }
 
   // parse side to move
-  fen[fenIndex] == 'w' ? (gameState.side = 0) : (gameState.side = 1);
+  gameState.side = fen[fenIndex] === 'w' ? 0 : 1;
   fenIndex += 2;
 
   // parse castling rights
