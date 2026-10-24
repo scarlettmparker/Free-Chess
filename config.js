@@ -11,7 +11,7 @@ config({
   path: `.env${isProduction ? '.production' : ''}`,
 });
 
-export const port = parseInt(process.env.SERVER_PORT || '5177', 10);
+export const port = parseInt(process.env.SERVER_PORT || '5179', 10);
 
 export const host = process.env.SERVER_HOST || '0.0.0.0';
 
@@ -32,3 +32,8 @@ export const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .filter(Boolean);
 
 export const manifestPath = './dist/client/.vite/manifest.json';
+
+/**
+ * Upstream URL of the matchmaking service. The web app proxies /ws to it.
+ */
+export const matchmakingUrl = process.env.MATCHMAKING_URL || 'http://127.0.0.1:4001';

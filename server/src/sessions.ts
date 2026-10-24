@@ -4,9 +4,14 @@
 
 export type Color = 'white' | 'black' | null;
 
+export type Socket = {
+  send(data: string): unknown;
+  close(code?: number, reason?: string): void;
+};
+
 export type Session = {
   color: Color;
-  ws?: unknown;
+  ws?: Socket;
 };
 
 // sessionId -> Session
@@ -65,7 +70,7 @@ export function chooseColorForReattach(
  */
 export function createSession(
   requestedColor: Color | undefined,
-  ws?: unknown,
+  ws?: Socket,
 ): { sessionId: string; color: Color } {
   let chosenColor: Color = null;
   if (requestedColor && !colorMap.has(requestedColor as NonNullable<Color>)) {
@@ -103,9 +108,7 @@ export function clearColor(color: NonNullable<Color>): boolean {
   if (!sid) return false;
   const sess = sessions.get(sid);
   try {
-    // if ws present and has close method, try to close it
-    // @ts-ignore
-    sess?.ws?.close?.(1000, 'cleared-by-cli');
+    sess?.ws?.close(1000, 'cleared-by-cli');
   } catch (e) {
     // ignore
   }

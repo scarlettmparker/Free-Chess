@@ -9,7 +9,7 @@ export default defineConfig(() => {
     process.env.ALLOWED_HOSTS?.split(',')
       .map((h) => h.trim())
       .filter(Boolean) ?? [];
-  const port = Number(process.env.SERVER_PORT) || 5177;
+  const port = Number(process.env.SERVER_PORT) || 5179;
 
   return {
     plugins: [
@@ -27,12 +27,6 @@ export default defineConfig(() => {
     server: {
       port,
       allowedHosts,
-      proxy: {
-        '/ws': {
-          target: process.env.MATCHMAKING_URL || 'ws://localhost:4001',
-          ws: true,
-        },
-      },
     },
     assetsInclude: ['**/*.json'],
     json: {

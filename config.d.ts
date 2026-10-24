@@ -6,4 +6,15 @@ declare const backendHost: string;
 declare const backendPort: number;
 declare const allowedOrigins: string[];
 declare const manifestPath: string;
-export { isProduction, port, host, base, backendHost, backendPort, allowedOrigins, manifestPath };
+declare const matchmakingUrl: string;
+export {
+  isProduction,
+  port,
+  host,
+  base,
+  backendHost,
+  backendPort,
+  allowedOrigins,
+  manifestPath,
+  matchmakingUrl,
+};

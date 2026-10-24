@@ -27,7 +27,7 @@ export const connectWith = (
   const params: string[] = [];
   if (color) params.push(`color=${encodeURIComponent(color)}`);
   if (sessionId) params.push(`sessionId=${encodeURIComponent(sessionId)}`);
-  if (params.length) url += '/?' + params.join('&');
+  if (params.length) url += (url.includes('?') ? '&' : '?') + params.join('&');
   // Return a promise that resolves when a session message is received, or rejects on error/timeout
   return new Promise<WebSocket>((resolve, reject) => {
     try {

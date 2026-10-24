@@ -1,7 +1,4 @@
-import express from 'express';
-import http from 'http';
-import { WebSocketServer, WebSocket as WS } from 'ws';
-import dotenv from 'dotenv';
+import type { ServerWebSocket } from 'bun';
 import {
   sessions,
   colorMap,
@@ -17,18 +14,35 @@ import { makeMove } from '~/game/move/move.ts';
 import { isSquareAttacked } from '~/game/board/attacks.ts';
 import { lsbIndex } from '~/game/board/bb.ts';
 
-dotenv.config();
+type Color = 'white' | 'black' | null;
 
-const app = express();
-const host = process.env.HOST || '0.0.0.0';
-const port = process.env.PORT || 4000;
+type SocketData = {
+  sessionId: string | null;
+  clientColor: Color;
+  requestedColor: Color;
+};
 
-app.get('/', (_, res) => {
-  res.send('Free-Chess WebSocket server is running.');
-});
+const host = Bun.env.HOST || '0.0.0.0';
+const port = Number(Bun.env.PORT) || 4001;
 
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+/**
+ * Optional comma-separated host allowlist for browser connections. Empty
+ * accepts every origin, which is what local development uses.
+ */
+const allowedOrigins = (Bun.env.ALLOWED_WS_ORIGINS || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+function isOriginAllowed(origin: string | null) {
+  if (!allowedOrigins.length) return true;
+  if (!origin) return false;
+  try {
+    return allowedOrigins.includes(new URL(origin).host);
+  } catch {
+    return false;
+  }
+}
 
 // initialize game state on server startup
 mountGame();
@@ -36,7 +50,7 @@ mountGame();
 /**
  * Send a JSON object safely over a WebSocket.
  */
-function safeSend(ws: WS, obj: unknown) {
+function safeSend(ws: { send(data: string): unknown }, obj: unknown) {
   try {
     ws.send(JSON.stringify(obj));
   } catch {
@@ -50,7 +64,7 @@ function safeSend(ws: WS, obj: unknown) {
 function broadcast(obj: unknown) {
   for (const sess of sessions.values()) {
     if (sess.ws) {
-      safeSend(sess.ws as any, obj);
+      safeSend(sess.ws, obj);
     }
   }
 }
@@ -58,176 +72,181 @@ function broadcast(obj: unknown) {
 /**
  * Send the current serialized game state to a client.
  */
-function sendGameState(ws: WS) {
+function sendGameState(ws: { send(data: string): unknown }) {
   safeSend(ws, { type: 'state', state: serializeGameState(gameState) });
 }
 
-wss.on('connection', (ws: WS, req) => {
-  console.log('Client connected', req.socket.remoteAddress);
+/**
+ * Reject a connection that cannot be assigned the requested color.
+ */
+function reject(ws: ServerWebSocket<SocketData>, reason: string) {
+  safeSend(ws, { type: 'reject', reason });
+  ws.close(4000, reason);
+}
 
-  const url = new URL(String(req.url), `http://${req.headers.host}`);
-  const requestedColor = (url.searchParams.get('color') as 'white' | 'black' | null) ?? null;
-  const sessionId = url.searchParams.get('sessionId');
+/**
+ * Assign a session on connect: reattach if known, create otherwise.
+ */
+function attachSession(ws: ServerWebSocket<SocketData>) {
+  const { sessionId, requestedColor } = ws.data;
 
-  /**
-   * Handle client messages.
-   */
-  const messageHandler = (message: any) => {
-    let parsed: any = message.toString();
-    try {
-      parsed = JSON.parse(parsed);
-    } catch {
-      return; // ignore non-json
-    }
-
-    console.log(
-      'Received message from client (color=%s, session=%s):',
-      (ws as any)._clientColor,
-      (ws as any)._sessionId,
-      parsed,
-    );
-
-    if (parsed?.type === 'hello' && parsed.color) {
-      // Assign player color
-      const ok = assignColor((ws as any)._sessionId, parsed.color);
-      if (!ok) {
-        safeSend(ws, { type: 'reject', reason: 'color-taken' });
-        ws.close(4000, 'color-taken');
-        return;
-      }
-      (ws as any)._clientColor = parsed.color;
-      safeSend(ws, { type: 'ack', message: 'color set', color: parsed.color });
-      return;
-    }
-
-    if (parsed?.type === 'move' && parsed.move !== undefined) {
-      const color = (ws as any)._clientColor;
-      const oldStateJson = serializeGameState(gameState);
-
-      if (!color || gameState.side !== (color === 'white' ? 0 : 1)) {
-        console.log("Ignoring move: not player's turn or no color");
-        broadcast({ type: 'state', state: oldStateJson });
-        return;
-      }
-
-      const accepted = makeMove(parsed.move, moveType.ALL_MOVES, 0);
-      if (accepted === 1) {
-        console.log('Move accepted, updating state');
-        gameState.moveHistory.push(parsed.move);
-        gameState.checked = [false, false];
-
-        // check if king is in check
-        const sideToMove = gameState.side;
-        const opponent = sideToMove ^ 1;
-
-        // we probably shouldn't care about this server side
-        const whiteKing =
-          sideToMove === colors.WHITE ? getBitboard(charPieces.K) : getBitboard(charPieces.k);
-        const kingSquare = lsbIndex(whiteKing.lo, whiteKing.hi);
-
-        gameState.checked[gameState.side] = isSquareAttacked(kingSquare, opponent);
-
-        // Notify opponent of the move
-        const oppColor = color === 'white' ? 'black' : 'white';
-        const oppSess = Array.from(sessions.values()).find((s) => s.color === oppColor && s.ws);
-        if (oppSess?.ws) {
-          safeSend(oppSess.ws as any, { type: 'opponent_move', move: parsed.move });
-        }
-
-        // Broadcast updated state
-        broadcast({ type: 'state', state: serializeGameState(gameState) });
-      } else {
-        console.log('Move rejected, sending old state');
-        broadcast({ type: 'state', state: oldStateJson });
-      }
-    }
-  };
-
-  /**
-   * Handle client disconnect.
-   */
-  const closeHandler = () => {
-    console.log(
-      'Client disconnected',
-      req.socket.remoteAddress,
-      'color:',
-      (ws as any)._clientColor,
-      'session:',
-      (ws as any)._sessionId,
-    );
-    // Keep session for reconnect
-  };
-
-  ws.on('message', messageHandler);
-  ws.on('close', closeHandler);
-
-  // reattach to existing session
   if (sessionId && sessions.has(sessionId)) {
     const sess = sessions.get(sessionId)!;
-    sess.ws = ws;
-    (ws as any)._sessionId = sessionId;
-
-    console.log('Session reattach requested', sessionId, 'requestedColor:', requestedColor);
-
     const desired = chooseColorForReattach(sessionId, requestedColor || undefined);
     if (desired === null && requestedColor) {
-      console.log('Rejecting reattach: desired color already taken', requestedColor);
-      safeSend(ws, { type: 'reject', reason: 'color-taken' });
-      ws.close(4000, 'color-taken');
+      reject(ws, 'color-taken');
       return;
     }
 
-    (ws as any)._clientColor = sess.color;
-    console.log('Session reattached:', sessionId, 'color:', sess.color);
+    sess.ws = ws;
+    ws.data.clientColor = sess.color;
 
     safeSend(ws, { type: 'session', sessionId, color: sess.color, status: 'restored' });
-    sendGameState(ws); // Send current game state immediately
-    return;
-  }
-
-  // unknown sessionId provided -> create new session
-  if (sessionId && !sessions.has(sessionId)) {
-    const { sessionId: newSessionId, color } = createSession(requestedColor || null, ws);
-    (ws as any)._clientColor = color;
-    (ws as any)._sessionId = newSessionId;
-
-    console.log(
-      'Unknown session requested, created new session:',
-      newSessionId,
-      'assigned color:',
-      color,
-    );
-
-    safeSend(ws, { type: 'session', sessionId: newSessionId, color, status: 'accepted' });
     sendGameState(ws);
     return;
   }
 
-  // requested color already taken -> reject
   if (requestedColor && colorMap.has(requestedColor)) {
-    console.log('Rejecting connection: color already taken', requestedColor);
-    safeSend(ws, { type: 'reject', reason: 'color-taken' });
-    ws.close(4000, 'color-taken');
+    reject(ws, 'color-taken');
     return;
   }
 
-  // normal connection -> create new session
-  const { sessionId: newSessionId, color } = createSession(requestedColor || null, ws);
-  (ws as any)._clientColor = color;
-  (ws as any)._sessionId = newSessionId;
+  const created = createSession(requestedColor, ws);
+  ws.data.sessionId = created.sessionId;
+  ws.data.clientColor = created.color;
+
+  safeSend(ws, {
+    type: 'session',
+    sessionId: created.sessionId,
+    color: created.color,
+    status: 'accepted',
+  });
+  sendGameState(ws);
+}
+
+/**
+ * Handle a client message.
+ */
+function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
+  let parsed: any = raw.toString();
+  try {
+    parsed = JSON.parse(parsed);
+  } catch {
+    return; // ignore non-json
+  }
 
   console.log(
-    'Client connected',
-    req.socket.remoteAddress,
-    'assigned session:',
-    newSessionId,
-    'color:',
-    color,
+    'Received message from client (color=%s, session=%s):',
+    ws.data.clientColor,
+    ws.data.sessionId,
+    parsed,
   );
 
-  safeSend(ws, { type: 'session', sessionId: newSessionId, color, status: 'accepted' });
-  sendGameState(ws);
+  if (parsed?.type === 'hello' && parsed.color) {
+    const ok = ws.data.sessionId ? assignColor(ws.data.sessionId, parsed.color) : false;
+    if (!ok) {
+      reject(ws, 'color-taken');
+      return;
+    }
+    ws.data.clientColor = parsed.color;
+    safeSend(ws, { type: 'ack', message: 'color set', color: parsed.color });
+    return;
+  }
+
+  if (parsed?.type === 'move' && parsed.move !== undefined) {
+    const color = ws.data.clientColor;
+    const oldStateJson = serializeGameState(gameState);
+
+    if (!color || gameState.side !== (color === 'white' ? 0 : 1)) {
+      console.log("Ignoring move: not player's turn or no color");
+      broadcast({ type: 'state', state: oldStateJson });
+      return;
+    }
+
+    const accepted = makeMove(parsed.move, moveType.ALL_MOVES, 0);
+    if (accepted === 1) {
+      console.log('Move accepted, updating state');
+      gameState.moveHistory.push(parsed.move);
+      gameState.checked = [false, false];
+
+      // check if king is in check
+      const sideToMove = gameState.side;
+      const opponent = sideToMove ^ 1;
+
+      // we probably shouldn't care about this server side
+      const whiteKing =
+        sideToMove === colors.WHITE ? getBitboard(charPieces.K) : getBitboard(charPieces.k);
+      const kingSquare = lsbIndex(whiteKing.lo, whiteKing.hi);
+
+      gameState.checked[gameState.side] = isSquareAttacked(kingSquare, opponent);
+
+      // Notify opponent of the move
+      const oppColor = color === 'white' ? 'black' : 'white';
+      const oppSess = Array.from(sessions.values()).find((s) => s.color === oppColor && s.ws);
+      if (oppSess?.ws) {
+        safeSend(oppSess.ws, { type: 'opponent_move', move: parsed.move });
+      }
+
+      // Broadcast updated state
+      broadcast({ type: 'state', state: serializeGameState(gameState) });
+    } else {
+      console.log('Move rejected, sending old state');
+      broadcast({ type: 'state', state: oldStateJson });
+    }
+  }
+}
+
+/**
+ * Log a client disconnect. Sessions are kept for reconnect.
+ */
+function handleClose(ws: ServerWebSocket<SocketData>) {
+  console.log('Client disconnected', 'color:', ws.data.clientColor, 'session:', ws.data.sessionId);
+}
+
+Bun.serve<SocketData>({
+  hostname: host,
+  port,
+  fetch(req, server) {
+    const url = new URL(req.url);
+    const isUpgrade = req.headers.get('upgrade')?.toLowerCase() === 'websocket';
+
+    if (!isUpgrade) {
+      if (url.pathname === '/') {
+        return new Response('Free-Chess WebSocket server is running.');
+      }
+      return new Response('Expected a WebSocket upgrade', { status: 400 });
+    }
+
+    if (!isOriginAllowed(req.headers.get('origin'))) {
+      return new Response('Origin not allowed', { status: 403 });
+    }
+
+    const colorParam = url.searchParams.get('color');
+    const requestedColor: Color =
+      colorParam === 'white' || colorParam === 'black' ? colorParam : null;
+
+    const data: SocketData = {
+      sessionId: url.searchParams.get('sessionId'),
+      clientColor: null,
+      requestedColor,
+    };
+
+    if (server.upgrade(req, { data })) {
+      return;
+    }
+    return new Response('Expected a WebSocket upgrade', { status: 400 });
+  },
+  websocket: {
+    open(ws) {
+      console.log('Client connected');
+      attachSession(ws);
+    },
+    message: handleMessage,
+    close: handleClose,
+  },
 });
+
+console.log(`Server listening on http://${host}:${port}`);
 
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (data) => {
@@ -265,9 +284,3 @@ process.stdin.on('data', (data) => {
       break;
   }
 });
-
-if (process.argv[1]?.endsWith('index.ts')) {
-  server.listen(port as number, host, () => {
-    console.log(`Server listening on http://${host}:${port}`);
-  });
-}
