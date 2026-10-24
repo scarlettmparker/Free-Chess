@@ -67,6 +67,12 @@ export function setupRoutes(app, vite) {
       ) {
         return reply.status(403).send('Forbidden');
       }
+      if (
+        (pathname === '/admin/boards' || pathname.startsWith('/admin/boards/')) &&
+        !hasAnyRole(session, ['admin'])
+      ) {
+        return reply.status(403).send('Forbidden');
+      }
     }
 
     let url = pathname.replace(base, '');

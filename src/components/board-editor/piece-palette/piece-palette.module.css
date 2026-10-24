@@ -1,0 +1,35 @@
+.carousel {
+  display: flex;
+  justify-content: center;
+  gap: var(--sm);
+  overflow-x: auto;
+  padding-bottom: var(--sm);
+}
+
+.swatch {
+  flex-shrink: 0;
+}
+
+.sprite {
+  position: relative;
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  pointer-events: none;
+}
+
+.sprite img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 34%;
+  object-fit: contain;
+}
+
+.sprite img:nth-child(2) {
+  top: 33%;
+}
+
+.sprite img:nth-child(3) {
+  top: 66%;
+}

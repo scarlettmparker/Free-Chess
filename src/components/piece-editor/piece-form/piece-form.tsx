@@ -141,6 +141,7 @@ const PieceForm = (props: PieceFormProps) => {
           <FormItem>
             <Input
               value={form.name}
+              placeholder={t('piece-name-placeholder')}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setForm({ ...form, name: event.currentTarget.value })
               }

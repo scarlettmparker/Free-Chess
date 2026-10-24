@@ -96,9 +96,9 @@ const MoveGrid = (props: MoveGridProps) => {
         >
           {isCentre ? (
             <span className={styles.centre_piece}>
-              <img src={partUrl(sprite.headKey)} alt="" />
-              <img src={partUrl(sprite.bodyKey)} alt="" />
-              <img src={partUrl(sprite.footKey)} alt="" />
+              <img src={partUrl(sprite.headKey, 0)} alt="" />
+              <img src={partUrl(sprite.bodyKey, 0)} alt="" />
+              <img src={partUrl(sprite.footKey, 0)} alt="" />
             </span>
           ) : null}
         </div>,

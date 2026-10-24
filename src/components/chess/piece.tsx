@@ -17,10 +17,11 @@ type PieceProps = {
  * Resolve a part key to a URL.
  *
  * @param key Part key.
+ * @param color Piece colour, 0 for white and 1 for black.
  * @returns Part URL.
  */
-export function partUrl(key: string): string {
-  return `/piece/parts/${key}.png`;
+export function partUrl(key: string, color: 0 | 1): string {
+  return `/piece/parts/${key}-${color === 0 ? 'white' : 'black'}.png`;
 }
 
 /**
@@ -31,6 +32,7 @@ const Piece = (props: PieceProps) => {
   const { t } = useTranslation('chess');
   const enginePiece = gameState.pieces.find((piece) => piece.getId() === pieceId);
   const rawSprite = enginePiece?.getSprite();
+  const color = enginePiece?.getColor() === 1 ? 1 : 0;
   const sprite =
     rawSprite && rawSprite.headKey && rawSprite.bodyKey && rawSprite.footKey
       ? rawSprite
@@ -41,19 +43,19 @@ const Piece = (props: PieceProps) => {
       {checked ? <span className={styles.check_glow} aria-hidden="true" /> : null}
       <img
         className={styles.part_head}
-        src={partUrl(sprite.headKey)}
+        src={partUrl(sprite.headKey, color)}
         alt={t('piece-head')}
         draggable={false}
       />
       <img
         className={styles.part_body}
-        src={partUrl(sprite.bodyKey)}
+        src={partUrl(sprite.bodyKey, color)}
         alt={t('piece-body')}
         draggable={false}
       />
       <img
         className={styles.part_foot}
-        src={partUrl(sprite.footKey)}
+        src={partUrl(sprite.footKey, color)}
         alt={t('piece-foot')}
         draggable={false}
       />
