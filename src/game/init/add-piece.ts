@@ -1,5 +1,5 @@
 import { gameState } from '~/game/consts/board';
-import { PieceFactory } from '~/game/piece/piece';
+import { PieceFactory } from '~/game/piece/piece-factory';
 
 /**
  * Piece IDs

@@ -248,7 +248,7 @@ export class SlidingMoveBehavior implements MoveBehavior {
 }
 
 // Piece base class
-abstract class Piece {
+class Piece {
   private id: number;
   private color: number;
   private move: number;
@@ -264,12 +264,16 @@ abstract class Piece {
   private pieceMask: BigUint64Array;
   private rotationalMoveType: string;
   private reverse: Map<number, number>;
+  private definitionId: number;
+  private type: string;
 
   constructor(
     id: number,
     color: number,
     moveBehavior: MoveBehavior,
     rotationalMoveType: string = 'DEFAULT',
+    definitionId: number = 0,
+    type: string = '',
   ) {
     this.id = id;
     this.color = color;
@@ -286,6 +290,8 @@ abstract class Piece {
     this.pieceMask = new BigUint64Array(64);
     this.rotationalMoveType = rotationalMoveType;
     this.reverse = new Map<number, number>();
+    this.definitionId = definitionId;
+    this.type = type;
     this.moveBehavior.initializeAttacks();
   }
 
@@ -350,6 +356,24 @@ abstract class Piece {
     return this.reverse;
   }
 
+  /**
+   * Definition id for this piece.
+   *
+   * @returns The definition id.
+   */
+  getDefinitionId(): number {
+    return this.definitionId;
+  }
+
+  /**
+   * Type slug for this piece.
+   *
+   * @returns The type slug.
+   */
+  getType(): string {
+    return this.type;
+  }
+
   // Setters
   setId(id: number): void {
     this.id = id;
@@ -410,207 +434,24 @@ abstract class Piece {
   setReverse(reverse: Map<number, number>): void {
     this.reverse = reverse;
   }
-}
 
-export class KingPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(
-      id,
-      color,
-      new LeaperMoveBehavior([
-        [
-          [-1, 1],
-          [0, 1],
-          [1, 1],
-          [-1, 0],
-          [1, 0],
-          [-1, -1],
-          [0, -1],
-          [1, -1],
-        ],
-      ]),
-    );
-    this.setKing(true);
-    this.setLeaper(true);
+  /**
+   * Set the definition id.
+   *
+   * @param id Definition id.
+   */
+  setDefinitionId(id: number): void {
+    this.definitionId = id;
+  }
+
+  /**
+   * Set the type slug.
+   *
+   * @param type Type slug.
+   */
+  setType(type: string): void {
+    this.type = type;
   }
 }
 
-export class QueenPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(id, color, new SlidingMoveBehavior(true, true));
-    this.setSlider(true);
-  }
-}
-
-export class RookPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(id, color, new SlidingMoveBehavior(true, false));
-    this.setSlider(true);
-  }
-}
-
-export class BishopPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(id, color, new SlidingMoveBehavior(false, true));
-    this.setSlider(true);
-  }
-}
-
-export class KnightPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(
-      id,
-      color,
-      new LeaperMoveBehavior([
-        [
-          [-2, 1],
-          [-1, 2],
-          [1, 2],
-          [2, 1],
-          [-2, -1],
-          [-1, -2],
-          [1, -2],
-          [2, -1],
-        ],
-      ]),
-    );
-    this.setLeaper(true);
-  }
-}
-
-export class PawnPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(id, color, new PawnMoveBehavior());
-    this.setPawn(true);
-    this.setEnpassant(true);
-    this.setPromote(true);
-  }
-}
-
-export class BalloonPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(
-      id,
-      color,
-      new LeaperMoveBehavior([
-        [
-          [0, 2],
-          [0, -2],
-          [1, 1],
-          [1, -1],
-          [-1, 1],
-          [-1, -1],
-        ],
-        [
-          [0, 2],
-          [0, -2],
-          [1, 2],
-          [1, -2],
-          [2, 1],
-          [2, -1],
-          [-1, 2],
-          [-1, -2],
-          [-2, 1],
-          [-2, -1],
-        ],
-      ]),
-      'ROTATE',
-    );
-    this.setLeaper(true);
-  }
-}
-
-export class SpongebobPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(
-      id,
-      color,
-      new LeaperMoveBehavior([
-        [
-          [1, 0],
-          [-1, 0],
-          [0, 1],
-          [0, -1],
-          [1, 1],
-          [1, -1],
-          [-1, 1],
-          [-1, -1],
-        ],
-        [
-          [2, 0],
-          [-2, 0],
-          [0, 2],
-          [0, -2],
-          [2, 2],
-          [2, -2],
-          [-2, 2],
-          [-2, -2],
-        ],
-        [
-          [3, 0],
-          [-3, 0],
-          [0, 3],
-          [0, -3],
-          [3, 3],
-          [3, -3],
-          [-3, 3],
-          [-3, -3],
-        ],
-        [
-          [2, 0],
-          [-2, 0],
-          [0, 2],
-          [0, -2],
-          [2, 2],
-          [2, -2],
-          [-2, 2],
-          [-2, -2],
-        ],
-      ]),
-      'ROTATE',
-    );
-    this.setLeaper(true);
-  }
-}
-
-export class PogoPiece extends Piece {
-  constructor(id: number, color: number) {
-    super(
-      id,
-      color,
-      new LeaperMoveBehavior([[[0, 2]], [[0, -1]], [[0, 1]], [[0, -2]]]),
-      'REVERSE_ROTATE',
-    );
-    this.setLeaper(true);
-  }
-}
-
-// Piece factory
-class PieceFactory {
-  static createPiece(type: string, id: number, color: number): Piece {
-    switch (type.toLowerCase()) {
-      case 'king':
-        return new KingPiece(id, color);
-      case 'queen':
-        return new QueenPiece(id, color);
-      case 'rook':
-        return new RookPiece(id, color);
-      case 'bishop':
-        return new BishopPiece(id, color);
-      case 'knight':
-        return new KnightPiece(id, color);
-      case 'pawn':
-        return new PawnPiece(id, color);
-      case 'balloon':
-        return new BalloonPiece(id, color);
-      case 'pogo':
-        return new PogoPiece(id, color);
-      case 'spongebob':
-        return new SpongebobPiece(id, color);
-      default:
-        throw new Error(`Unknown piece type: ${type}`);
-    }
-  }
-}
-
-export { Piece, PieceFactory };
+export { Piece };

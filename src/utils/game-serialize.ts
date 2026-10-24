@@ -1,4 +1,5 @@
-import { Piece, PieceFactory } from '~/game/piece/piece';
+import { Piece } from '~/game/piece/piece';
+import { PieceFactory } from '~/game/piece/piece-factory';
 import { gameState, GameState, Moves } from '~/game/consts/board';
 
 type SerializedPiece = {
@@ -55,41 +56,13 @@ export function serializeGameState(gs: GameState): SerializedGameState {
    * @param piece Piece to serialize.
    */
   function serializePiece(piece: Piece): SerializedPiece {
-    let pieceType: string;
-    if (piece instanceof Piece) {
-      switch (piece.constructor.name) {
-        case 'KingPiece':
-          pieceType = 'king';
-          break;
-        case 'QueenPiece':
-          pieceType = 'queen';
-          break;
-        case 'RookPiece':
-          pieceType = 'rook';
-          break;
-        case 'BishopPiece':
-          pieceType = 'bishop';
-          break;
-        case 'KnightPiece':
-          pieceType = 'knight';
-          break;
-        case 'PawnPiece':
-          pieceType = 'pawn';
-          break;
-        case 'BalloonPiece':
-          pieceType = 'balloon';
-          break;
-        case 'PogoPiece':
-          pieceType = 'pogo';
-          break;
-        case 'SpongebobPiece':
-          pieceType = 'spongebob';
-          break;
-        default:
-          throw new Error('Unknown Piece type');
-      }
-    } else {
+    if (!(piece instanceof Piece)) {
       throw new Error('Invalid Piece instance');
+    }
+
+    const pieceType = piece.getType();
+    if (!pieceType) {
+      throw new Error('Unknown Piece type');
     }
 
     return {
