@@ -4,6 +4,8 @@
  */
 
 import type { SunApp, SunReply, SunRequest } from '@sun/ssr/server';
+import { isMailerConfigured } from './mailer.ts';
+import { rateLimit } from './rate-limit.ts';
 import type { Auth } from './session.ts';
 import { safeRedirect } from './redirect.ts';
 
@@ -35,6 +37,33 @@ function errorStatus(error: unknown) {
 }
 
 /**
+ * Checks whether an auth error marks a banned account.
+ *
+ * @param error Error thrown by better-auth.
+ * @returns True when the account is banned.
+ */
+function isBannedError(error: unknown) {
+  if (!error || typeof error !== 'object' || !('body' in error)) return false;
+  const body = error.body;
+  return Boolean(body && typeof body === 'object' && 'code' in body && body.code === 'BANNED_USER');
+}
+
+/**
+ * Checks whether a response body reports a banned account.
+ *
+ * @param response Response returned by better-auth.
+ * @returns True when the body carries the banned code.
+ */
+async function isBannedResponse(response: Response) {
+  try {
+    const body = (await response.clone().json()) as { code?: string };
+    return body.code === 'BANNED_USER';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Redirects back to the login page with an error code.
  *
  * @param reply Response being built.
@@ -44,6 +73,16 @@ function errorStatus(error: unknown) {
 function loginError(reply: SunReply, code: string, redirectTo: string) {
   const target = `/login?error=${code}&redirect=${encodeURIComponent(redirectTo)}`;
   reply.redirect(target);
+}
+
+/**
+ * Redirects to the login page with a link-sent notice.
+ *
+ * @param reply Response being built.
+ * @param redirectTo Page to open after sign-in.
+ */
+function magicLinkSent(reply: SunReply, redirectTo: string) {
+  reply.redirect(`/login?sent=1&redirect=${encodeURIComponent(redirectTo)}`);
 }
 
 /**
@@ -109,5 +148,113 @@ export function registerAuthRoutes(app: SunApp, auth: Auth) {
     }
 
     reply.redirect('/login');
+  });
+
+  app.post('/__magic-link', async (request, reply) => {
+    const body = (request.body ?? {}) as Record<string, unknown>;
+    const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+    const redirectTo = safeRedirect(body.redirect ?? request.query.redirect);
+
+    if (!email) {
+      magicLinkSent(reply, redirectTo);
+      return;
+    }
+
+    if (process.env.NODE_ENV === 'production' && !isMailerConfigured()) {
+      loginError(reply, 'mail', redirectTo);
+      return;
+    }
+
+    if (!rateLimit(`${request.ip || 'unknown'}:${email}`, { windowMs: 15 * 60_000, max: 5 })) {
+      magicLinkSent(reply, redirectTo);
+      return;
+    }
+
+    try {
+      const context = await auth.$context;
+      const existing = await context.internalAdapter.findUserByEmail(email, {
+        includeAccounts: false,
+      });
+      if (!existing || (existing.user as { banned?: boolean | null }).banned) {
+        magicLinkSent(reply, redirectTo);
+        return;
+      }
+    } catch (error) {
+      console.error('Magic link lookup failed:', error);
+      magicLinkSent(reply, redirectTo);
+      return;
+    }
+
+    try {
+      await auth.api.signInMagicLink({
+        body: {
+          email,
+          callbackURL: redirectTo,
+          metadata: { redirect: redirectTo },
+        },
+        headers: requestHeaders(request),
+      });
+    } catch (error) {
+      console.error('Magic link request failed:', error);
+    }
+
+    magicLinkSent(reply, redirectTo);
+  });
+
+  app.get('/__magic-link/verify', async (request, reply) => {
+    const query = (request.query ?? {}) as Record<string, unknown>;
+    const token = typeof query.token === 'string' ? query.token : '';
+    const redirectTo = safeRedirect(query.redirect);
+
+    if (!token) {
+      loginError(reply, 'link', redirectTo);
+      return;
+    }
+
+    try {
+      const response = await auth.api.magicLinkVerify({
+        query: { token },
+        headers: requestHeaders(request),
+        asResponse: true,
+      });
+      const cookie = sessionCookie(response);
+
+      if (!response.ok || !cookie) {
+        const banned = await isBannedResponse(response);
+        loginError(reply, banned ? 'banned' : 'link', redirectTo);
+        return;
+      }
+
+      const result = (await response.clone().json()) as {
+        user?: { banned?: boolean | null };
+      };
+
+      if (result.user?.banned) {
+        try {
+          const signOutResponse = await auth.api.signOut({
+            headers: new Headers({ cookie: cookie.split(';')[0] }),
+            asResponse: true,
+          });
+          const cleared = sessionCookie(signOutResponse);
+          if (cleared) reply.header('Set-Cookie', cleared);
+        } catch {
+          // A banned account stays locked out even if the session lingers.
+        }
+
+        loginError(reply, 'banned', redirectTo);
+        return;
+      }
+
+      reply.header('Set-Cookie', cookie);
+      reply.redirect(redirectTo);
+    } catch (error) {
+      if (isBannedError(error)) {
+        loginError(reply, 'banned', redirectTo);
+        return;
+      }
+
+      console.error('Magic link verify failed:', error);
+      loginError(reply, 'link', redirectTo);
+    }
   });
 }

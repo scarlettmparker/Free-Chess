@@ -1,0 +1,9 @@
+.sent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lg);
+}
+
+.link {
+  align-self: flex-start;
+}

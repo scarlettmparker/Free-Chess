@@ -10,10 +10,21 @@ import { fileURLToPath } from 'node:url';
 import { betterAuth, type BetterAuthOptions } from 'better-auth';
 import { admin } from 'better-auth/plugins';
 import { openAuthDatabase, resolveAuthDbPath } from './db.ts';
+import { createMagicLink, type SendMagicLink } from './magic-link.ts';
 import { ac, adminRoles, defaultRole, roles } from './permissions.ts';
 
 const devSecret = '3f9a2c7e1b8d4056a1c4e7f29b6d0835';
 const configPath = join(dirname(fileURLToPath(import.meta.url)), 'auth-cli.ts');
+
+/**
+ * Optional collaborators replaced in tests.
+ */
+export type AuthDeps = {
+  /**
+   * Delivers magic-link messages.
+   */
+  sendMagicLink?: SendMagicLink;
+};
 
 /**
  * Builds the better-auth configuration for a database path.
@@ -25,6 +36,7 @@ const configPath = join(dirname(fileURLToPath(import.meta.url)), 'auth-cli.ts');
 export function buildAuthOptions(
   dbPath = resolveAuthDbPath(),
   database: Database = openAuthDatabase(dbPath),
+  deps: AuthDeps = {},
 ) {
   const isProduction = process.env.NODE_ENV === 'production';
   const secret = process.env.BETTER_AUTH_SECRET || (isProduction ? '' : devSecret);
@@ -67,6 +79,7 @@ export function buildAuthOptions(
         defaultRole,
         adminRoles,
       }),
+      createMagicLink(deps.sendMagicLink),
     ],
     trustedOrigins: [...new Set(trustedOrigins)],
     advanced: {
@@ -93,8 +106,8 @@ export function buildAuthOptions(
  * @param dbPath Path to the auth database.
  * @returns Configured better-auth instance.
  */
-export function createAuth(dbPath = resolveAuthDbPath()) {
-  return betterAuth(buildAuthOptions(dbPath));
+export function createAuth(dbPath = resolveAuthDbPath(), deps: AuthDeps = {}) {
+  return betterAuth(buildAuthOptions(dbPath, undefined, deps));
 }
 
 /**

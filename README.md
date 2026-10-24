@@ -60,6 +60,14 @@ sign-in is enabled, public sign-up is disabled, and the first admin is created
 with `auth:create-admin`. `/login` is public; the chess board stays public for
 guests.
 
+Magic-link sign-in is available for existing accounts. Enter an email on
+`/login`, and the app sends a single-use link that expires after 15 minutes.
+Unknown and banned accounts get the same "check your inbox" page and no email.
+Links go out through Gmail SMTP. Set `SMTP_USER` to the Gmail address and
+`SMTP_PASSWORD` to an app password (2FA must be on). Without those in
+development the link is printed to the server log; in production the request
+returns an email-unavailable error and password login keeps working.
+
 The database defaults to `$XDG_DATA_HOME/free-chess/auth.db`, then
 `~/.local/share/free-chess/auth.db`. Set `AUTH_DB_PATH` to override it.
 
@@ -71,6 +79,11 @@ Environment:
 - `CSRF_SECRET` - HMAC key for native form CSRF tokens. Falls back to `BETTER_AUTH_SECRET`.
 - `ADMIN_TOKEN` - bearer token shared by the web app and the matchmaking admin API. Required in production.
 - `MATCHMAKING_ADMIN_URL` - loopback admin API URL, default `http://127.0.0.1:4002`.
+- `SMTP_HOST` - SMTP host, default `smtp.gmail.com`.
+- `SMTP_PORT` - SMTP port, default `587`.
+- `SMTP_USER` - Gmail address used to send magic links.
+- `SMTP_PASSWORD` - Gmail app password for `SMTP_USER`.
+- `MAIL_FROM` - From header, default `SMTP_USER`.
 
 Roles are defined in `src/server/permissions.ts`:
 

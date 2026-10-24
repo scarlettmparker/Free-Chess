@@ -115,15 +115,3 @@
 .gameOver {
   margin: 0;
 }
-
-@media (max-width: 560px) {
-  .board {
-    --square-size: 40px;
-  }
-}
-
-@media (max-width: 380px) {
-  .board {
-    --square-size: 32px;
-  }
-}

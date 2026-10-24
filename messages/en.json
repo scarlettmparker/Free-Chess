@@ -24,7 +24,17 @@
     "sign-in-label": "Sign in",
     "sign-in-title": "Sign in",
     "error-default": "Invalid credentials",
-    "error-rate": "Too many attempts. Try again later."
+    "error-rate": "Too many attempts. Try again later.",
+    "use-magic-link": "Email me a sign-in link",
+    "send-link-label": "Send link",
+    "send-link-title": "Send sign-in link",
+    "back-to-password": "Back to password sign-in",
+    "sent-title": "Check your inbox",
+    "sent-subtitle": "If that email has an account, a link is on its way.",
+    "sent-body": "The link works once and expires in 15 minutes.",
+    "error-mail": "Email sign-in isn't available right now.",
+    "error-link": "That link is invalid or has expired.",
+    "error-banned": "This account is banned."
   },
   "nav": {
     "sign-in": "Sign in",
