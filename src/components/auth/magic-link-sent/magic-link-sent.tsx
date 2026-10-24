@@ -10,7 +10,7 @@ const MagicLinkSent = () => {
   const { t } = useTranslation('login');
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') ?? '';
-  const target = `/login?mode=magic&redirect=${encodeURIComponent(redirect)}`;
+  const target = `/login?redirect=${encodeURIComponent(redirect)}`;
 
   return (
     <div className={styles.sent}>
