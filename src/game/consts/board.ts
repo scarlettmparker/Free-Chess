@@ -15,6 +15,7 @@ export type GameState = {
   whitePieceIds: number[];
   blackPieceIds: number[];
   pieces: Piece[];
+  kingPieceId: [number, number];
   bitboards: BitboardData[];
   occLo: Uint32Array;
   occHi: Uint32Array;
@@ -41,6 +42,7 @@ export const gameState: GameState = {
   whitePieceIds: [],
   blackPieceIds: [],
   pieces: [],
+  kingPieceId: [10, 11],
   bitboards: [],
   occLo: new Uint32Array(3),
   occHi: new Uint32Array(3),

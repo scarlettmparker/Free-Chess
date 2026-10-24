@@ -18,7 +18,7 @@ export const SPONGEBOB_ID = 16;
 /**
  * Helper functions to add pieces to the current game state
  */
-function addPiece(type: string, whiteId: number) {
+export function addPiece(type: string, whiteId: number) {
   const blackId = whiteId + 1;
   const whitePiece = PieceFactory.createPiece(type, whiteId, 0);
   const blackPiece = PieceFactory.createPiece(type, blackId, 1);

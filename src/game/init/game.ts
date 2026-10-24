@@ -14,6 +14,7 @@ import { initSlidingPieces } from '~/game/init/sliding-piece';
  */
 export function resetGameState() {
   gameState.pieces = [];
+  gameState.kingPieceId = [10, 11];
   gameState.bitboards = [];
   gameState.occLo = new Uint32Array(3);
   gameState.occHi = new Uint32Array(3);

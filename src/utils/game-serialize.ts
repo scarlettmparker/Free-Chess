@@ -5,6 +5,7 @@ import { gameState, GameState, Moves } from '~/game/consts/board';
 type SerializedPiece = {
   pieceType: string;
   id: number;
+  definitionId: number;
   color: number;
   pieceMask: string[];
   move: number;
@@ -28,6 +29,7 @@ type SerializedBitboardData = {
 export type SerializedGameState = {
   whitePieceIds: number[];
   blackPieceIds: number[];
+  kingPieceId: [number, number];
   pieces: SerializedPiece[];
   bitboards: SerializedBitboardData[];
   occupancies: string[];
@@ -68,6 +70,7 @@ export function serializeGameState(gs: GameState): SerializedGameState {
     return {
       pieceType,
       id: piece.getId(),
+      definitionId: piece.getDefinitionId(),
       color: piece.getColor(),
       pieceMask: Array.from(piece.getPieceMask()).map((b) => b.toString()),
       move: piece.getMove(),
@@ -87,6 +90,7 @@ export function serializeGameState(gs: GameState): SerializedGameState {
   const serialized = {
     whitePieceIds: gs.whitePieceIds,
     blackPieceIds: gs.blackPieceIds,
+    kingPieceId: gs.kingPieceId,
     pieces: gs.pieces.map(serializePiece),
     bitboards: gs.bitboards.map((bb) => ({
       pieceId: bb.pieceId,
@@ -150,6 +154,7 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     piece.setLeaper(serialized.leaper);
     piece.setRotationalMoveType(serialized.rotationalMoveType);
     piece.setReverse(new Map(serialized.reverse));
+    piece.setDefinitionId(serialized.definitionId);
     return piece;
   }
 
@@ -161,6 +166,7 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     whitePieceIds: json.whitePieceIds,
     blackPieceIds: json.blackPieceIds,
     pieces: json.pieces.map((p) => deserializePiece(p, currentPieces)),
+    kingPieceId: json.kingPieceId ?? [10, 11],
     bitboards: json.bitboards.map((bb) => {
       const v = BigInt(bb.bitboard);
       return {

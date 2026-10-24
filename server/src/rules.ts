@@ -5,7 +5,7 @@
 
 import { isSquareAttacked } from '~/game/board/attacks.ts';
 import { lsbIndex } from '~/game/board/bb.ts';
-import { charPieces, colors, gameState, getBitboard } from '~/game/consts/board.ts';
+import { gameState, getBitboard } from '~/game/consts/board.ts';
 
 /**
  * Largest value produced by `encodeMove`.
@@ -34,10 +34,13 @@ export function isEncodedMove(value: unknown): value is number {
 export function checkedForSideToMove(): [boolean, boolean] {
   const sideToMove = gameState.side;
   const opponent = sideToMove ^ 1;
-  const king = sideToMove === colors.WHITE ? charPieces.K : charPieces.k;
-  const bitboard = getBitboard(king);
-  const square = lsbIndex(bitboard.lo, bitboard.hi);
   const checked: [boolean, boolean] = [false, false];
+  const kingPiece = gameState.pieces.find(
+    (candidate) => candidate.getType() === 'king' && candidate.getColor() === sideToMove,
+  );
+  if (!kingPiece) return checked;
+  const bitboard = getBitboard(kingPiece.getId());
+  const square = lsbIndex(bitboard.lo, bitboard.hi);
 
   if (square >= 0) {
     checked[sideToMove] = isSquareAttacked(square, opponent);
