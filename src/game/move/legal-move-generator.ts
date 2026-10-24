@@ -1,127 +1,89 @@
-import {
-  blackPromotions,
-  castlePieces,
-  colors,
-  gameState,
-  getBitboard,
-  whitePromotions,
-} from '~/game/consts/board';
-import {
-  Piece,
-  SlidingMoveBehavior,
-  LeaperMoveBehavior,
-  PawnMoveBehavior,
-} from '~/game/piece/piece';
-import { isSquareAttacked } from '~/game/board/attacks';
+import { colors, gameState, getBitboard } from '~/game/consts/board';
 import { getBit } from '~/game/board/bitboard';
 import { lsbIndex } from '~/game/board/bb';
 import { notToRawPos } from '~/game/board/square-helper';
-import { addMove, getCheckMove } from './move';
+import { isSquareAttacked } from '~/game/board/attacks';
+import { addMove } from './move';
 import { encodeMove, MoveList } from './move-def';
+import { pieceRegistry } from '~/game/piece/piece-registry';
+import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
+import type { Piece } from '~/game/piece/piece';
+import type { PieceDefinition, MoveVector } from '~/game/piece/piece-definition';
 
 /**
- * Generates moves for all pieces of the current side.
- * @param moves Move list to add generated moves to.
- * @param pieces List of pieces to generate moves for.
+ * Look up a piece definition.
+ *
+ * @param piece Piece to inspect.
+ * @returns The piece definition.
  */
-export const generateMoves = (moves: MoveList, pieces: Piece[]) => {
-  const l = pieces.length;
-  for (let i = 0; i < l; i++) {
-    const piece = pieces[i];
-    if (piece.getColor() !== gameState.side) continue;
-    generateMove(moves, piece);
-  }
-};
+function getDefinition(piece: Piece): PieceDefinition {
+  const def = pieceRegistry.getDefinition(piece.getDefinitionId());
+  if (def) return def;
+  const fallback = BUILTIN_DEFINITIONS.find((d) => d.slug === piece.getType());
+  if (fallback) return fallback;
+  throw new Error(`Unknown piece definition: ${piece.getType()}`);
+}
 
 /**
- * Generates moves for a specific piece.
- * @param movesCopy Move list to add generated moves to.
- * @param piece Piece to generate moves for.
+ * Convert a source square plus an offset into a target square, or -1.
+ *
+ * @param source Source square.
+ * @param dx Horizontal offset.
+ * @param dy Vertical offset.
+ * @returns Target square or -1.
  */
-export const generateMove = (movesCopy: MoveList, piece: Piece) => {
-  let targetSquare: number;
-  const moveBehavior = piece.getMoveBehavior();
+function offsetSquare(source: number, dx: number, dy: number): number {
+  const rankTop = source >> 3;
+  const file = source & 7;
+  const nrt = rankTop - dy;
+  const nf = file + dx;
+  if (nf < 0 || nf > 7 || nrt < 0 || nrt > 7) return -1;
+  return nrt * 8 + nf;
+}
 
-  const pieceBB = getBitboard(piece.getId());
-  let sourceSquare = lsbIndex(pieceBB.lo, pieceBB.hi);
+/**
+ * Whether a square holds a piece of the moving side.
+ *
+ * @param square Square to test.
+ * @returns True if occupied by the moving side.
+ */
+function isOwn(square: number): boolean {
+  const side = gameState.side;
+  const occLo =
+    side === colors.WHITE ? gameState.occLo[colors.WHITE] : gameState.occLo[colors.BLACK];
+  const occHi =
+    side === colors.WHITE ? gameState.occHi[colors.WHITE] : gameState.occHi[colors.BLACK];
+  if (square < 32) return ((occLo >>> square) & 1) === 1;
+  return ((occHi >>> (square - 32)) & 1) === 1;
+}
 
-  if (piece.getColor() === colors.WHITE && moveBehavior instanceof PawnMoveBehavior) {
-    const bothLo = gameState.occLo[colors.BOTH];
-    const bothHi = gameState.occHi[colors.BOTH];
-    const oppLo = gameState.occLo[colors.BLACK];
-    const oppHi = gameState.occHi[colors.BLACK];
-    let bbLo = pieceBB.lo;
-    let bbHi = pieceBB.hi;
+/**
+ * Whether a square holds an enemy piece.
+ *
+ * @param square Square to test.
+ * @returns True if occupied by the enemy.
+ */
+function isEnemy(square: number): boolean {
+  const side = gameState.side;
+  const occLo =
+    side === colors.WHITE ? gameState.occLo[colors.BLACK] : gameState.occLo[colors.WHITE];
+  const occHi =
+    side === colors.WHITE ? gameState.occHi[colors.BLACK] : gameState.occHi[colors.WHITE];
+  if (square < 32) return ((occLo >>> square) & 1) === 1;
+  return ((occHi >>> (square - 32)) & 1) === 1;
+}
 
-    while (bbLo !== 0 || bbHi !== 0) {
-      sourceSquare = lsbIndex(bbLo, bbHi);
-      targetSquare = sourceSquare - 8;
-      const targetFree =
-        targetSquare < 32
-          ? !((bothLo >>> targetSquare) & 1)
-          : !((bothHi >>> (targetSquare - 32)) & 1);
-      if (!(targetSquare < notToRawPos['a8']) && targetFree) {
-        if (sourceSquare >= notToRawPos['a7'] && sourceSquare <= notToRawPos['h7']) {
-          if (piece.getPromote()) {
-            whitePromotions.forEach((promotePiece) => {
-              addMove(
-                movesCopy,
-                encodeMove(sourceSquare, targetSquare, piece.getId(), promotePiece, 0, 0, 0, 0),
-              );
-            });
-          }
-        } else {
-          // one square ahead push
-          addMove(movesCopy, encodeMove(sourceSquare, targetSquare, piece.getId(), 0, 0, 0, 0, 0));
-          if (sourceSquare >= notToRawPos['a2'] && sourceSquare <= notToRawPos['h2']) {
-            const t2 = targetSquare - 8;
-            const t2Free = t2 < 32 ? !((bothLo >>> t2) & 1) : !((bothHi >>> (t2 - 32)) & 1);
-            if (t2Free) {
-              addMove(movesCopy, encodeMove(sourceSquare, t2, piece.getId(), 0, 0, 1, 0, 0));
-            }
-          }
-        }
-      }
+/**
+ * Generate castling moves for a king piece.
+ *
+ * @param movesCopy Move list to append to.
+ * @param piece King piece.
+ */
+function generateCastling(movesCopy: MoveList, piece: Piece): void {
+  const color = piece.getColor();
 
-      // pawn captures
-      let alo = moveBehavior.getPawnPieceStateLo()[gameState.side][sourceSquare] & oppLo;
-      let ahi = moveBehavior.getPawnPieceStateHi()[gameState.side][sourceSquare] & oppHi;
-      while (alo !== 0 || ahi !== 0) {
-        targetSquare = lsbIndex(alo, ahi);
-        // pawn capture promotion
-        if (sourceSquare >= notToRawPos['a7'] && sourceSquare <= notToRawPos['h7']) {
-          if (piece.getPromote()) {
-            whitePromotions.forEach((promotePiece) => {
-              addMove(
-                movesCopy,
-                encodeMove(sourceSquare, targetSquare, piece.getId(), promotePiece, 1, 0, 0, 0),
-              );
-            });
-          }
-        } else {
-          addMove(movesCopy, encodeMove(sourceSquare, targetSquare, piece.getId(), 0, 1, 0, 0, 0));
-        }
-        if (targetSquare < 32) alo &= ~(1 << targetSquare);
-        else ahi &= ~(1 << (targetSquare - 32));
-      }
-
-      if (gameState.enpassant != -1) {
-        const ep = gameState.enpassant;
-        const epLo = moveBehavior.getPawnPieceStateLo()[gameState.side][sourceSquare];
-        const epHi = moveBehavior.getPawnPieceStateHi()[gameState.side][sourceSquare];
-        const hits = ep < 32 ? (epLo >>> ep) & 1 : (epHi >>> (ep - 32)) & 1;
-        if (hits) {
-          addMove(movesCopy, encodeMove(sourceSquare, ep, piece.getId(), 0, 1, 0, 1, 0));
-        }
-      }
-
-      if (sourceSquare < 32) bbLo &= ~(1 << sourceSquare);
-      else bbHi &= ~(1 << (sourceSquare - 32));
-    }
-  }
-
-  if (piece.getColor() === colors.WHITE && piece.getKing()) {
-    if (gameState.castle & castlePieces.wk) {
+  if (color === colors.WHITE && piece.getKing()) {
+    if (gameState.castle & 1) {
       if (
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['f1']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['g1'])
@@ -137,9 +99,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
         }
       }
     }
-
-    // queen side
-    if (gameState.castle & castlePieces.wq) {
+    if (gameState.castle & 2) {
       if (
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['d1']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['c1']) &&
@@ -158,82 +118,8 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
     }
   }
 
-  if (piece.getColor() === colors.BLACK && moveBehavior instanceof PawnMoveBehavior) {
-    const bothLo = gameState.occLo[colors.BOTH];
-    const bothHi = gameState.occHi[colors.BOTH];
-    const oppLo = gameState.occLo[colors.WHITE];
-    const oppHi = gameState.occHi[colors.WHITE];
-    let bbLo = pieceBB.lo;
-    let bbHi = pieceBB.hi;
-
-    while (bbLo !== 0 || bbHi !== 0) {
-      sourceSquare = lsbIndex(bbLo, bbHi);
-      targetSquare = sourceSquare + 8;
-      const targetFree =
-        targetSquare < 32
-          ? !((bothLo >>> targetSquare) & 1)
-          : !((bothHi >>> (targetSquare - 32)) & 1);
-      if (!(targetSquare > notToRawPos['h1']) && targetFree) {
-        // pawn promotion
-        if (sourceSquare >= notToRawPos['a2'] && sourceSquare <= notToRawPos['h2']) {
-          if (piece.getPromote()) {
-            blackPromotions.forEach((promotePiece) => {
-              addMove(
-                movesCopy,
-                encodeMove(sourceSquare, targetSquare, piece.getId(), promotePiece, 0, 0, 0, 0),
-              );
-            });
-          }
-        } else {
-          addMove(movesCopy, encodeMove(sourceSquare, targetSquare, piece.getId(), 0, 0, 0, 0, 0));
-          if (sourceSquare >= notToRawPos['a7'] && sourceSquare <= notToRawPos['h7']) {
-            const t2 = targetSquare + 8;
-            const t2Free = t2 < 32 ? !((bothLo >>> t2) & 1) : !((bothHi >>> (t2 - 32)) & 1);
-            if (t2Free) {
-              addMove(movesCopy, encodeMove(sourceSquare, t2, piece.getId(), 0, 0, 1, 0, 0));
-            }
-          }
-        }
-      }
-
-      // initialize pawn attacks bitboard
-      let alo = moveBehavior.getPawnPieceStateLo()[gameState.side][sourceSquare] & oppLo;
-      let ahi = moveBehavior.getPawnPieceStateHi()[gameState.side][sourceSquare] & oppHi;
-      while (alo !== 0 || ahi !== 0) {
-        targetSquare = lsbIndex(alo, ahi);
-        // pawn capture promotion
-        if (sourceSquare >= notToRawPos['a2'] && sourceSquare <= notToRawPos['h2']) {
-          if (piece.getPromote()) {
-            blackPromotions.forEach((promotePiece) => {
-              addMove(
-                movesCopy,
-                encodeMove(sourceSquare, targetSquare, piece.getId(), promotePiece, 1, 0, 0, 0),
-              );
-            });
-          }
-        } else {
-          addMove(movesCopy, encodeMove(sourceSquare, targetSquare, piece.getId(), 0, 1, 0, 0, 0));
-        }
-        if (targetSquare < 32) alo &= ~(1 << targetSquare);
-        else ahi &= ~(1 << (targetSquare - 32));
-      }
-
-      if (gameState.enpassant != -1) {
-        const ep = gameState.enpassant;
-        const epLo = moveBehavior.getPawnPieceStateLo()[gameState.side][sourceSquare];
-        const epHi = moveBehavior.getPawnPieceStateHi()[gameState.side][sourceSquare];
-        const hits = ep < 32 ? (epLo >>> ep) & 1 : (epHi >>> (ep - 32)) & 1;
-        if (hits) {
-          addMove(movesCopy, encodeMove(sourceSquare, ep, piece.getId(), 0, 1, 0, 1, 0));
-        }
-      }
-      if (sourceSquare < 32) bbLo &= ~(1 << sourceSquare);
-      else bbHi &= ~(1 << (sourceSquare - 32));
-    }
-  }
-
-  if (piece.getColor() === colors.BLACK && piece.getKing()) {
-    if (gameState.castle & castlePieces.bk) {
+  if (color === colors.BLACK && piece.getKing()) {
+    if (gameState.castle & 4) {
       if (
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['f8']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['g8'])
@@ -249,9 +135,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
         }
       }
     }
-
-    // queen side
-    if (gameState.castle & castlePieces.bq) {
+    if (gameState.castle & 8) {
       if (
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['d8']) &&
         !getBit(gameState.occLo[colors.BOTH], gameState.occHi[colors.BOTH], notToRawPos['c8']) &&
@@ -269,60 +153,193 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
       }
     }
   }
+}
 
-  if (moveBehavior instanceof LeaperMoveBehavior || moveBehavior instanceof SlidingMoveBehavior) {
-    const side = gameState.side;
-    const ownLo =
-      side == colors.WHITE ? gameState.occLo[colors.WHITE] : gameState.occLo[colors.BLACK];
-    const ownHi =
-      side == colors.WHITE ? gameState.occHi[colors.WHITE] : gameState.occHi[colors.BLACK];
-    const oppLo =
-      side == colors.WHITE ? gameState.occLo[colors.BLACK] : gameState.occLo[colors.WHITE];
-    const oppHi =
-      side == colors.WHITE ? gameState.occHi[colors.BLACK] : gameState.occHi[colors.WHITE];
-    const notOwnLo = ~ownLo;
-    const notOwnHi = ~ownHi;
-    const bothLo = gameState.occLo[colors.BOTH];
-    const bothHi = gameState.occHi[colors.BOTH];
+/**
+ * Add a single vector's moves for one source square.
+ *
+ * @param movesCopy Move list to append to.
+ * @param piece Moving piece.
+ * @param def Piece definition.
+ * @param source Source square.
+ * @param v Move vector.
+ * @param color Piece colour.
+ */
+function addVectorMoves(
+  movesCopy: MoveList,
+  piece: Piece,
+  def: PieceDefinition,
+  source: number,
+  v: MoveVector,
+  color: number,
+): void {
+  const tdx = color === colors.WHITE ? v.dx : -v.dx;
+  const promotedTargets = def.promotionTargets
+    .map((defId) => pieceRegistry.getEngineId(defId, color))
+    .filter((id): id is number => id !== undefined);
+  const tdy = color === colors.WHITE ? v.dy : -v.dy;
 
-    let bbLo = pieceBB.lo;
-    let bbHi = pieceBB.hi;
+  // En passant capture.
+  if (v.enPassant && gameState.enpassant !== -1) {
+    const target = gameState.enpassant;
+    const expected = offsetSquare(source, tdx, tdy);
+    if (target === expected) {
+      addMove(movesCopy, encodeMove(source, target, piece.getId(), 0, 1, 0, 1, 0));
+    }
+  }
 
-    while (bbLo !== 0 || bbHi !== 0) {
-      sourceSquare = lsbIndex(bbLo, bbHi);
-      const checkMove = getCheckMove(piece, sourceSquare);
+  // Double step.
+  if (v.doubleStep) {
+    const sourceRank = source >> 3;
+    const startingRank = color === colors.WHITE ? 6 : 1;
+    if (sourceRank !== startingRank) return;
+    const step1 = offsetSquare(source, tdx, tdy / 2);
+    const step2 = offsetSquare(source, tdx, tdy);
+    if (
+      step1 !== -1 &&
+      step2 !== -1 &&
+      !isOwn(step1) &&
+      !isEnemy(step1) &&
+      !isOwn(step2) &&
+      !isEnemy(step2)
+    ) {
+      addMove(movesCopy, encodeMove(source, step2, piece.getId(), 0, 0, 1, 0, 0));
+    }
+    return;
+  }
 
-      // get attack set for this source square
-      let alo = 0;
-      let ahi = 0;
-      if (moveBehavior instanceof LeaperMoveBehavior) {
-        const color = piece.getColor();
-        alo |= moveBehavior.getLeaperPieceStateLo()[color][checkMove][sourceSquare];
-        ahi |= moveBehavior.getLeaperPieceStateHi()[color][checkMove][sourceSquare];
+  // Promotion ranks.
+  let promotionRanks = def.promotionRanks;
+  if (promotionRanks.length === 0) {
+    promotionRanks = color === colors.WHITE ? [0] : [7];
+  }
+  const isPromotionTarget = (square: number) => promotionRanks.includes(square >> 3);
+
+  if (v.range === 'slide') {
+    let cur = source;
+    for (;;) {
+      cur = offsetSquare(cur, tdx, tdy);
+      if (cur === -1) break;
+      if (isOwn(cur)) break;
+      const enemy = isEnemy(cur);
+      if (enemy) {
+        if (v.capture !== 'forbidden') {
+          if (v.promotes && isPromotionTarget(cur) && promotedTargets.length) {
+            for (const promoted of promotedTargets) {
+              addMove(movesCopy, encodeMove(source, cur, piece.getId(), promoted, 1, 0, 0, 0));
+            }
+          } else {
+            addMove(movesCopy, encodeMove(source, cur, piece.getId(), 0, 1, 0, 0, 0));
+          }
+        }
+        break;
       }
-      if (moveBehavior instanceof SlidingMoveBehavior) {
-        const r = moveBehavior.getSliderAttacksLoHi(sourceSquare, bothLo, bothHi);
-        alo |= r.lo;
-        ahi |= r.hi;
+      // empty square
+      if (v.capture !== 'required') {
+        if (v.promotes && isPromotionTarget(cur) && promotedTargets.length) {
+          for (const promoted of promotedTargets) {
+            addMove(movesCopy, encodeMove(source, cur, piece.getId(), promoted, 0, 0, 0, 0));
+          }
+        } else {
+          addMove(movesCopy, encodeMove(source, cur, piece.getId(), 0, 0, 0, 0, 0));
+        }
       }
+    }
+    return;
+  }
 
-      alo &= notOwnLo;
-      ahi &= notOwnHi;
-
-      while (alo !== 0 || ahi !== 0) {
-        targetSquare = lsbIndex(alo, ahi);
-        const isCapture =
-          targetSquare < 32 ? (oppLo >>> targetSquare) & 1 : (oppHi >>> (targetSquare - 32)) & 1;
+  if (v.range === 'hop') {
+    const target = offsetSquare(source, tdx, tdy);
+    if (target === -1) return;
+    if (isOwn(target)) return;
+    const enemy = isEnemy(target);
+    if (enemy && v.capture === 'forbidden') return;
+    if (!enemy && v.capture === 'required') return;
+    if (v.promotes && isPromotionTarget(target) && promotedTargets.length) {
+      for (const promoted of promotedTargets) {
         addMove(
           movesCopy,
-          encodeMove(sourceSquare, targetSquare, piece.getId(), 0, isCapture ? 1 : 0, 0, 0, 0),
+          encodeMove(source, target, piece.getId(), promoted, enemy ? 1 : 0, 0, 0, 0),
         );
-        if (targetSquare < 32) alo &= ~(1 << targetSquare);
-        else ahi &= ~(1 << (targetSquare - 32));
       }
-
-      if (sourceSquare < 32) bbLo &= ~(1 << sourceSquare);
-      else bbHi &= ~(1 << (sourceSquare - 32));
+    } else {
+      addMove(movesCopy, encodeMove(source, target, piece.getId(), 0, enemy ? 1 : 0, 0, 0, 0));
     }
+    return;
+  }
+
+  // step
+  const target = offsetSquare(source, tdx, tdy);
+  if (target === -1) return;
+  if (isOwn(target)) return;
+  const enemy = isEnemy(target);
+  if (enemy && v.capture === 'forbidden') return;
+  if (!enemy && v.capture === 'required') return;
+
+  if (v.promotes && isPromotionTarget(target) && promotedTargets.length) {
+    for (const promoted of promotedTargets) {
+      addMove(
+        movesCopy,
+        encodeMove(source, target, piece.getId(), promoted, enemy ? 1 : 0, 0, 0, 0),
+      );
+    }
+  } else {
+    addMove(movesCopy, encodeMove(source, target, piece.getId(), 0, enemy ? 1 : 0, 0, 0, 0));
+  }
+}
+
+/**
+ * Generates moves for all pieces of the current side.
+ *
+ * @param moves Move list to append to.
+ * @param pieces Pieces to generate for.
+ */
+export const generateMoves = (moves: MoveList, pieces: Piece[]) => {
+  const l = pieces.length;
+  for (let i = 0; i < l; i++) {
+    const piece = pieces[i];
+    if (piece.getColor() !== gameState.side) continue;
+    generateMove(moves, piece);
+  }
+};
+
+/**
+ * Generates moves for a specific piece.
+ *
+ * @param movesCopy Move list to append to.
+ * @param piece Piece to generate for.
+ */
+export const generateMove = (movesCopy: MoveList, piece: Piece) => {
+  const def = getDefinition(piece);
+  const color = piece.getColor();
+
+  // Castling for kings.
+  if (def.isKing) {
+    generateCastling(movesCopy, piece);
+  }
+
+  const pieceBB = getBitboard(piece.getId());
+  let bbLo = pieceBB.lo;
+  let bbHi = pieceBB.hi;
+
+  const pieceMovesMap = color === colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
+
+  while (bbLo !== 0 || bbHi !== 0) {
+    const source = lsbIndex(bbLo, bbHi);
+
+    let stateIndex = 0;
+    if (def.stateTransition !== 'none' && def.moveStates.length > 0) {
+      const key = Number(`${source}${piece.getId()}`);
+      stateIndex = (pieceMovesMap.get(key) || 0) % def.moveStates.length;
+    }
+    const state = def.moveStates[stateIndex] ?? def.moveStates[0];
+    const vectors = state?.vectors ?? [];
+
+    for (const v of vectors) {
+      addVectorMoves(movesCopy, piece, def, source, v, color);
+    }
+
+    if (source < 32) bbLo &= ~(1 << source);
+    else bbHi &= ~(1 << (source - 32));
   }
 };
