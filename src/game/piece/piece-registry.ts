@@ -39,6 +39,22 @@ export class PieceRegistry {
   }
 
   /**
+   * Store a definition, overwriting any existing entry while keeping its
+   * allocated engine base id stable.
+   *
+   * @param definition Definition to store.
+   * @returns The engine base id assigned to the definition.
+   */
+  update(definition: PieceDefinition): number {
+    const existing = this.engineBaseIdByDefinition.get(definition.id);
+    if (existing === undefined) {
+      return this.register(definition);
+    }
+    this.definitions.set(definition.id, definition);
+    return existing;
+  }
+
+  /**
    * Register several definitions at once.
    */
   registerAll(entries: Array<{ definition: PieceDefinition; engineBaseId?: number }>): void {

@@ -1,34 +1,28 @@
-import { useTranslation } from "@sun/i18n";
-import { colors } from "~/game/consts/board";
-import { useChessSession } from "~/hooks/use-chess-session";
-import Board from "./board";
-import styles from "./board.module.css";
+import { useTranslation } from '@sun/i18n';
+import { colors } from '~/game/consts/board';
+import { useChessSession } from '~/hooks/use-chess-session';
+import Board from './board';
+import styles from './board.module.css';
 
 /**
  * Chess page body: status line and board.
  */
 const Game = () => {
   const { view, status, playerColor, selectSquare } = useChessSession();
-  const { t } = useTranslation("chess");
+  const { t } = useTranslation('chess');
 
-  const turn =
-    view.side === colors.WHITE ? t("white-to-move") : t("black-to-move");
-  const side =
-    playerColor !== colors.WHITE &&
-    playerColor !== colors.BLACK &&
-    t("spectator");
+  const turn = view.side === colors.WHITE ? t('white-to-move') : t('black-to-move');
+  const side = playerColor !== colors.WHITE && playerColor !== colors.BLACK && t('spectator');
 
   return (
     <div className={styles.game}>
       <div className={styles.status}>
         <span>{turn}</span>
-        {status === "connected" ? null : <span>{t(status)}</span>}
+        {status === 'connected' ? null : <span>{t(status)}</span>}
       </div>
       <Board view={view} onSelect={selectSquare} />
       <span>{side}</span>
-      {view.gameOver ? (
-        <p className={styles.game_over}>{t("game-over")}</p>
-      ) : null}
+      {view.gameOver ? <p className={styles.game_over}>{t('game-over')}</p> : null}
     </div>
   );
 };

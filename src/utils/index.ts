@@ -118,7 +118,7 @@ export function mountGame(layout?: MountedLayout) {
 
   if (layout) {
     for (const definition of layout.definitions) {
-      if (!pieceRegistry.getDefinition(definition.id)) pieceRegistry.register(definition);
+      pieceRegistry.update(definition);
     }
     mountPlacedPieces(layout.placements, layout.definitions);
     initGameState();

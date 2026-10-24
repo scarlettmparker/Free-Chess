@@ -72,11 +72,15 @@ export function serializeGameState(gs: GameState): SerializedGameState {
       throw new Error('Unknown Piece type');
     }
 
+    const stored = pieceRegistry.getDefinition(piece.getDefinitionId());
+    const { legacy: _legacy, ...definition } = stored ?? {};
+    void _legacy;
+
     return {
       pieceType,
       id: piece.getId(),
       definitionId: piece.getDefinitionId(),
-      definition: pieceRegistry.getDefinition(piece.getDefinitionId()) ?? null,
+      definition: stored ? (definition as PieceDefinition) : null,
       color: piece.getColor(),
       sprite: piece.getSprite(),
       pieceMask: Array.from(piece.getPieceMask()).map((b) => b.toString()),
@@ -135,7 +139,7 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     const existing = currentPieces.find((p) => p.getId() === serialized.id);
 
     if (serialized.definition) {
-      pieceRegistry.register(serialized.definition);
+      pieceRegistry.update(serialized.definition);
     }
 
     const piece =
