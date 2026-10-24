@@ -73,14 +73,16 @@ export function serializeGameState(gs: GameState): SerializedGameState {
     }
 
     const stored = pieceRegistry.getDefinition(piece.getDefinitionId());
-    const { legacy: _legacy, ...definition } = stored ?? {};
-    void _legacy;
+    const definition = stored ? { ...stored } : null;
+    if (definition) {
+      delete definition.legacy;
+    }
 
     return {
       pieceType,
       id: piece.getId(),
       definitionId: piece.getDefinitionId(),
-      definition: stored ? (definition as PieceDefinition) : null,
+      definition: definition as PieceDefinition | null,
       color: piece.getColor(),
       sprite: piece.getSprite(),
       pieceMask: Array.from(piece.getPieceMask()).map((b) => b.toString()),
