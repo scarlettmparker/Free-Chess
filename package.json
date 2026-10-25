@@ -20,9 +20,7 @@
     "test": "bun --bun x vitest run --passWithNoTests",
     "test:watch": "bun --bun x vitest",
     "test:coverage": "bun --bun x vitest run --coverage --passWithNoTests",
-    "db:migrate:game": "bun server/scripts/migrate-game.ts",
-    "db:export-to-sun": "bun server/scripts/export-to-sun.ts",
-    "db:import-to-sun": "bun server/scripts/import-to-sun.ts"
+    "db:migrate:game": "bun server/scripts/migrate-game.ts"
   },
   "dependencies": {
     "@fastify/compress": "^8.3.1",
