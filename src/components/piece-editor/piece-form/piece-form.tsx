@@ -49,13 +49,6 @@ type FormVector = {
   capture: string;
 };
 
-const TRANSITION_LABEL_KEYS: Record<string, string> = {
-  none: 'state-none',
-  advance: 'state-advance',
-  advanceReverseAtEdge: 'state-advance-reverse',
-  cycle: 'state-cycle',
-};
-
 type FormState = {
   /**
    * Zero based state index.
@@ -103,7 +96,6 @@ const PieceForm = (props: PieceFormProps) => {
   const [canPromote, setCanPromote] = useState((piece?.promotionTargets?.length ?? 0) > 0);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  const transitionLabel = t(TRANSITION_LABEL_KEYS[form.stateTransition] ?? 'state-none');
   const states = normalizeStates(form.moveStates);
   const current = states[stateIndex] ?? states[0];
   const vectors = current?.vectors ?? [];
@@ -225,21 +217,18 @@ const PieceForm = (props: PieceFormProps) => {
         <FormField name="stateTransition">
           <FormLabel>{t('state-transition')}</FormLabel>
           <FormItem>
-            {readOnly ? (
-              <Input value={transitionLabel} disabled />
-            ) : (
-              <Select
-                value={form.stateTransition}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                  setForm({ ...form, stateTransition: event.currentTarget.value })
-                }
-              >
-                <SelectOption value="none">{t('state-none')}</SelectOption>
-                <SelectOption value="advance">{t('state-advance')}</SelectOption>
-                <SelectOption value="advanceReverseAtEdge">{t('state-advance-reverse')}</SelectOption>
-                <SelectOption value="cycle">{t('state-cycle')}</SelectOption>
-              </Select>
-            )}
+            <Select
+              value={form.stateTransition}
+              disabled={readOnly}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                setForm({ ...form, stateTransition: event.currentTarget.value })
+              }
+            >
+              <SelectOption value="none">{t('state-none')}</SelectOption>
+              <SelectOption value="advance">{t('state-advance')}</SelectOption>
+              <SelectOption value="advanceReverseAtEdge">{t('state-advance-reverse')}</SelectOption>
+              <SelectOption value="cycle">{t('state-cycle')}</SelectOption>
+            </Select>
           </FormItem>
         </FormField>
       </div>
