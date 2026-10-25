@@ -52,14 +52,17 @@ const SpriteComposer = (props: SpriteComposerProps) => {
       </div>
       {readOnly ? null : (
         <div className={styles.controls}>
-          {(['head', 'body', 'foot'] as const).map((part) => {
+          {(['head', 'body', 'foot'] as const).map((part, index) => {
             const value = part === 'head' ? headKey : part === 'body' ? bodyKey : footKey;
             return (
-              <div key={part} className={styles.row}>
+              <div
+                key={part}
+                className={styles.arrow_pair}
+                style={{ top: `${index * 33.333}%` }}
+              >
                 <Button variant="secondary" onClick={() => cycle(part, value, -1)}>
                   {'<'}
                 </Button>
-                <span className={styles.key}>{t(`${part}-key`)}</span>
                 <Button variant="secondary" onClick={() => cycle(part, value, 1)}>
                   {'>'}
                 </Button>

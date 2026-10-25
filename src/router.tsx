@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { useRoutes, type RouteObject } from 'react-router-dom';
 import AdminPageSkeleton from '~/components/admin/admin-page-skeleton';
+import AdminCardSkeleton from '~/components/admin/admin-card-skeleton';
 
 const ChessPage = lazy(() => import('~/routes/index'));
 const LoginPage = lazy(() => import('~/routes/login'));
@@ -51,11 +52,19 @@ export const routes: RouteObject[] = [
       },
       {
         path: 'users',
-        element: <UsersPage />,
+        element: (
+          <Suspense fallback={<AdminPageSkeleton />}>
+            <UsersPage />
+          </Suspense>
+        ),
         children: [
           {
             path: ':id',
-            element: <UserDetailPage />,
+            element: (
+              <Suspense fallback={<AdminCardSkeleton />}>
+                <UserDetailPage />
+              </Suspense>
+            ),
           },
         ],
       },
