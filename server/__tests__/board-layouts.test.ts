@@ -210,6 +210,30 @@ test('custom pieces mount and move', () => {
   expect(deleteLayout(id)).toBe(true);
 });
 
+test('loads promotion targets that are not placed on the board', () => {
+  const id = saveLayout({
+    slug: 'promotion-test',
+    name: 'Promotion Test',
+    placements: [
+      at('king', 0, 60),
+      at('king', 1, 7),
+      at('pawn', 0, 12),
+      at('pawn', 1, 15),
+    ],
+  });
+  const loaded = loadLayout(id);
+
+  expect(loaded).not.toBeNull();
+  expect(loaded!.definitions.some((definition) => definition.slug === 'queen')).toBe(true);
+  expect(loaded!.definitions.some((definition) => definition.slug === 'rook')).toBe(true);
+
+  mountGame(loaded!);
+  const queen = bySlug.get('queen')!;
+  expect(gameState.pieces.some((piece) => piece.getDefinitionId() === queen.id)).toBe(true);
+
+  expect(deleteLayout(id)).toBe(true);
+});
+
 test('worker reset mounts a layout and rejects unknown layouts', () => {
   const broadcast = vi.fn();
   const standard = listLayouts().find((layout) => layout.slug === 'standard');

@@ -28,6 +28,16 @@ describe('game state serialization', () => {
     expect(serializeGameState(restored)).toEqual(first);
   });
 
+  test('round-trips the game result', () => {
+    gameState.gameOver = true;
+    gameState.result = 'white-checkmate';
+    const first = serializeGameState(gameState);
+    const restored = deserializeGameState(JSON.parse(JSON.stringify(first)));
+
+    expect(restored.gameOver).toBe(true);
+    expect(restored.result).toBe('white-checkmate');
+  });
+
   test('initializes generic leaper attack tables after deserialization', () => {
     const first = serializeGameState(gameState);
     const template = first.pieces.find((piece) => piece.color === 0)!;

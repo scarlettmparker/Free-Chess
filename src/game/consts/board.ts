@@ -9,7 +9,19 @@ type BitboardData = {
   hi: number;
 };
 
+/**
+ * How the current game finished, or null while it is running.
+ */
+export type GameResult =
+  | 'white-checkmate'
+  | 'black-checkmate'
+  | 'stalemate'
+  | 'draw'
+  | null;
+
 export type GameState = {
+  gameOver: boolean;
+  result: GameResult;
   whiteMoves: Map<number, number>;
   blackMoves: Map<number, number>;
   whitePieceIds: number[];
@@ -37,6 +49,8 @@ export type Moves = {
 };
 
 export const gameState: GameState = {
+  gameOver: false,
+  result: null,
   whiteMoves: new Map(),
   blackMoves: new Map(),
   whitePieceIds: [],

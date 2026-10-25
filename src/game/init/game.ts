@@ -13,6 +13,8 @@ import { initSlidingPieces } from '~/game/init/sliding-piece';
  * the global game state variables to their defaults.
  */
 export function resetGameState() {
+  gameState.gameOver = false;
+  gameState.result = null;
   gameState.pieces = [];
   gameState.whitePieceIds = [];
   gameState.blackPieceIds = [];

@@ -1,5 +1,12 @@
 import { getBit, getPieceById } from '~/game/board/bitboard';
-import { BOARD_SIZE, colors, gameState, getBitboard, type PlayerColor } from '~/game/consts/board';
+import {
+  BOARD_SIZE,
+  colors,
+  gameState,
+  getBitboard,
+  type GameResult,
+  type PlayerColor,
+} from '~/game/consts/board';
 import { generateMoves } from '~/game/move/legal-move-generator';
 import { isLegalMove } from '~/game/move/move';
 import { getMovePiece, getMoveSource, getMoveTarget, type MoveList } from '~/game/move/move-def';
@@ -63,9 +70,13 @@ export type BoardView = {
    */
   selectedSquare: number | null;
   /**
-   * Whether the side to move has no legal moves.
+   * Whether the game has finished.
    */
   gameOver: boolean;
+  /**
+   * Finished-game result, or null while the game is running.
+   */
+  result: GameResult;
   /**
    * Whether this player may move right now.
    */
@@ -94,6 +105,7 @@ export function emptyBoardView(playerColor: PlayerColor | null = null): BoardVie
     latestMove: null,
     selectedSquare: null,
     gameOver: false,
+    result: null,
     canMove: false,
   };
 }
@@ -140,12 +152,14 @@ function mapMoves(legalMoves: number[]): Map<string, MoveList> {
  * @param selectedSquare Square selected by the user, or null.
  * @param playerColor Colour assigned to this client, or null.
  * @param viewMoveIndex Move-history index to highlight, or the latest move when omitted.
+ * @param atLatest Whether the viewed position is the live position.
  * @returns The board view.
  */
 export function buildBoardView(
   selectedSquare: number | null,
   playerColor: PlayerColor | null,
   viewMoveIndex?: number,
+  atLatest = true,
 ): BoardView {
   const candidates: MoveList = { moves: [], count: 0 };
   generateMoves(candidates, gameState.pieces);
@@ -163,7 +177,7 @@ export function buildBoardView(
   const moveCount = gameState.moveHistory.length;
   const viewedIndex =
     viewMoveIndex == null ? moveCount : Math.max(0, Math.min(viewMoveIndex, moveCount));
-  const latestMove = viewedIndex > 0 ? gameState.moveHistory[viewedIndex - 1] ?? null : null;
+  const latestMove = viewedIndex > 0 ? (gameState.moveHistory[viewedIndex - 1] ?? null) : null;
   const latestSource = latestMove == null ? -1 : getMoveSource(latestMove);
   const latestTarget = latestMove == null ? -1 : getMoveTarget(latestMove);
 
@@ -172,11 +186,12 @@ export function buildBoardView(
       ? null
       : (movesByPieceAndSquare.get(`${pieces[selectedSquare]}-${selectedSquare}`) ?? null);
 
-  const gameOver = sideMoves.length === 0;
+  const gameOver = gameState.gameOver || sideMoves.length === 0;
   const canMove =
     playerColor != null &&
     playerColor === gameState.side &&
     !gameOver &&
+    atLatest &&
     viewedIndex === moveCount;
 
   const squares: SquareView[] = pieces.map((pieceId, key) => {
@@ -223,6 +238,7 @@ export function buildBoardView(
     latestMove,
     selectedSquare,
     gameOver,
+    result: gameState.result,
     canMove,
   };
 }

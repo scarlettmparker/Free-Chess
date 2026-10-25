@@ -366,6 +366,7 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
     const vectors = state?.vectors ?? [];
 
     for (const v of vectors) {
+      if (v.firstMoveOnly && !v.doubleStep && piece.getFirstMove() >= 0) continue;
       addVectorMoves(movesCopy, piece, def, source, v, color);
     }
 

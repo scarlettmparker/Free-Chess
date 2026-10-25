@@ -8,7 +8,7 @@ import { PieceFactory } from '~/game/piece/piece-factory';
 import type { PieceDefinition } from '~/game/piece/piece-definition';
 import { pieceRegistry } from '~/game/piece/piece-registry';
 import { initSlidingPieces } from '~/game/init/sliding-piece';
-import { gameState, GameState, Moves } from '~/game/consts/board';
+import { gameState, GameState, GameResult, Moves } from '~/game/consts/board';
 
 type SerializedPiece = {
   pieceType: string;
@@ -44,6 +44,8 @@ export type SerializedGameState = {
   bitboards: SerializedBitboardData[];
   occupancies: string[];
   checked: [boolean, boolean];
+  gameOver: boolean;
+  result: GameResult;
   side: number;
   enpassant: number;
   castle: string;
@@ -118,6 +120,8 @@ export function serializeGameState(gs: GameState): SerializedGameState {
       ((BigInt(gs.occHi[i]) << 32n) | BigInt(gs.occLo[i])).toString(),
     ),
     checked: [...gs.checked],
+    gameOver: gs.gameOver,
+    result: gs.result,
     side: gs.side,
     enpassant: gs.enpassant,
     castle: gs.castle.toString(),
@@ -209,6 +213,8 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     occLo: Uint32Array.from(json.occupancies.map((o) => Number(BigInt(o) & 0xffffffffn) >>> 0)),
     occHi: Uint32Array.from(json.occupancies.map((o) => Number(BigInt(o) >> 32n) >>> 0)),
     checked: [...json.checked],
+    gameOver: Boolean(json.gameOver),
+    result: json.result ?? null,
     side: json.side,
     enpassant: json.enpassant,
     castle: Number(json.castle),

@@ -11,6 +11,7 @@ import { validateBoardLayout } from '~/game/board/validate-layout';
 import { gameState } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';
 import { captureInitialState, getInitialState } from './initial-state.ts';
+import { resetGameStatus } from './rules.ts';
 import { clearColor, sessions } from './sessions.ts';
 
 /**
@@ -130,6 +131,7 @@ export function runCommand(
       }
       gameState.moveHistory = [];
       captureInitialState();
+      resetGameStatus();
       broadcast({
         type: 'state',
         state: serializeGameState(gameState),

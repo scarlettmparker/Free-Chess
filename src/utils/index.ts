@@ -84,27 +84,35 @@ function reindexBitboards(): void {
 }
 
 /**
- * Mount pieces for every definition and colour present in the placements.
+ * Mount pieces for every definition used by a layout, including unplaced
+ * promotion targets.
  *
  * @param placements Placements to mount.
- * @param definitions Definitions referenced by the placements.
+ * @param definitions Definitions referenced by the layout.
  */
 function mountPlacedPieces(placements: BoardPlacement[], definitions: PieceDefinition[]): void {
-  const byId = new Map(definitions.map((definition) => [definition.id, definition]));
-  const seen = new Set<string>();
-  for (const placement of placements) {
-    const key = `${placement.definitionId}:${placement.color}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const definition = byId.get(placement.definitionId);
-    if (!definition) throw new Error('Placement refers to an unknown piece');
+  const placedKings = new Set(
+    definitions
+      .filter(
+        (definition) =>
+          definition.isKing &&
+          placements.some((placement) => placement.definitionId === definition.id),
+      )
+      .map((definition) => definition.id),
+  );
+
+  for (const definition of definitions) {
+    if (definition.isKing && !placedKings.has(definition.id)) continue;
     let base = pieceRegistry.getEngineBaseId(definition.id);
     if (base === undefined) base = pieceRegistry.register(definition);
-    const engineId = base + placement.color;
-    const piece = definition.legacy
-      ? PieceFactory.createPiece(definition.slug, engineId, placement.color)
-      : PieceFactory.createGenericPiece(definition, engineId, placement.color);
-    gameState.pieces.push(piece);
+    for (const color of [0, 1] as const) {
+      const engineId = base + color;
+      if (gameState.pieces.some((piece) => piece.getId() === engineId)) continue;
+      const piece = definition.legacy
+        ? PieceFactory.createPiece(definition.slug, engineId, color)
+        : PieceFactory.createGenericPiece(definition, engineId, color);
+      gameState.pieces.push(piece);
+    }
   }
 }
 

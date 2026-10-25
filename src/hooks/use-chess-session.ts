@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { colors, gameState, moveType, type PlayerColor } from '~/game/consts/board';
 import { makeMove } from '~/game/move/move';
-import { getMoveTarget } from '~/game/move/move-def';
+import { getMovePromoted, getMoveTarget } from '~/game/move/move-def';
 import { playMoveSound, preloadPieceSounds } from '~/game/sound/play';
 import { mountGame } from '~/utils';
 import { resetGameState } from '~/game/init/game';
@@ -24,6 +24,7 @@ export function useChessSession() {
   const [version, setVersion] = useState(0);
   const [history, setHistory] = useState<SerializedGameState[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const [promotion, setPromotion] = useState<number[] | null>(null);
 
   const refresh = useCallback(() => setVersion((value) => value + 1), []);
 
@@ -57,12 +58,13 @@ export function useChessSession() {
   );
 
   /**
-   * Applies an opponent move and appends it to the viewed history.
+   * Applies an opponent move while the live position is shown.
    *
    * @param move Encoded move from the opponent.
    */
   const handleOpponentMove = useCallback(
     (move: number) => {
+      if (historyIndex !== history.length - 1) return;
       if (makeMove(move, moveType.ALL_MOVES, 0)) {
         gameState.moveHistory.push(move);
         setHistory((previous) => [...previous, serializeGameState(gameState)]);
@@ -72,7 +74,7 @@ export function useChessSession() {
       setSelectedSquare(null);
       refresh();
     },
-    [refresh],
+    [history.length, historyIndex, refresh],
   );
 
   const { status, sendMove } = useMatchmakingSocket({
@@ -101,8 +103,39 @@ export function useChessSession() {
   }, []);
 
   const view = useMemo(
-    () => (mounted ? buildBoardView(selectedSquare, playerColor, historyIndex) : emptyBoardView(playerColor)),
-    [mounted, selectedSquare, playerColor, version, historyIndex],
+    () =>
+      mounted
+        ? buildBoardView(
+            selectedSquare,
+            playerColor,
+            historyIndex,
+            historyIndex === history.length - 1,
+          )
+        : emptyBoardView(playerColor),
+    [mounted, selectedSquare, playerColor, version, historyIndex, history.length],
+  );
+
+  /**
+   * Applies one move locally and sends it to the server.
+   *
+   * @param move Encoded move.
+   */
+  const playMove = useCallback(
+    (move: number) => {
+      if (!makeMove(move, moveType.ALL_MOVES, 0)) return;
+      gameState.moveHistory.push(move);
+      setHistory((previous) => {
+        const base =
+          historyIndex < previous.length - 1 ? previous.slice(0, historyIndex + 1) : previous;
+        return [...base, serializeGameState(gameState)];
+      });
+      setHistoryIndex(historyIndex < history.length - 1 ? historyIndex + 1 : history.length);
+      setSelectedSquare(null);
+      sendMove(move);
+      playMoveSound(move);
+      refresh();
+    },
+    [history.length, historyIndex, refresh, sendMove],
   );
 
   /**
@@ -113,34 +146,50 @@ export function useChessSession() {
   const selectSquare = useCallback(
     (key: number) => {
       if (!mounted || !view.canMove) return;
+      if (historyIndex !== history.length - 1) return;
       const square = view.squares[key];
 
       if (selectedSquare != null) {
-        const move = view.squares[selectedSquare].moves.moves.find(
+        const candidates = view.squares[selectedSquare].moves.moves.filter(
           (candidate) => getMoveTarget(candidate) === key,
         );
-        if (move !== undefined && makeMove(move, moveType.ALL_MOVES, 0)) {
-          gameState.moveHistory.push(move);
-          setHistory((previous) => {
-            const base =
-              historyIndex < previous.length - 1
-                ? previous.slice(0, historyIndex + 1)
-                : previous;
-            return [...base, serializeGameState(gameState)];
-          });
-          setHistoryIndex(historyIndex < history.length - 1 ? historyIndex + 1 : history.length);
-          setSelectedSquare(null);
-          sendMove(move);
-          playMoveSound(move);
-          refresh();
+        const promotions = candidates.filter((candidate) => getMovePromoted(candidate) > 0);
+        if (promotions.length > 1) {
+          setPromotion(promotions);
+          return;
+        }
+        const move = promotions[0] ?? candidates[0];
+        if (move !== undefined) {
+          playMove(move);
           return;
         }
       }
 
       setSelectedSquare(square.selectable ? key : null);
     },
-    [mounted, view, selectedSquare, sendMove, refresh, history, historyIndex],
+    [mounted, view, selectedSquare, playMove, history.length, historyIndex],
   );
+
+  /**
+   * Plays the chosen promotion move.
+   *
+   * @param move Encoded promotion move.
+   */
+  const choosePromotion = useCallback(
+    (move: number) => {
+      setPromotion(null);
+      playMove(move);
+    },
+    [playMove],
+  );
+
+  /**
+   * Closes the promotion picker without moving.
+   */
+  const cancelPromotion = useCallback(() => {
+    setPromotion(null);
+    setSelectedSquare(null);
+  }, []);
 
   /**
    * Moves to the previous historical position.
@@ -210,5 +259,13 @@ export function useChessSession() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [goBack, goForward, goLatest]);
 
-  return { view, status, playerColor, selectSquare };
+  return {
+    view,
+    status,
+    playerColor,
+    selectSquare,
+    promotion,
+    choosePromotion,
+    cancelPromotion,
+  };
 }

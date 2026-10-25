@@ -17,6 +17,7 @@ import { castlingRights } from '~/game/consts/bits';
 import { isSquareAttacked } from '~/game/board/attacks';
 import { lsbIndex } from '~/game/board/bb';
 import { Piece, LeaperMoveBehavior } from '~/game/piece/piece';
+import type { PieceDefinition } from '~/game/piece/piece-definition';
 import { pieceRegistry } from '~/game/piece/piece-registry';
 
 /**
@@ -37,6 +38,7 @@ export type Undo = {
   enpassant: number;
   castle: number;
   enpassantCaptured: number;
+  firstMove: number;
   // rotational piece bookkeeping
   mapKeySrc: number;
   mapHadSrc: boolean;
@@ -82,6 +84,30 @@ function findPieceIdOnSquare(square: number, color: number): number {
   return -1;
 }
 
+/**
+ * Next move state for a data-driven piece after it lands on a square.
+ *
+ * @param definition Piece definition.
+ * @param current Current state index.
+ * @param targetSquare Square the piece moved to.
+ * @returns Next state index.
+ */
+function nextStateIndex(
+  definition: PieceDefinition,
+  current: number,
+  targetSquare: number,
+): number {
+  const stateCount = definition.moveStates.length;
+  if (stateCount <= 1) return 0;
+
+  const rank = targetSquare >> 3;
+  const atEdge = rank === 0 || rank === 7;
+  if (definition.edgeReset && atEdge) return 0;
+  if (definition.stateTransition === 'cycle') return (current + 1) % stateCount;
+  if (definition.stateTransition === 'advanceReverseAtEdge' && atEdge) return 0;
+  return Math.min(current + 1, stateCount - 1);
+}
+
 export const applyMove = (move: number): Undo => {
   const sourceSquare = getMoveSource(move);
   const targetSquare = getMoveTarget(move);
@@ -103,6 +129,7 @@ export const applyMove = (move: number): Undo => {
     enpassant: gameState.enpassant,
     castle: gameState.castle,
     enpassantCaptured: -1,
+    firstMove: -1,
     mapKeySrc: 0,
     mapHadSrc: false,
     mapValSrc: 0,
@@ -157,14 +184,16 @@ export const applyMove = (move: number): Undo => {
   // promotions
   if (promoted) {
     const promotedBB = bitboards[promoted];
-    if (targetSquare < 32) {
-      const m = 1 << targetSquare;
-      moverBB.lo &= ~m;
-      promotedBB.lo |= m;
-    } else {
-      const m = 1 << (targetSquare - 32);
-      moverBB.hi &= ~m;
-      promotedBB.hi |= m;
+    if (promotedBB) {
+      if (targetSquare < 32) {
+        const m = 1 << targetSquare;
+        moverBB.lo &= ~m;
+        promotedBB.lo |= m;
+      } else {
+        const m = 1 << (targetSquare - 32);
+        moverBB.hi &= ~m;
+        promotedBB.hi |= m;
+      }
     }
   }
 
@@ -221,6 +250,8 @@ export const applyMove = (move: number): Undo => {
   // deal with rotating piece moves
   const pieceObj = getPieceById(piece);
   if (pieceObj) {
+    undo.firstMove = pieceObj.getFirstMove();
+    pieceObj.setFirstMove(1);
     const rot = pieceObj.getRotationalMoveType();
     if (rot === 'ROTATE' || rot === 'REVERSE_ROTATE') {
       const pieceMoves = mover == WHITE ? gameState.whiteMoves : gameState.blackMoves;
@@ -240,6 +271,23 @@ export const applyMove = (move: number): Undo => {
       if (rot === 'REVERSE_ROTATE') {
         undo.reverseChanged = true;
         updateRotatorMoves(pieceObj, pieceMoves, sourceSquare, targetSquare, undo);
+      }
+    } else {
+      const definition = pieceRegistry.getDefinition(pieceObj.getDefinitionId());
+      if (definition && definition.stateTransition !== 'none' && definition.moveStates.length > 0) {
+        const pieceMoves = mover == WHITE ? gameState.whiteMoves : gameState.blackMoves;
+        const mapKeySrc = Number(`${sourceSquare}${piece}`);
+        const mapKeyTgt = Number(`${targetSquare}${piece}`);
+        undo.mapKeySrc = mapKeySrc;
+        undo.mapHadSrc = pieceMoves.has(mapKeySrc);
+        undo.mapValSrc = undo.mapHadSrc ? (pieceMoves.get(mapKeySrc) as number) : 0;
+        undo.mapKeyTgt = mapKeyTgt;
+        undo.mapHadTgt = pieceMoves.has(mapKeyTgt);
+        undo.mapValTgt = undo.mapHadTgt ? (pieceMoves.get(mapKeyTgt) as number) : 0;
+
+        const current = undo.mapValSrc % definition.moveStates.length;
+        pieceMoves.delete(mapKeySrc);
+        pieceMoves.set(mapKeyTgt, nextStateIndex(definition, current, targetSquare));
       }
     }
   }
@@ -321,14 +369,16 @@ export const undoMove = (move: number, undo: Undo) => {
   // undo promotion
   if (promoted) {
     const promotedBB = bitboards[promoted];
-    if (targetSquare < 32) {
-      const m = 1 << targetSquare;
-      promotedBB.lo &= ~m;
-      moverBB.lo |= m;
-    } else {
-      const m = 1 << (targetSquare - 32);
-      promotedBB.hi &= ~m;
-      moverBB.hi |= m;
+    if (promotedBB) {
+      if (targetSquare < 32) {
+        const m = 1 << targetSquare;
+        promotedBB.lo &= ~m;
+        moverBB.lo |= m;
+      } else {
+        const m = 1 << (targetSquare - 32);
+        promotedBB.hi &= ~m;
+        moverBB.hi |= m;
+      }
     }
   }
 
@@ -354,6 +404,8 @@ export const undoMove = (move: number, undo: Undo) => {
   occHi[colors.BOTH] = occHi[WHITE] | occHi[BLACK];
   gameState.enpassant = undo.enpassant;
   gameState.castle = undo.castle;
+  const movedPiece = getPieceById(piece);
+  if (movedPiece) movedPiece.setFirstMove(undo.firstMove);
 
   // restore rotational piece bookkeeping
   if (undo.reverseChanged || undo.mapHadSrc || undo.mapHadTgt || undo.mapKeySrc !== 0) {

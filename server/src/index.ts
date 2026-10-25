@@ -1,6 +1,6 @@
 import type { ServerWebSocket } from 'bun';
 import { sessions, assignColor, attachSession as openSession, detachSession } from './sessions.ts';
-import { checkedForSideToMove, isEncodedMove } from './rules.ts';
+import { isEncodedMove, resetGameStatus, updateGameStatus, validateServerMove } from './rules.ts';
 import { adminCommands, isAdminAuthorized, runCommand } from './admin.ts';
 import { captureInitialState, getInitialState } from './initial-state.ts';
 import { adminToken } from '../../config.js';
@@ -83,6 +83,7 @@ function mountStandardLayout() {
 
 mountStandardLayout();
 captureInitialState();
+resetGameStatus();
 
 /**
  * Send a JSON object safely over a WebSocket.
@@ -115,6 +116,17 @@ function sendGameState(ws: { send(data: string): unknown }) {
     state: serializeGameState(gameState),
     initial: getInitialState(),
   });
+}
+
+/**
+ * Rejects one move and sends the caller the authoritative state.
+ *
+ * @param ws Socket that sent the move.
+ * @param reason Machine-readable rejection reason.
+ */
+function rejectMove(ws: ServerWebSocket<SocketData>, reason: string) {
+  safeSend(ws, { type: 'move-rejected', reason });
+  sendGameState(ws);
 }
 
 /**
@@ -176,6 +188,14 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
     if (message.color !== 'white' && message.color !== 'black') {
       return;
     }
+    if (
+      gameState.moveHistory.length > 0 &&
+      ws.data.clientColor !== null &&
+      ws.data.clientColor !== message.color
+    ) {
+      reject(ws, 'game-started');
+      return;
+    }
     const ok = ws.data.sessionId ? assignColor(ws.data.sessionId, message.color) : false;
     if (!ok) {
       reject(ws, 'color-taken');
@@ -188,44 +208,44 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
 
   if (message.type === 'move') {
     if (!isEncodedMove(message.move)) {
-      sendGameState(ws);
+      rejectMove(ws, 'invalid-payload');
       return;
     }
 
     const move = message.move;
     const color = ws.data.clientColor;
-    let oldState: ReturnType<typeof serializeGameState> | null = null;
 
-    /**
-     * Serialize the pre-move state, only when a reject path needs it.
-     */
-    const getOldState = () => (oldState ??= serializeGameState(gameState));
-
-    if (!color || gameState.side !== (color === 'white' ? 0 : 1)) {
-      console.log("Ignoring move: not player's turn or no color");
-      broadcast({ type: 'state', state: getOldState(), initial: getInitialState() });
+    if (!color) {
+      rejectMove(ws, 'no-color');
       return;
     }
 
-    const accepted = makeMove(move, moveType.ALL_MOVES, 0);
-    if (accepted === 1) {
-      console.log('Move accepted, updating state');
-      gameState.moveHistory.push(move);
-      gameState.checked = checkedForSideToMove();
-
-      // Notify opponent of the move
-      const oppColor = color === 'white' ? 'black' : 'white';
-      const oppSess = Array.from(sessions.values()).find((s) => s.color === oppColor && s.ws);
-      if (oppSess?.ws) {
-        safeSend(oppSess.ws, { type: 'opponent_move', move });
-      }
-
-      // Broadcast updated state
-      broadcast({ type: 'state', state: serializeGameState(gameState), initial: getInitialState() });
-    } else {
-      console.log('Move rejected, sending old state');
-      broadcast({ type: 'state', state: getOldState(), initial: getInitialState() });
+    if (gameState.gameOver) {
+      rejectMove(ws, 'game-over');
+      return;
     }
+
+    if (gameState.side !== (color === 'white' ? 0 : 1)) {
+      rejectMove(ws, 'not-your-turn');
+      return;
+    }
+
+    if (!validateServerMove(move) || makeMove(move, moveType.ALL_MOVES, 0) !== 1) {
+      rejectMove(ws, 'illegal-move');
+      return;
+    }
+
+    console.log('Move accepted, updating state');
+    gameState.moveHistory.push(move);
+    updateGameStatus(move);
+
+    const oppColor = color === 'white' ? 'black' : 'white';
+    const oppSess = Array.from(sessions.values()).find((s) => s.color === oppColor && s.ws);
+    if (oppSess?.ws) {
+      safeSend(oppSess.ws, { type: 'opponent_move', move });
+    }
+
+    broadcast({ type: 'state', state: serializeGameState(gameState), initial: getInitialState() });
   }
 }
 

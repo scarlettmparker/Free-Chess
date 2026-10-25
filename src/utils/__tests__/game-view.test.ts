@@ -68,6 +68,14 @@ describe('buildBoardView', () => {
     expect(view.squares[getMoveTarget(move)].highlight).toBe('latest');
   });
 
+  test('cannot move while viewing an earlier position', () => {
+    const historical = buildBoardView(null, colors.WHITE, 0, false);
+    const live = buildBoardView(null, colors.WHITE, 0, true);
+
+    expect(historical.canMove).toBe(false);
+    expect(live.canMove).toBe(true);
+  });
+
   test('flags the checked king', () => {
     const view = buildBoardView(null, colors.WHITE);
     const king = view.squares.find(

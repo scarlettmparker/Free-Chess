@@ -198,9 +198,15 @@ function loadLayoutDefinitions(
   db: ReturnType<typeof openGameDatabase>,
   placements: BoardPlacement[],
 ): PieceDefinition[] | null {
-  const ids = [...new Set(placements.map((placement) => placement.definitionId))];
+  const pending = [...new Set(placements.map((placement) => placement.definitionId))];
+  const seen = new Set<number>();
   const definitions: PieceDefinition[] = [];
-  for (const definitionId of ids) {
+
+  while (pending.length > 0) {
+    const definitionId = pending.shift() as number;
+    if (seen.has(definitionId)) continue;
+    seen.add(definitionId);
+
     const defRow = db
       .query(
         `SELECT p.*, s.head_key, s.body_key, s.foot_key
@@ -223,13 +229,15 @@ function loadLayoutDefinitions(
       foot_key: string;
     } | null;
     if (!defRow) return null;
+
     const builtin = bySlug.get(defRow.slug);
+    const promotionTargets = JSON.parse(defRow.promotion_targets) as number[];
     const base = {
       id: defRow.id,
       slug: defRow.slug,
       name: defRow.name,
       isKing: Boolean(defRow.is_king),
-      promotionTargets: JSON.parse(defRow.promotion_targets) as number[],
+      promotionTargets,
       promotionRanks: JSON.parse(defRow.promotion_ranks) as number[],
       moveStates: JSON.parse(defRow.move_states) as PieceDefinition['moveStates'],
       stateTransition: defRow.state_transition as PieceDefinition['stateTransition'],
@@ -241,7 +249,9 @@ function loadLayoutDefinitions(
       },
     };
     definitions.push(builtin ? { ...base, legacy: builtin.legacy } : base);
+    pending.push(...promotionTargets);
   }
+
   return definitions;
 }
 
