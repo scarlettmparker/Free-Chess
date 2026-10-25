@@ -16,13 +16,12 @@ steps:
       - bun run build
 
   deploy:
-    image: alpine:3.21
+    image: sun-ci:1
     volumes:
       - /opt/woodpecker/keys/ci-deploy:/root/.ssh/ci-deploy:ro
       - /opt/woodpecker/keys/known_hosts:/root/.ssh/known_hosts:ro
     environment:
       SSH_KEY: /root/.ssh/ci-deploy
     commands:
-      - apk add --no-cache openssh-client rsync bash curl
       - printf 'Host *\n  BatchMode yes\n  IdentitiesOnly yes\n' > ~/.ssh/config
       - ./vm/vps/deploy-free-chess.sh --skip-build
