@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import type { ComponentType, SVGProps } from 'react';
-import { useTranslation } from '@sun/i18n';
-import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
-import { usePageData } from '@sun/ssr/react';
+import { useState } from "react";
+import type { ComponentType, SVGProps } from "react";
+import { useTranslation } from "@sun/i18n";
+import { executeMutation, makeCacheKey, revalidatePageData } from "@sun/ssr";
+import { usePageData } from "@sun/ssr/react";
 import {
   Badge,
   Button,
@@ -20,11 +20,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   ScrollArea,
-} from '@sun/components';
-import { EllipsisVerticalOutline, PlusOutline, TrashOutline } from 'preact-heroicons';
-import PieceForm from '~/components/piece-editor/piece-form';
-import type { MedusaPieceDefinitionDto } from '~/utils/piece-types';
-import styles from './piece-editor.module.css';
+} from "@sun/components";
+import {
+  EllipsisVerticalOutline,
+  PlusOutline,
+  TrashOutline,
+} from "preact-heroicons";
+import PieceForm from "~/components/piece-editor/piece-form";
+import type { MedusaPieceDefinitionDto } from "~/utils/piece-types";
+import styles from "./piece-editor.module.css";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -36,50 +40,66 @@ const TrashIcon = TrashOutline as IconComponent;
  * Piece editor page.
  */
 const PieceEditor = () => {
-  const { t } = useTranslation('admin');
-  const { data } = usePageData<MedusaPieceDefinitionDto[]>('pieces', 'pieces', {});
+  const { t } = useTranslation("admin");
+  const { data } = usePageData<MedusaPieceDefinitionDto[]>(
+    "pieces",
+    "pieces",
+    {},
+  );
   const pieces = data ?? [];
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<MedusaPieceDefinitionDto | null>(null);
+  const [deleteTarget, setDeleteTarget] =
+    useState<MedusaPieceDefinitionDto | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const selected = pieces.find((piece: MedusaPieceDefinitionDto) => piece.id === selectedId) ?? null;
+  const selected =
+    pieces.find((piece: MedusaPieceDefinitionDto) => piece.id === selectedId) ??
+    null;
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setDeleteError(null);
     try {
-      await executeMutation('pieces/delete', { id: deleteTarget.id });
+      await executeMutation("pieces/delete", { id: deleteTarget.id });
       if (selectedId === deleteTarget.id) setSelectedId(null);
       setDeleteTarget(null);
-      revalidatePageData([makeCacheKey('pieces', {})]);
+      revalidatePageData([makeCacheKey("pieces", {})]);
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : t('action-failed'));
+      setDeleteError(
+        error instanceof Error ? error.message : t("action-failed"),
+      );
     }
   };
 
   return (
     <div className={styles.page}>
       <div className={styles.body}>
-        <Button type="button" variant="default" className={styles.create_piece_button} onClick={() => setSelectedId(null)}>
-          <PlusIcon width={16} height={16} />
-          {t('new-piece')}
-        </Button>
         <div className={styles.list_panel}>
           <Card>
+            <Button
+              type="button"
+              variant="default"
+              className={styles.create_piece_button}
+              onClick={() => setSelectedId(null)}
+            >
+              <PlusIcon width={16} height={16} />
+              {t("new-piece")}
+            </Button>
             <CardHeader>
-              <CardTitle>{t('pieces')}</CardTitle>
+              <CardTitle>{t("pieces")}</CardTitle>
             </CardHeader>
             <CardBody className={styles.list}>
               {pieces.map((piece: MedusaPieceDefinitionDto) => (
                 <Button
                   key={piece.id}
-                  variant={piece.id === selectedId ? 'default' : 'secondary'}
+                  variant={piece.id === selectedId ? "default" : "secondary"}
                   className={styles.piece_button}
                   onClick={() => setSelectedId(piece.id)}
                 >
-                  <span className={styles.piece_name}>{piece.name || t('unnamed-piece')}</span>
+                  <span className={styles.piece_name}>
+                    {piece.name || t("unnamed-piece")}
+                  </span>
                   {piece.isSystem ? (
-                    <Badge variant="secondary">{t('system-piece')}</Badge>
+                    <Badge variant="secondary">{t("system-piece")}</Badge>
                   ) : null}
                   {piece.isSystem ? null : (
                     <span className={styles.piece_actions}>
@@ -95,7 +115,7 @@ const PieceEditor = () => {
                             className={styles.menu_trigger}
                             width={16}
                             height={16}
-                            aria-label={t('piece-actions')}
+                            aria-label={t("piece-actions")}
                           />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
@@ -104,7 +124,7 @@ const PieceEditor = () => {
                             onClick={() => setDeleteTarget(piece)}
                           >
                             <TrashIcon width={16} height={16} />
-                            {t('delete')}
+                            {t("delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -120,13 +140,21 @@ const PieceEditor = () => {
             <Card>
               <CardBody>
                 <ScrollArea maxHeight="85vh" className={styles.scroll_area}>
-                  <PieceForm key={selectedId ?? 'new'} piece={selected} readOnly={Boolean(selected?.isSystem)} />
+                  <PieceForm
+                    key={selectedId ?? "new"}
+                    piece={selected}
+                    readOnly={Boolean(selected?.isSystem)}
+                  />
                 </ScrollArea>
               </CardBody>
             </Card>
             {selected?.isSystem ? null : (
-              <Button className={styles.save_button} type="submit" form="piece-form">
-                {t('save')}
+              <Button
+                className={styles.save_button}
+                type="submit"
+                form="piece-form"
+              >
+                {t("save")}
               </Button>
             )}
           </div>
@@ -142,12 +170,12 @@ const PieceEditor = () => {
         }}
       >
         <DialogHeader>
-          <DialogTitle>{t('delete-piece-title')}</DialogTitle>
+          <DialogTitle>{t("delete-piece-title")}</DialogTitle>
         </DialogHeader>
         <DialogBody>
           <p>
-            {t('delete-piece-body', {
-              name: deleteTarget?.name || t('unnamed-piece'),
+            {t("delete-piece-body", {
+              name: deleteTarget?.name || t("unnamed-piece"),
             })}
           </p>
           {deleteError ? <p className={styles.error}>{deleteError}</p> : null}
@@ -161,10 +189,10 @@ const PieceEditor = () => {
               setDeleteError(null);
             }}
           >
-            {t('cancel')}
+            {t("cancel")}
           </Button>
           <Button type="button" variant="destructive" onClick={handleDelete}>
-            {t('delete')}
+            {t("delete")}
           </Button>
         </DialogFooter>
       </Dialog>

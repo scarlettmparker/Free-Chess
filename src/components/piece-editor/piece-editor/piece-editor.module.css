@@ -16,8 +16,8 @@
 
 .create_piece_button {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: var(--lg);
+  right: var(--xl);
   z-index: 1;
 }
 
@@ -54,7 +54,6 @@
   pointer-events: none;
   max-width: 60%;
 }
-
 
 .piece_actions {
   margin-left: auto;

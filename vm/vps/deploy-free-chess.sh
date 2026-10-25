@@ -23,9 +23,16 @@ log() { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
 # @param $@ Command and arguments.
 remote() { ssh -i "$SSH_KEY" -o BatchMode=yes "$VPS" "$@"; }
 
+# Hashes the production dependency inputs.
+#
+# @return The combined digest on stdout.
+deps_hash() {
+  sha256sum "$REPO/package.json" "$REPO/bun.lock" | sha256sum | cut -d' ' -f1
+}
+
 # Builds Free Chess and the ARM64 dependency tree.
 build() {
-  local log
+  local log hash dir
   if [ "$SKIP_BUILD" = "0" ]; then
     log "build: Free Chess"
     log="$(mktemp "${TMPDIR:-/tmp}/free-chess-build.XXXXXX.log")"
@@ -40,13 +47,18 @@ build() {
     rm -f "$log"
   fi
 
+  hash="$(deps_hash)"
+  dir="/home/ubuntu/free-chess-deps/$hash"
+  if remote "test -d '$dir/node_modules'"; then
+    log "deps: cached ($hash)"
+    return 0
+  fi
   log "deps: ARM64 node_modules"
-  remote "rm -rf /tmp/free-chess-deps && mkdir -p /tmp/free-chess-deps"
+  remote "rm -rf '$dir' && mkdir -p '$dir'"
   rsync -az -e "ssh -i $SSH_KEY" \
     "$REPO/package.json" "$REPO/bun.lock" "$REPO/bunfig.toml" \
-    "$VPS:/tmp/free-chess-deps/"
-  remote "cd /tmp/free-chess-deps && /home/ubuntu/.bun/bin/bun install --production --frozen-lockfile --no-progress"
-  remote "cd /tmp/free-chess-deps && tar -czf /tmp/free-chess-deps.tgz node_modules"
+    "$VPS:$dir/"
+  remote "cd '$dir' && /home/ubuntu/.bun/bin/bun install --production --frozen-lockfile --no-progress"
 }
 
 # Renders the container env.
@@ -102,9 +114,8 @@ deploy() {
   remote "sudo lxc exec '$CONTAINER' -- rm -f /tmp/free-chess.tgz /tmp/free-chess-deps.tgz"
   remote "sudo lxc file push -q -p --mode 0644 '$REMOTE_TMP/free-chess.tgz' '$CONTAINER/tmp/free-chess.tgz'"
   remote "sudo lxc exec '$CONTAINER' -- tar -xzf /tmp/free-chess.tgz -C /opt/free-chess"
-  remote "sudo lxc exec '$CONTAINER' -- bash -c 'rm -rf /opt/free-chess/node_modules'"
-  remote "sudo lxc file push -q -p --mode 0644 /tmp/free-chess-deps.tgz '$CONTAINER/tmp/free-chess-deps.tgz'"
-  remote "sudo lxc exec '$CONTAINER' -- tar -xzf /tmp/free-chess-deps.tgz -C /opt/free-chess"
+  remote "sudo mkdir -p /opt/free-chess/node_modules"
+  remote "sudo rsync -az --delete -e 'ssh -i /opt/woodpecker/keys/ci-deploy -p 2203 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' /home/ubuntu/free-chess-deps/$(deps_hash)/node_modules/ root@127.0.0.1:/opt/free-chess/node_modules/"
 
   if [ -f "$ENV_FILE" ]; then
     tmp="$(mktemp)"
