@@ -14,7 +14,7 @@ import {
   type AdminUserPage,
 } from './admin-user-types';
 
-const PAGE_SIZE = 20;
+
 
 /**
  * Checks whether the caller may read admin data.
@@ -36,12 +36,12 @@ defineLoader({
     const page = Math.max(0, Number(params.page ?? 0) || 0);
     const allowed = await canRead(context.cookie);
     if (!allowed) {
-      return { adminUsers: emptyUserPage(page, PAGE_SIZE) };
+      return { adminUsers: emptyUserPage(page, 20) };
     }
 
     try {
       const result = await executeDocument<ListAccountsQuery>(ListAccountsDocument, {
-        pagination: { page, size: PAGE_SIZE },
+        pagination: { page, size: 20 },
       });
       const items = result?.success ? (result.data?.gaiaQueries.accounts.items ?? []) : [];
       const total = result?.success ? (result.data?.gaiaQueries.accounts.pageInfo.totalCount ?? 0) : 0;
@@ -59,13 +59,13 @@ defineLoader({
         })),
         total,
         page,
-        pageSize: PAGE_SIZE,
-        totalPages: Math.ceil(total / PAGE_SIZE) || 1,
+        pageSize: 20,
+        totalPages: Math.ceil(total / 20) || 1,
       };
       return { adminUsers };
     } catch (error) {
       console.error('Failed to list admin users:', error);
-      return { adminUsers: emptyUserPage(page, PAGE_SIZE) };
+      return { adminUsers: emptyUserPage(page, 20) };
     }
   },
 });

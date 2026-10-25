@@ -42,6 +42,7 @@ const StateTabs = (props: StateTabsProps) => {
         {Array.from({ length: count }, (_, index) => (
           <Button
             key={index}
+            type="button"
             variant={index === active ? 'default' : 'secondary'}
             onClick={() => onSelect(index)}
           >
@@ -51,10 +52,10 @@ const StateTabs = (props: StateTabsProps) => {
       </div>
       {readOnly ? null : (
         <div className={styles.actions}>
-          <Button variant="secondary" onClick={onAdd}>
+          <Button type="button" variant="secondary" onClick={onAdd}>
             {t('add-state')}
           </Button>
-          <Button variant="destructive" onClick={onDelete} disabled={count <= 1}>
+          <Button type="button" variant="destructive" onClick={onDelete} disabled={count <= 1}>
             {t('delete-state')}
           </Button>
         </div>

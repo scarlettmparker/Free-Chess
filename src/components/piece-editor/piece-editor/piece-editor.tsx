@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
   ScrollArea,
 } from '@sun/components';
-import { EllipsisVerticalOutline, TrashOutline } from 'preact-heroicons';
+import { EllipsisVerticalOutline, PlusOutline, TrashOutline } from 'preact-heroicons';
 import PieceForm from '~/components/piece-editor/piece-form';
 import type { MedusaPieceDefinitionDto } from '~/utils/piece-types';
 import styles from './piece-editor.module.css';
@@ -29,6 +29,7 @@ import styles from './piece-editor.module.css';
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 const EllipsisIcon = EllipsisVerticalOutline as IconComponent;
+const PlusIcon = PlusOutline as IconComponent;
 const TrashIcon = TrashOutline as IconComponent;
 
 /**
@@ -37,10 +38,11 @@ const TrashIcon = TrashOutline as IconComponent;
 const PieceEditor = () => {
   const { t } = useTranslation('admin');
   const { data } = usePageData<MedusaPieceDefinitionDto[]>('pieces', 'pieces', {});
+  const pieces = data ?? [];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MedusaPieceDefinitionDto | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const selected = data?.find((piece: MedusaPieceDefinitionDto) => piece.id === selectedId) ?? null;
+  const selected = pieces.find((piece: MedusaPieceDefinitionDto) => piece.id === selectedId) ?? null;
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -58,13 +60,17 @@ const PieceEditor = () => {
   return (
     <div className={styles.page}>
       <div className={styles.body}>
+        <Button type="button" variant="default" className={styles.create_piece_button} onClick={() => setSelectedId(null)}>
+          <PlusIcon width={16} height={16} />
+          {t('new-piece')}
+        </Button>
         <div className={styles.list_panel}>
           <Card>
             <CardHeader>
               <CardTitle>{t('pieces')}</CardTitle>
             </CardHeader>
             <CardBody className={styles.list}>
-              {(data ?? []).map((piece: MedusaPieceDefinitionDto) => (
+              {pieces.map((piece: MedusaPieceDefinitionDto) => (
                 <Button
                   key={piece.id}
                   variant={piece.id === selectedId ? 'default' : 'secondary'}
@@ -106,9 +112,6 @@ const PieceEditor = () => {
                   )}
                 </Button>
               ))}
-              <Button variant="secondary" onClick={() => setSelectedId(null)}>
-                {t('new-piece')}
-              </Button>
             </CardBody>
           </Card>
         </div>

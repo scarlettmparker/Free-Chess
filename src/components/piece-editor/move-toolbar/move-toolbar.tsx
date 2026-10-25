@@ -34,6 +34,7 @@ const MoveToolbar = (props: MoveToolbarProps) => {
         {(['step', 'slide', 'hop'] as const).map((value) => (
           <Button
             key={value}
+            type="button"
             variant={value === moveType ? 'default' : 'secondary'}
             onClick={() => onMoveTypeChange(value)}
           >
@@ -48,6 +49,7 @@ const MoveToolbar = (props: MoveToolbarProps) => {
         {(['optional', 'required', 'forbidden'] as const).map((value) => (
           <Button
             key={value}
+            type="button"
             variant={value === capture ? 'default' : 'secondary'}
             disabled={moveType === 'step'}
             onClick={() => onCaptureChange(value)}
