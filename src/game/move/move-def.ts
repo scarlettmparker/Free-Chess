@@ -24,7 +24,7 @@ export function encodeMove(
     (double << 29) |
     (enpassant << 30) |
     (castling << 31)
-  );
+  ) >>> 0;
 }
 
 export function getMoveSource(move: number): number {
