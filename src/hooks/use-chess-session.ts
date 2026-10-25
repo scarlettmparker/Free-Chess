@@ -61,6 +61,7 @@ export function useChessSession() {
         return next;
       });
       setSelectedSquare(null);
+      setPromotion(null);
       refresh();
     },
     [rebuildHistory, refresh],

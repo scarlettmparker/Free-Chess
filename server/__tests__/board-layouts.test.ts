@@ -16,9 +16,14 @@ import {
   loadLayout,
   upsertSyncedLayout,
 } from '~/server/board-layouts';
+import { getBit } from '~/game/board/bitboard';
+import { notToRawPos } from '~/game/board/square-helper';
 import { validateBoardLayout } from '~/game/board/validate-layout';
 import { mountGame } from '~/utils/index';
-import { gameState } from '~/game/consts/board';
+import { gameState, getBitboard, moveType } from '~/game/consts/board';
+import { generateMoves } from '~/game/move/legal-move-generator';
+import { makeMove } from '~/game/move/move';
+import { getMovePromoted, getMoveSource, getMoveTarget } from '~/game/move/move-def';
 import { perft } from '~/game/perft';
 import { runCommand } from '~server/admin';
 
@@ -229,7 +234,24 @@ test('loads promotion targets that are not placed on the board', () => {
 
   mountGame(loaded!);
   const queen = bySlug.get('queen')!;
-  expect(gameState.pieces.some((piece) => piece.getDefinitionId() === queen.id)).toBe(true);
+  const queenPiece = gameState.pieces.find((piece) => piece.getDefinitionId() === queen.id);
+  const moves = { moves: [] as number[], count: 0 };
+  generateMoves(moves, gameState.pieces);
+  const promotion = moves.moves
+    .slice(0, moves.count)
+    .find(
+      (move) =>
+        getMovePromoted(move) > 0 &&
+        getMoveSource(move) === notToRawPos['e7'] &&
+        getMoveTarget(move) === notToRawPos['e8'],
+    );
+
+  expect(queenPiece).toBeDefined();
+  expect(promotion).toBeDefined();
+  expect(makeMove(promotion!, moveType.ALL_MOVES, 0)).toBe(1);
+
+  const board = getBitboard(queenPiece!.getId());
+  expect(getBit(board.lo, board.hi, notToRawPos['e8'])).toBe(1);
 
   expect(deleteLayout(id)).toBe(true);
 });
