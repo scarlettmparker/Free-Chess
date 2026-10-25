@@ -1,0 +1,28 @@
+when:
+  - event: [push, manual]
+    branch: main
+
+steps:
+  build:
+    image: oven/bun:1.4.3
+    volumes:
+      - free-chess-bun-cache:/root/.bun/install/cache
+    environment:
+      VITE_SERVER_BASE: https://chess.scarlettparker.co.uk
+      VITE_WS_URL: wss://chess-server.scarlettparker.co.uk
+      ALLOWED_HOSTS: chess.scarlettparker.co.uk,localhost
+    commands:
+      - bun install --frozen-lockfile --no-progress
+      - bun run build
+
+  deploy:
+    image: alpine:3.21
+    volumes:
+      - /opt/woodpecker/keys/ci-deploy:/root/.ssh/ci-deploy:ro
+      - /opt/woodpecker/keys/known_hosts:/root/.ssh/known_hosts:ro
+    environment:
+      SSH_KEY: /root/.ssh/ci-deploy
+    commands:
+      - apk add --no-cache openssh-client rsync bash curl
+      - printf 'Host *\n  BatchMode yes\n  IdentitiesOnly yes\n' > ~/.ssh/config
+      - ./vm/vps/deploy-free-chess.sh --skip-build

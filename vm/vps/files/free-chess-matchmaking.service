@@ -1,0 +1,18 @@
+[Unit]
+Description=Free Chess Matchmaking
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/free-chess
+Environment=NODE_ENV=production
+Environment=HOST=0.0.0.0
+Environment=PORT=4001
+Environment=ADMIN_PORT=4002
+ExecStart=/usr/local/bin/bun server/src/index.ts
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

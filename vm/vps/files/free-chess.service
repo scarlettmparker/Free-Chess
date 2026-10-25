@@ -1,0 +1,16 @@
+[Unit]
+Description=Free Chess
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/free-chess
+Environment=NODE_ENV=production
+Environment=SERVER_PORT=5179
+ExecStart=/usr/local/bin/bun --preload ./css-plugin.ts server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
