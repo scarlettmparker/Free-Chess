@@ -1699,7 +1699,7 @@ type MedusaQueries {
   piece(id: ID!): Piece
   pieceSet(id: ID!): PieceSet
   pieceSets: [PieceSet!]!
-  pieces: [Piece!]!
+  pieces(all: Boolean): [Piece!]!
 }
 
 type Mutation {

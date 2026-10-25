@@ -1,6 +1,6 @@
-query ListPieces {
+query ListPieces($all: Boolean) {
   medusaQueries {
-    pieces {
+    pieces(all: $all) {
       id
       slug
       name
@@ -12,6 +12,8 @@ query ListPieces {
       stateTransition
       edgeReset
       isSystem
+      createdBy
+      ownerName
       sprite {
         headKey
         bodyKey

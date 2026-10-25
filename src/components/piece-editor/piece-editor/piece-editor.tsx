@@ -27,7 +27,9 @@ import {
   TrashOutline,
 } from "preact-heroicons";
 import PieceForm from "~/components/piece-editor/piece-form";
+import { isPieceReadOnly } from "~/utils/piece-access";
 import type { MedusaPieceDefinitionDto } from "~/utils/piece-types";
+import type { MeQuery } from "~/generated/graphql";
 import styles from "./piece-editor.module.css";
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -46,6 +48,9 @@ const PieceEditor = () => {
     "pieces",
     {},
   );
+  const { data: currentUser } = usePageData<
+    MeQuery["gaiaQueries"]["me"] | null
+  >("currentUser", "currentUser", {});
   const pieces = data ?? [];
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] =
@@ -54,6 +59,9 @@ const PieceEditor = () => {
   const selected =
     pieces.find((piece: MedusaPieceDefinitionDto) => piece.id === selectedId) ??
     null;
+  const selectedReadOnly = selected
+    ? isPieceReadOnly(selected, currentUser?.id)
+    : false;
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -88,50 +96,55 @@ const PieceEditor = () => {
               <CardTitle>{t("pieces")}</CardTitle>
             </CardHeader>
             <CardBody className={styles.list}>
-              {pieces.map((piece: MedusaPieceDefinitionDto) => (
-                <Button
-                  key={piece.id}
-                  variant={piece.id === selectedId ? "default" : "secondary"}
-                  className={styles.piece_button}
-                  onClick={() => setSelectedId(piece.id)}
-                >
-                  <span className={styles.piece_name}>
-                    {piece.name || t("unnamed-piece")}
-                  </span>
-                  {piece.isSystem ? (
-                    <Badge variant="secondary">{t("system-piece")}</Badge>
-                  ) : null}
-                  {piece.isSystem ? null : (
-                    <span className={styles.piece_actions}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          asChild
-                          onClick={(event: React.MouseEvent<HTMLElement>) => {
-                            event.stopPropagation();
-                            event.preventDefault();
-                          }}
-                        >
-                          <EllipsisIcon
-                            className={styles.menu_trigger}
-                            width={16}
-                            height={16}
-                            aria-label={t("piece-actions")}
-                          />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem
-                            variant="destructive"
-                            onClick={() => setDeleteTarget(piece)}
-                          >
-                            <TrashIcon width={16} height={16} />
-                            {t("delete")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+              {pieces.map((piece: MedusaPieceDefinitionDto) => {
+                const readOnly = isPieceReadOnly(piece, currentUser?.id);
+                return (
+                  <Button
+                    key={piece.id}
+                    variant={piece.id === selectedId ? "default" : "secondary"}
+                    className={styles.piece_button}
+                    onClick={() => setSelectedId(piece.id)}
+                  >
+                    <span className={styles.piece_name}>
+                      {piece.name || t("unnamed-piece")}
                     </span>
-                  )}
-                </Button>
-              ))}
+                    {readOnly ? (
+                      <Badge variant="secondary">
+                        {piece.ownerName ?? t("system-piece")}
+                      </Badge>
+                    ) : null}
+                    {readOnly ? null : (
+                      <span className={styles.piece_actions}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            asChild
+                            onClick={(event: React.MouseEvent<HTMLElement>) => {
+                              event.stopPropagation();
+                              event.preventDefault();
+                            }}
+                          >
+                            <EllipsisIcon
+                              className={styles.menu_trigger}
+                              width={16}
+                              height={16}
+                              aria-label={t("piece-actions")}
+                            />
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              variant="destructive"
+                              onClick={() => setDeleteTarget(piece)}
+                            >
+                              <TrashIcon width={16} height={16} />
+                              {t("delete")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </span>
+                    )}
+                  </Button>
+                );
+              })}
             </CardBody>
           </Card>
         </div>
@@ -143,12 +156,12 @@ const PieceEditor = () => {
                   <PieceForm
                     key={selectedId ?? "new"}
                     piece={selected}
-                    readOnly={Boolean(selected?.isSystem)}
+                    readOnly={selectedReadOnly}
                   />
                 </ScrollArea>
               </CardBody>
             </Card>
-            {selected?.isSystem ? null : (
+            {selectedReadOnly ? null : (
               <Button
                 className={styles.save_button}
                 type="submit"

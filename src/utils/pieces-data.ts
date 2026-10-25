@@ -18,7 +18,7 @@ defineLoader({
   pattern: 'pieces',
   async loader() {
     try {
-      const result = await executeDocument<ListPiecesQuery>(ListPiecesDocument);
+      const result = await executeDocument<ListPiecesQuery>(ListPiecesDocument, { all: true });
       if (result?.success && result.data) {
         return { pieces: result.data.medusaQueries.pieces ?? [] };
       }

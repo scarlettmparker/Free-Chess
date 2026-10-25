@@ -76,10 +76,16 @@ async function syncLayout(id: string): Promise<number> {
     throw new MutationError('Board layout not found', 400);
   }
 
-  const piecesResult = await executeDocument<ListPiecesQuery>(ListPiecesDocument);
+  const piecesResult = await executeDocument<ListPiecesQuery>(ListPiecesDocument, { all: true });
   const pieces = piecesResult.success ? (piecesResult.data?.medusaQueries.pieces ?? []) : [];
   for (const piece of pieces) {
-    const { id: _id, isSystem: _isSystem, ...base } = piece;
+    const {
+      id: _id,
+      isSystem: _isSystem,
+      createdBy: _createdBy,
+      ownerName: _ownerName,
+      ...base
+    } = piece;
     const input: PieceInput = {
       ...base,
       promotionTargets: base.promotionTargets?.map(Number) ?? [],
