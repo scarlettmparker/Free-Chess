@@ -24,6 +24,7 @@
     "db:migrate:game": "bun server/scripts/migrate-game.ts",
     "db:backup": "bun server/scripts/backup.ts",
     "db:prune-audit": "bun server/scripts/prune-audit.ts",
+    "db:export-to-sun": "bun server/scripts/export-to-sun.ts",
     "auth:create-admin": "bun server/scripts/create-admin.ts"
   },
   "dependencies": {

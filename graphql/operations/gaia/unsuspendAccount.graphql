@@ -1,0 +1,11 @@
+mutation UnsuspendAccount($id: ID!) {
+  gaiaMutations {
+    unsuspendAccount(id: $id) {
+      message
+      account {
+        id
+        status
+      }
+    }
+  }
+}

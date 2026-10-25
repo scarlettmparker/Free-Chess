@@ -1,0 +1,7 @@
+mutation SetAccountRoles($accountId: ID!, $roleNames: [String!]!) {
+  gaiaMutations {
+    setAccountRoles(accountId: $accountId, roleNames: $roleNames) {
+      message
+    }
+  }
+}

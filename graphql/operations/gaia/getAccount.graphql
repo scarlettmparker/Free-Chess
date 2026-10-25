@@ -1,0 +1,11 @@
+query GetAccount($id: ID!) {
+  gaiaQueries {
+    account(id: $id) {
+      id
+      username
+      status
+      createdAt
+      updatedAt
+    }
+  }
+}

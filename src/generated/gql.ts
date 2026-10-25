@@ -14,9 +14,14 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
+    "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}": typeof types.GetAccountDocument,
+    "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": typeof types.ListAccountsDocument,
     "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}": typeof types.LoginDocument,
     "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}": typeof types.MeDocument,
     "query MyRoles {\n  gaiaQueries {\n    myRoles\n  }\n}": typeof types.MyRolesDocument,
+    "mutation SetAccountRoles($accountId: ID!, $roleNames: [String!]!) {\n  gaiaMutations {\n    setAccountRoles(accountId: $accountId, roleNames: $roleNames) {\n      message\n    }\n  }\n}": typeof types.SetAccountRolesDocument,
+    "mutation SuspendAccount($id: ID!) {\n  gaiaMutations {\n    suspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}": typeof types.SuspendAccountDocument,
+    "mutation UnsuspendAccount($id: ID!) {\n  gaiaMutations {\n    unsuspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}": typeof types.UnsuspendAccountDocument,
     "query AuditLogs($pagination: PaginationInput) {\n  medusaQueries {\n    auditLogs(pagination: $pagination) {\n      total\n      items {\n        id\n        createdAt\n        actorId\n        actorEmail\n        action\n        target\n        outcome\n        detail\n        ip\n      }\n    }\n  }\n}": typeof types.AuditLogsDocument,
     "mutation DeleteBoardLayout($id: ID!) {\n  medusaMutations {\n    deleteBoardLayout(id: $id) {\n      ok\n    }\n  }\n}": typeof types.DeleteBoardLayoutDocument,
     "mutation DeletePiece($id: ID!) {\n  medusaMutations {\n    deletePiece(id: $id) {\n      ok\n    }\n  }\n}": typeof types.DeletePieceDocument,
@@ -32,9 +37,14 @@ type Documents = {
     "mutation SavePieceSet($input: PieceSetInput!) {\n  medusaMutations {\n    savePieceSet(input: $input) {\n      message\n      pieceSet {\n        id\n        name\n      }\n    }\n  }\n}": typeof types.SavePieceSetDocument,
 };
 const documents: Documents = {
+    "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}": types.GetAccountDocument,
+    "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": types.ListAccountsDocument,
     "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}": types.LoginDocument,
     "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}": types.MeDocument,
     "query MyRoles {\n  gaiaQueries {\n    myRoles\n  }\n}": types.MyRolesDocument,
+    "mutation SetAccountRoles($accountId: ID!, $roleNames: [String!]!) {\n  gaiaMutations {\n    setAccountRoles(accountId: $accountId, roleNames: $roleNames) {\n      message\n    }\n  }\n}": types.SetAccountRolesDocument,
+    "mutation SuspendAccount($id: ID!) {\n  gaiaMutations {\n    suspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}": types.SuspendAccountDocument,
+    "mutation UnsuspendAccount($id: ID!) {\n  gaiaMutations {\n    unsuspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}": types.UnsuspendAccountDocument,
     "query AuditLogs($pagination: PaginationInput) {\n  medusaQueries {\n    auditLogs(pagination: $pagination) {\n      total\n      items {\n        id\n        createdAt\n        actorId\n        actorEmail\n        action\n        target\n        outcome\n        detail\n        ip\n      }\n    }\n  }\n}": types.AuditLogsDocument,
     "mutation DeleteBoardLayout($id: ID!) {\n  medusaMutations {\n    deleteBoardLayout(id: $id) {\n      ok\n    }\n  }\n}": types.DeleteBoardLayoutDocument,
     "mutation DeletePiece($id: ID!) {\n  medusaMutations {\n    deletePiece(id: $id) {\n      ok\n    }\n  }\n}": types.DeletePieceDocument,
@@ -67,6 +77,14 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}"): (typeof documents)["query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}"): (typeof documents)["query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}"): (typeof documents)["mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -76,6 +94,18 @@ export function graphql(source: "query Me {\n  gaiaQueries {\n    me {\n      id
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "query MyRoles {\n  gaiaQueries {\n    myRoles\n  }\n}"): (typeof documents)["query MyRoles {\n  gaiaQueries {\n    myRoles\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "mutation SetAccountRoles($accountId: ID!, $roleNames: [String!]!) {\n  gaiaMutations {\n    setAccountRoles(accountId: $accountId, roleNames: $roleNames) {\n      message\n    }\n  }\n}"): (typeof documents)["mutation SetAccountRoles($accountId: ID!, $roleNames: [String!]!) {\n  gaiaMutations {\n    setAccountRoles(accountId: $accountId, roleNames: $roleNames) {\n      message\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "mutation SuspendAccount($id: ID!) {\n  gaiaMutations {\n    suspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}"): (typeof documents)["mutation SuspendAccount($id: ID!) {\n  gaiaMutations {\n    suspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "mutation UnsuspendAccount($id: ID!) {\n  gaiaMutations {\n    unsuspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}"): (typeof documents)["mutation UnsuspendAccount($id: ID!) {\n  gaiaMutations {\n    unsuspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

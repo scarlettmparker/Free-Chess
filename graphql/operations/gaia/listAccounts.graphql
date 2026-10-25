@@ -1,0 +1,16 @@
+query ListAccounts($pagination: PaginationInput) {
+  gaiaQueries {
+    accounts(pagination: $pagination) {
+      items {
+        id
+        username
+        status
+        createdAt
+        updatedAt
+      }
+      pageInfo {
+        totalCount
+      }
+    }
+  }
+}

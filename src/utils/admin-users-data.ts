@@ -4,13 +4,14 @@
  */
 
 import { defineLoader } from '@sun/ssr';
+import { executeDocument } from '@sun/api';
 import { callerHeaders } from '~/server/admin-auth';
 import { auth } from '~/server/auth-instance';
 import type { Permission } from '~/server/permissions';
 import { getSession, requirePermission } from '~/server/session';
+import { ListAccountsDocument, GetAccountDocument, type ListAccountsQuery, type GetAccountQuery } from '~/generated/graphql';
 import {
   emptyUserPage,
-  toAdminUser,
   toAdminUserSession,
   type AdminUserPage,
 } from './admin-user-types';
@@ -33,31 +34,33 @@ defineLoader({
   pattern: 'adminUsers',
   async loader(params, context) {
     const page = Math.max(0, Number(params.page ?? 0) || 0);
-    const search = typeof params.search === 'string' ? params.search : '';
     const allowed = await canRead(context.cookie, { user: ['list'] } satisfies Permission);
     if (!allowed) {
       return { adminUsers: emptyUserPage(page, PAGE_SIZE) };
     }
 
     try {
-      const result = await auth.api.listUsers({
-        query: {
-          limit: PAGE_SIZE,
-          offset: page * PAGE_SIZE,
-          searchValue: search || undefined,
-          searchField: 'email',
-          searchOperator: 'contains',
-          sortBy: 'createdAt',
-          sortDirection: 'desc',
-        },
-        headers: callerHeaders(context.cookie),
+      const result = await executeDocument<ListAccountsQuery>(ListAccountsDocument, {
+        pagination: { page, size: PAGE_SIZE },
       });
+      const items = result?.success ? (result.data?.gaiaQueries.accounts.items ?? []) : [];
+      const total = result?.success ? (result.data?.gaiaQueries.accounts.pageInfo.totalCount ?? 0) : 0;
       const adminUsers: AdminUserPage = {
-        users: result.users.map(toAdminUser),
-        total: result.total,
+        users: items.map((u) => ({
+          id: u.id,
+          email: u.username,
+          name: u.username,
+          role: 'user',
+          banned: u.status === 'SUSPENDED',
+          banReason: null,
+          banExpires: null,
+          createdAt: String(u.createdAt ?? ''),
+          updatedAt: String(u.updatedAt ?? ''),
+        })),
+        total,
         page,
         pageSize: PAGE_SIZE,
-        totalPages: Math.ceil(result.total / PAGE_SIZE),
+        totalPages: Math.ceil(total / PAGE_SIZE) || 1,
       };
       return { adminUsers };
     } catch (error) {
@@ -77,11 +80,24 @@ defineLoader({
     }
 
     try {
-      const user = await auth.api.getUser({
-        query: { id },
-        headers: callerHeaders(context.cookie),
-      });
-      return { adminUser: toAdminUser(user) };
+      const result = await executeDocument<GetAccountQuery>(GetAccountDocument, { id });
+      if (!result?.success || !result.data?.gaiaQueries.account) {
+        return { adminUser: null };
+      }
+      const u = result.data.gaiaQueries.account;
+      return {
+        adminUser: {
+          id: u.id,
+          email: u.username,
+          name: u.username,
+          role: 'user',
+          banned: u.status === 'SUSPENDED',
+          banReason: null,
+          banExpires: null,
+          createdAt: String(u.createdAt ?? ''),
+          updatedAt: String(u.updatedAt ?? ''),
+        },
+      };
     } catch (error) {
       console.error('Failed to load admin user:', error);
       return { adminUser: null };
