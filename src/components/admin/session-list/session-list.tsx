@@ -13,6 +13,7 @@ import {
 import RoleCheck from '~/utils/role-check';
 import type { AdminSession } from '~/utils/admin-command';
 import styles from './session-list.module.css';
+import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
 
 /**
  * Formats a disconnect time without depending on the viewer's timezone.
@@ -29,7 +30,7 @@ const formatDisconnectedAt = (value: number | null) => {
  * Current matchmaking sessions.
  */
 const SessionList = () => (
-  <RoleCheck roles={['admin', 'game-admin']} match="any">
+  <RoleCheck roles={[FREE_CHESS_ADMIN_ROLE]} match="any">
     <SessionListContent />
   </RoleCheck>
 );

@@ -7,6 +7,7 @@ import BoardPickerDialog from '~/components/admin/board-picker-dialog';
 import RoleCheck from '~/utils/role-check';
 import type { AdminColor } from '~/utils/admin-command';
 import styles from './admin-bar.module.css';
+import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
 
 type GameAction = 'reset' | 'clear-white' | 'clear-black' | 'clear-all' | 'list';
 
@@ -71,7 +72,7 @@ const AdminBar = () => {
   const confirmKeys = confirming ? confirmKeysByAction[confirming] : null;
 
   return (
-    <RoleCheck roles={['admin', 'game-admin']} match="any">
+    <RoleCheck roles={[FREE_CHESS_ADMIN_ROLE]} match="any">
       <div className={styles.bar}>
         <div className={styles.actions}>
           <Button

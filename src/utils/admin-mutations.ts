@@ -7,6 +7,7 @@ import { defineMutation, MutationError } from '@sun/ssr';
 import { executeDocument, getCookieValue } from '@sun/api';
 import { MyRolesDocument } from '~/generated/graphql';
 import { AUTH_COOKIE } from '~/utils/auth';
+import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
 import { getLayout, loadLayout } from '~/server/board-layouts';
 import { validateBoardLayout } from '~/game/board/validate-layout';
 import { runAdminCommand, type AdminColor } from './admin-command';
@@ -51,7 +52,7 @@ async function requireGame(cookie: string | undefined) {
   if (!token) throw new MutationError('Forbidden', 403);
   const res = await executeDocument<{ gaiaQueries: { myRoles: string[] } }>(MyRolesDocument, {}, token);
   const roles = res.success ? (res.data?.gaiaQueries.myRoles ?? []) : [];
-  if (!roles.includes('admin') && !roles.includes('game-admin')) {
+  if (!roles.includes(FREE_CHESS_ADMIN_ROLE)) {
     throw new MutationError('Forbidden', 403);
   }
 }

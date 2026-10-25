@@ -40,19 +40,39 @@ function verifyToken(token) {
  * @param {string} cookie raw cookie header.
  * @returns {object|null} session.
  */
-function getSession(cookie) {
+async function fetchRoles(token) {
+  try {
+    const res = await fetch(process.env.GRAPHQL_ENDPOINT || 'http://localhost:8083/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        'X-Client-Id': 'free-chess',
+        'X-Client-Secret': process.env.CSRF_SECRET || process.env.BETTER_AUTH_SECRET || '',
+      },
+      body: JSON.stringify({ query: 'query { gaiaQueries { myRoles } }' }),
+    });
+    const json = await res.json();
+    return (json.data?.gaiaQueries?.myRoles ?? []).join(',');
+  } catch {
+    return '';
+  }
+}
+
+async function getSession(cookie) {
   if (!cookie) return null;
   const token = getCookieValue(cookie, 'free_chess_auth');
   if (!token) return null;
   const payload = verifyToken(token);
   if (!payload) return null;
-  return { user: { id: payload.sub, role: 'user' } };
+  const role = await fetchRoles(token);
+  return { user: { id: payload.sub, role: role || 'user' } };
 }
 
 /**
  * Roles allowed into the admin area.
  */
-const ADMIN_ROLES = ['admin', 'game-admin', 'user-admin'];
+const ADMIN_ROLES = ['Free Chess Admin'];
 
 /**
  * Sets up routes for the Fastify application.
@@ -82,6 +102,10 @@ export function setupRoutes(app, vite) {
       if (!session) {
         const target = `${pathname}${requestUrl.search}`;
         return reply.redirect(`/login?redirect=${encodeURIComponent(target)}`);
+      }
+      if (!ADMIN_ROLES.some((role) => (session.user.role || '').split(',').map((r) => r.trim()).includes(role))) {
+        reply.status(403).send('Forbidden: you do not have access to this area.');
+        return;
       }
     }
 

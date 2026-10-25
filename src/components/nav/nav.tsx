@@ -7,6 +7,7 @@ import CsrfField from '~/utils/csrf-field';
 import RoleCheck from '~/utils/role-check';
 import type { MeQuery } from '~/generated/graphql';
 import styles from './nav.module.css';
+import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
 
 /**
  * Top navigation with the account controls.
@@ -48,7 +49,7 @@ const NavAccount = () => {
 
   return (
     <div className={styles.account}>
-      <RoleCheck roles={['admin', 'game-admin', 'user-admin']} match="any">
+      <RoleCheck roles={[FREE_CHESS_ADMIN_ROLE]} match="any">
         <Link to="/admin" className={styles.link}>
           <Button variant="secondary" className={styles.button}>
             {t('admin')}

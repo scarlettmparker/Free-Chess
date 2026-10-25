@@ -68,10 +68,12 @@ const PieceEditor = () => {
                   key={piece.id}
                   variant={piece.id === selectedId ? 'default' : 'secondary'}
                   className={styles.piece_button}
-                  disabled={piece.isSystem}
                   onClick={() => setSelectedId(piece.id)}
                 >
                   <span className={styles.piece_name}>{piece.name || t('unnamed-piece')}</span>
+                  {piece.ownerName && piece.ownerName !== 'System' ? (
+                    <span className={styles.owner_badge}>{piece.ownerName}</span>
+                  ) : null}
                   {piece.isSystem ? null : (
                     <span className={styles.piece_actions}>
                       <DropdownMenu>
@@ -114,7 +116,7 @@ const PieceEditor = () => {
             <Card>
               <CardBody>
                 <ScrollArea maxHeight="85vh" className={styles.scroll_area}>
-                  <PieceForm key={selectedId ?? 'new'} piece={selected} />
+                  <PieceForm key={selectedId ?? 'new'} piece={selected} readOnly={Boolean(selected?.isSystem)} />
                 </ScrollArea>
               </CardBody>
             </Card>

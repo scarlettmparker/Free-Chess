@@ -1,9 +1,24 @@
 /**
- * @fileoverview Roles assignable from the admin UI.
+ * @fileoverview Shared role name constants for Free Chess.
  * @module utils/roles
  */
 
 /**
- * Roles the admin UI can assign.
+ * Role granted to Free Chess administrators.
  */
-export const ROLE_OPTIONS = ['admin', 'game-admin', 'user-admin', 'user'] as const;
+export const FREE_CHESS_ADMIN_ROLE = 'Free Chess Admin';
+
+/**
+ * Role granted to Free Chess players.
+ */
+export const FREE_CHESS_USER_ROLE = 'Free Chess User';
+
+/**
+ * Assignable role options in the admin UI.
+ */
+export const ROLE_OPTIONS = [FREE_CHESS_ADMIN_ROLE, FREE_CHESS_USER_ROLE] as const;
+
+/**
+ * Roles allowed into the admin area.
+ */
+export const ADMIN_ROLES = [FREE_CHESS_ADMIN_ROLE] as const;

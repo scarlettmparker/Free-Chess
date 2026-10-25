@@ -63,6 +63,14 @@ export type PieceDefinitionDto = {
    */
   isSystem: boolean;
   /**
+   * Owner account id.
+   */
+  createdBy?: string | null;
+  /**
+   * Owner display name.
+   */
+  ownerName?: string | null;
+  /**
    * Creation timestamp.
    */
   createdAt: string;

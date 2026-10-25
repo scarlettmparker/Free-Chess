@@ -7,6 +7,7 @@ import { defineLoader } from '@sun/ssr';
 import { executeDocument, getCookieValue } from '@sun/api';
 import { MyRolesDocument } from '~/generated/graphql';
 import { AUTH_COOKIE } from '~/utils/auth';
+import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
 import { ListAccountsDocument, GetAccountDocument, type ListAccountsQuery, type GetAccountQuery } from '~/generated/graphql';
 import {
   emptyUserPage,
@@ -26,7 +27,7 @@ async function canRead(cookie: string | undefined): Promise<boolean> {
   if (!token) return false;
   const res = await executeDocument<{ gaiaQueries: { myRoles: string[] } }>(MyRolesDocument, {}, token);
   const roles = res.success ? (res.data?.gaiaQueries.myRoles ?? []) : [];
-  return roles.includes('admin') || roles.includes('user-admin');
+  return roles.includes(FREE_CHESS_ADMIN_ROLE);
 }
 
 defineLoader({

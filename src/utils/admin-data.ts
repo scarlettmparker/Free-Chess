@@ -4,8 +4,7 @@ import { getCookieValue } from '@sun/api';
 import { MyRolesDocument } from '~/generated/graphql';
 import { AUTH_COOKIE } from '~/utils/auth';
 import { runAdminCommand } from './admin-command';
-
-const ADMIN_ROLES = ['admin', 'game-admin', 'user-admin'];
+import { ADMIN_ROLES } from '~/utils/roles';
 
 /**
  * Checks whether the caller holds any admin role.

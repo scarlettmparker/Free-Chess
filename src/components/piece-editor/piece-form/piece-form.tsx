@@ -24,6 +24,10 @@ type PieceFormProps = {
    * Piece to edit.
    */
   piece: PieceDefinitionDto | null;
+  /**
+   * Whether the form is read-only.
+   */
+  readOnly?: boolean;
 };
 
 type FormVector = {
@@ -70,7 +74,7 @@ function normalizeStates(moveStates: unknown[]): FormState[] {
  * Piece editing form.
  */
 const PieceForm = (props: PieceFormProps) => {
-  const { piece } = props;
+  const { piece, readOnly = false } = props;
   const { t } = useTranslation('admin');
   const [form, setForm] = useState<PieceInput>(() => ({
     id: piece?.id,
@@ -193,6 +197,7 @@ const PieceForm = (props: PieceFormProps) => {
           <FormItem>
             <Input
               value={form.name}
+              disabled={readOnly}
               placeholder={t('piece-name-placeholder')}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setForm({ ...form, name: event.currentTarget.value })
@@ -205,6 +210,7 @@ const PieceForm = (props: PieceFormProps) => {
           <FormItem>
             <Select
               value={form.stateTransition}
+              disabled={readOnly}
               onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
                 setForm({ ...form, stateTransition: event.currentTarget.value })
               }
@@ -224,6 +230,7 @@ const PieceForm = (props: PieceFormProps) => {
           className={styles.checkbox}
           label={t('piece-king')}
           checked={form.isKing}
+          disabled={readOnly}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             setForm({ ...form, isKing: event.currentTarget.checked })
           }
@@ -234,6 +241,7 @@ const PieceForm = (props: PieceFormProps) => {
           className={styles.checkbox}
           label={t('can-promote')}
           checked={canPromote}
+          disabled={readOnly}
           onChange={(event) => setCanPromote(event.currentTarget.checked)}
         />
       </div>

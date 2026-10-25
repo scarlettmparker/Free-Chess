@@ -18,6 +18,7 @@ import AdminUserListPagination from '~/components/admin/admin-user-list-paginati
 import type { CreateUserValues } from '~/utils/admin-user-types';
 import RoleCheck from '~/utils/role-check';
 import styles from './admin-user-list.module.css';
+import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
 
 type AdminUserListProps = {
   /**
@@ -72,7 +73,7 @@ const AdminUserList = (props: AdminUserListProps) => {
               onSearch={onSearch}
               placeholder={t('search-placeholder')}
             />
-            <RoleCheck roles={['admin', 'user-admin']} match="any">
+            <RoleCheck roles={[FREE_CHESS_ADMIN_ROLE]} match="any">
               <Button type="button" onClick={() => setCreateOpen(true)}>
                 {t('create-user')}
               </Button>
