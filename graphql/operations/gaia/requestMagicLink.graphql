@@ -1,0 +1,7 @@
+mutation RequestMagicLink($email: String!) {
+  gaiaMutations {
+    requestMagicLink(email: $email) {
+      message
+    }
+  }
+}

@@ -18,13 +18,16 @@ type Documents = {
     "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}": typeof types.GetAccountDocument,
     "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": typeof types.ListAccountsDocument,
     "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}": typeof types.LoginDocument,
+    "mutation LoginWithGoogle($code: String!, $redirectUri: String!) {\n  gaiaMutations {\n    loginWithGoogle(code: $code, redirectUri: $redirectUri) {\n      token\n    }\n  }\n}": typeof types.LoginWithGoogleDocument,
     "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}": typeof types.MeDocument,
     "query MyRoles {\n  gaiaQueries {\n    myRoles\n  }\n}": typeof types.MyRolesDocument,
     "mutation RegisterAccount($input: RegisterInput!) {\n  gaiaMutations {\n    register(input: $input) {\n      accountId\n      personId\n      token\n    }\n  }\n}": typeof types.RegisterAccountDocument,
+    "mutation RequestMagicLink($email: String!) {\n  gaiaMutations {\n    requestMagicLink(email: $email) {\n      message\n    }\n  }\n}": typeof types.RequestMagicLinkDocument,
     "mutation SetAccountPassword($accountId: ID!, $newPassword: String!) {\n  gaiaMutations {\n    setAccountPassword(accountId: $accountId, newPassword: $newPassword) {\n      message\n    }\n  }\n}": typeof types.SetAccountPasswordDocument,
     "mutation SetAccountRoles($accountId: ID!, $roleNames: [String!]!) {\n  gaiaMutations {\n    setAccountRoles(accountId: $accountId, roleNames: $roleNames) {\n      message\n    }\n  }\n}": typeof types.SetAccountRolesDocument,
     "mutation SuspendAccount($id: ID!) {\n  gaiaMutations {\n    suspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}": typeof types.SuspendAccountDocument,
     "mutation UnsuspendAccount($id: ID!) {\n  gaiaMutations {\n    unsuspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}": typeof types.UnsuspendAccountDocument,
+    "mutation VerifyMagicLink($token: String!) {\n  gaiaMutations {\n    verifyMagicLink(token: $token) {\n      token\n    }\n  }\n}": typeof types.VerifyMagicLinkDocument,
     "query AuditLogs($pagination: PaginationInput) {\n  medusaQueries {\n    auditLogs(pagination: $pagination) {\n      total\n      items {\n        id\n        createdAt\n        actorId\n        actorEmail\n        action\n        target\n        outcome\n        detail\n        ip\n      }\n    }\n  }\n}": typeof types.AuditLogsDocument,
     "mutation DeleteBoardLayout($id: ID!) {\n  medusaMutations {\n    deleteBoardLayout(id: $id) {\n      ok\n    }\n  }\n}": typeof types.DeleteBoardLayoutDocument,
     "mutation DeletePiece($id: ID!) {\n  medusaMutations {\n    deletePiece(id: $id) {\n      ok\n    }\n  }\n}": typeof types.DeletePieceDocument,
@@ -44,13 +47,16 @@ const documents: Documents = {
     "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}": types.GetAccountDocument,
     "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": types.ListAccountsDocument,
     "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}": types.LoginDocument,
+    "mutation LoginWithGoogle($code: String!, $redirectUri: String!) {\n  gaiaMutations {\n    loginWithGoogle(code: $code, redirectUri: $redirectUri) {\n      token\n    }\n  }\n}": types.LoginWithGoogleDocument,
     "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}": types.MeDocument,
     "query MyRoles {\n  gaiaQueries {\n    myRoles\n  }\n}": types.MyRolesDocument,
     "mutation RegisterAccount($input: RegisterInput!) {\n  gaiaMutations {\n    register(input: $input) {\n      accountId\n      personId\n      token\n    }\n  }\n}": types.RegisterAccountDocument,
+    "mutation RequestMagicLink($email: String!) {\n  gaiaMutations {\n    requestMagicLink(email: $email) {\n      message\n    }\n  }\n}": types.RequestMagicLinkDocument,
     "mutation SetAccountPassword($accountId: ID!, $newPassword: String!) {\n  gaiaMutations {\n    setAccountPassword(accountId: $accountId, newPassword: $newPassword) {\n      message\n    }\n  }\n}": types.SetAccountPasswordDocument,
     "mutation SetAccountRoles($accountId: ID!, $roleNames: [String!]!) {\n  gaiaMutations {\n    setAccountRoles(accountId: $accountId, roleNames: $roleNames) {\n      message\n    }\n  }\n}": types.SetAccountRolesDocument,
     "mutation SuspendAccount($id: ID!) {\n  gaiaMutations {\n    suspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}": types.SuspendAccountDocument,
     "mutation UnsuspendAccount($id: ID!) {\n  gaiaMutations {\n    unsuspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}": types.UnsuspendAccountDocument,
+    "mutation VerifyMagicLink($token: String!) {\n  gaiaMutations {\n    verifyMagicLink(token: $token) {\n      token\n    }\n  }\n}": types.VerifyMagicLinkDocument,
     "query AuditLogs($pagination: PaginationInput) {\n  medusaQueries {\n    auditLogs(pagination: $pagination) {\n      total\n      items {\n        id\n        createdAt\n        actorId\n        actorEmail\n        action\n        target\n        outcome\n        detail\n        ip\n      }\n    }\n  }\n}": types.AuditLogsDocument,
     "mutation DeleteBoardLayout($id: ID!) {\n  medusaMutations {\n    deleteBoardLayout(id: $id) {\n      ok\n    }\n  }\n}": types.DeleteBoardLayoutDocument,
     "mutation DeletePiece($id: ID!) {\n  medusaMutations {\n    deletePiece(id: $id) {\n      ok\n    }\n  }\n}": types.DeletePieceDocument,
@@ -99,6 +105,10 @@ export function graphql(source: "mutation Login($input: LoginInput!) {\n  gaiaMu
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "mutation LoginWithGoogle($code: String!, $redirectUri: String!) {\n  gaiaMutations {\n    loginWithGoogle(code: $code, redirectUri: $redirectUri) {\n      token\n    }\n  }\n}"): (typeof documents)["mutation LoginWithGoogle($code: String!, $redirectUri: String!) {\n  gaiaMutations {\n    loginWithGoogle(code: $code, redirectUri: $redirectUri) {\n      token\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}"): (typeof documents)["query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -108,6 +118,10 @@ export function graphql(source: "query MyRoles {\n  gaiaQueries {\n    myRoles\n
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "mutation RegisterAccount($input: RegisterInput!) {\n  gaiaMutations {\n    register(input: $input) {\n      accountId\n      personId\n      token\n    }\n  }\n}"): (typeof documents)["mutation RegisterAccount($input: RegisterInput!) {\n  gaiaMutations {\n    register(input: $input) {\n      accountId\n      personId\n      token\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "mutation RequestMagicLink($email: String!) {\n  gaiaMutations {\n    requestMagicLink(email: $email) {\n      message\n    }\n  }\n}"): (typeof documents)["mutation RequestMagicLink($email: String!) {\n  gaiaMutations {\n    requestMagicLink(email: $email) {\n      message\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -124,6 +138,10 @@ export function graphql(source: "mutation SuspendAccount($id: ID!) {\n  gaiaMuta
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "mutation UnsuspendAccount($id: ID!) {\n  gaiaMutations {\n    unsuspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}"): (typeof documents)["mutation UnsuspendAccount($id: ID!) {\n  gaiaMutations {\n    unsuspendAccount(id: $id) {\n      message\n      account {\n        id\n        status\n      }\n    }\n  }\n}"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "mutation VerifyMagicLink($token: String!) {\n  gaiaMutations {\n    verifyMagicLink(token: $token) {\n      token\n    }\n  }\n}"): (typeof documents)["mutation VerifyMagicLink($token: String!) {\n  gaiaMutations {\n    verifyMagicLink(token: $token) {\n      token\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

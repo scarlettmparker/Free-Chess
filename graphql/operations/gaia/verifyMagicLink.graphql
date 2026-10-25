@@ -1,0 +1,7 @@
+mutation VerifyMagicLink($token: String!) {
+  gaiaMutations {
+    verifyMagicLink(token: $token) {
+      token
+    }
+  }
+}

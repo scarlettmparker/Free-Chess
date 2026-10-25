@@ -1,0 +1,7 @@
+mutation LoginWithGoogle($code: String!, $redirectUri: String!) {
+  gaiaMutations {
+    loginWithGoogle(code: $code, redirectUri: $redirectUri) {
+      token
+    }
+  }
+}

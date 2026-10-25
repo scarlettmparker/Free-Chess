@@ -1,5 +1,14 @@
 import { executeDocument } from "@sun/api";
-import { LoginDocument, MeDocument, type MeQuery } from "~/generated/graphql";
+import {
+  LoginDocument,
+  MeDocument,
+  RequestMagicLinkDocument,
+  VerifyMagicLinkDocument,
+  LoginWithGoogleDocument,
+  type MeQuery,
+  type VerifyMagicLinkMutation,
+  type LoginWithGoogleMutation,
+} from "~/generated/graphql";
 
 export const AUTH_COOKIE = "free_chess_auth";
 
@@ -33,6 +42,41 @@ export async function loginViaGaia(username: string, password: string): Promise<
  * @param token the JWT
  * @returns the account, or null
  */
+/**
+ * Requests a magic-link email.
+ *
+ * @param email account email
+ * @returns void
+ */
+export async function requestMagicLink(email: string): Promise<void> {
+  await executeDocument(RequestMagicLinkDocument, { email });
+}
+
+/**
+ * Verifies a magic-link token and returns a JWT.
+ *
+ * @param token magic-link token
+ * @returns JWT or null
+ */
+export async function verifyMagicLink(token: string): Promise<string | null> {
+  const res = await executeDocument<VerifyMagicLinkMutation>(VerifyMagicLinkDocument, { token });
+  if (!res.success || !res.data) return null;
+  return res.data.gaiaMutations.verifyMagicLink?.token ?? null;
+}
+
+/**
+ * Signs in with Google using an authorization code.
+ *
+ * @param code authorization code
+ * @param redirectUri redirect uri
+ * @returns JWT or null
+ */
+export async function loginWithGoogle(code: string, redirectUri: string): Promise<string | null> {
+  const res = await executeDocument<LoginWithGoogleMutation>(LoginWithGoogleDocument, { code, redirectUri });
+  if (!res.success || !res.data) return null;
+  return res.data.gaiaMutations.loginWithGoogle?.token ?? null;
+}
+
 export async function getCurrentUser(token: string | undefined): Promise<MeQuery["gaiaQueries"]["me"] | null> {
   if (!token) return null;
   const res = await executeDocument<MeQuery>(MeDocument, {}, token);
