@@ -7,7 +7,7 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'di
 
 type ServerMessage =
   | { type: 'session'; sessionId?: string; color?: string; status?: string }
-  | { type: 'state'; state: SerializedGameState }
+  | { type: 'state'; state: SerializedGameState; initial?: SerializedGameState }
   | { type: 'opponent_move'; move: number }
   | { type: 'reject'; reason?: string }
   | { type: 'ack'; message?: string; color?: string };
@@ -20,7 +20,7 @@ type MatchmakingHandlers = {
   /**
    * Called with the authoritative game state.
    */
-  onState: (state: SerializedGameState) => void;
+  onState: (state: SerializedGameState, initial?: SerializedGameState) => void;
   /**
    * Called when the opponent makes a move.
    */
@@ -51,7 +51,7 @@ export function useMatchmakingSocket(handlers: MatchmakingHandlers) {
       }
 
       if (message.type === 'state') {
-        handlersRef.current.onState(message.state);
+        handlersRef.current.onState(message.state, message.initial);
       } else if (message.type === 'opponent_move') {
         handlersRef.current.onOpponentMove(message.move);
       }

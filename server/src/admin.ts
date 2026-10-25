@@ -10,6 +10,7 @@ import { getLayout, loadLayout } from '~/server/board-layouts';
 import { validateBoardLayout } from '~/game/board/validate-layout';
 import { gameState } from '~/game/consts/board.ts';
 import { serializeGameState } from '~/utils/game-serialize.ts';
+import { captureInitialState, getInitialState } from './initial-state.ts';
 import { clearColor, sessions } from './sessions.ts';
 
 /**
@@ -128,7 +129,12 @@ export function runCommand(
         }
       }
       gameState.moveHistory = [];
-      broadcast({ type: 'state', state: serializeGameState(gameState) });
+      captureInitialState();
+      broadcast({
+        type: 'state',
+        state: serializeGameState(gameState),
+        initial: getInitialState(),
+      });
       return { ok: true, message: 'Game state reset and broadcast' };
 
     default:

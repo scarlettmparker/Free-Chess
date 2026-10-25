@@ -27,22 +27,29 @@ export function useChessSession() {
 
   const refresh = useCallback(() => setVersion((value) => value + 1), []);
 
-  const rebuildHistory = useCallback((moves: number[]) => {
-    mountGame();
-    const snapshots = [serializeGameState(gameState)];
-    for (const move of moves) {
-      if (makeMove(move, moveType.ALL_MOVES, 0)) {
-        gameState.moveHistory.push(move);
-        snapshots.push(serializeGameState(gameState));
+  const rebuildHistory = useCallback(
+    (initial: SerializedGameState | undefined, moves: number[]) => {
+      if (initial) {
+        Object.assign(gameState, deserializeGameState(initial));
+      } else {
+        mountGame();
       }
-    }
-    setHistory(snapshots);
-    setHistoryIndex(snapshots.length - 1);
-  }, []);
+      const snapshots = [serializeGameState(gameState)];
+      for (const move of moves) {
+        if (makeMove(move, moveType.ALL_MOVES, 0)) {
+          gameState.moveHistory.push(move);
+          snapshots.push(serializeGameState(gameState));
+        }
+      }
+      setHistory(snapshots);
+      setHistoryIndex(snapshots.length - 1);
+    },
+    [],
+  );
 
   const handleState = useCallback(
-    (state: SerializedGameState) => {
-      rebuildHistory(state.moveHistory ?? []);
+    (state: SerializedGameState, initial?: SerializedGameState) => {
+      rebuildHistory(initial, state.moveHistory ?? []);
       setSelectedSquare(null);
       refresh();
     },

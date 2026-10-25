@@ -122,10 +122,14 @@ defineMutation({
     if (body.boardLayoutId !== undefined) {
       localLayoutId = await syncLayout(body.boardLayoutId);
     }
-    return runAdminCommand(
+    const result = await runAdminCommand(
       'reset',
       localLayoutId === undefined ? {} : { body: { boardLayoutId: localLayoutId } },
     );
+    if (!result.ok) {
+      throw new MutationError(result.message, 400);
+    }
+    return result;
   },
 });
 

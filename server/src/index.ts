@@ -2,6 +2,7 @@ import type { ServerWebSocket } from 'bun';
 import { sessions, assignColor, attachSession as openSession, detachSession } from './sessions.ts';
 import { checkedForSideToMove, isEncodedMove } from './rules.ts';
 import { adminCommands, isAdminAuthorized, runCommand } from './admin.ts';
+import { captureInitialState, getInitialState } from './initial-state.ts';
 import { adminToken } from '../../config.js';
 import { mountGame } from '~/utils/index.ts';
 import { listLayouts, loadLayout } from '~/server/board-layouts';
@@ -81,6 +82,7 @@ function mountStandardLayout() {
 }
 
 mountStandardLayout();
+captureInitialState();
 
 /**
  * Send a JSON object safely over a WebSocket.
@@ -108,7 +110,11 @@ function broadcast(obj: unknown) {
  * Send the current serialized game state to a client.
  */
 function sendGameState(ws: { send(data: string): unknown }) {
-  safeSend(ws, { type: 'state', state: serializeGameState(gameState) });
+  safeSend(ws, {
+    type: 'state',
+    state: serializeGameState(gameState),
+    initial: getInitialState(),
+  });
 }
 
 /**
@@ -197,7 +203,7 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
 
     if (!color || gameState.side !== (color === 'white' ? 0 : 1)) {
       console.log("Ignoring move: not player's turn or no color");
-      broadcast({ type: 'state', state: getOldState() });
+      broadcast({ type: 'state', state: getOldState(), initial: getInitialState() });
       return;
     }
 
@@ -215,10 +221,10 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
       }
 
       // Broadcast updated state
-      broadcast({ type: 'state', state: serializeGameState(gameState) });
+      broadcast({ type: 'state', state: serializeGameState(gameState), initial: getInitialState() });
     } else {
       console.log('Move rejected, sending old state');
-      broadcast({ type: 'state', state: getOldState() });
+      broadcast({ type: 'state', state: getOldState(), initial: getInitialState() });
     }
   }
 }
