@@ -2,6 +2,7 @@ import { Suspense, useState } from "react";
 import { useTranslation } from "@sun/i18n";
 import { executeMutation, makeCacheKey, revalidatePageData } from "@sun/ssr";
 import {
+  Button,
   Card,
   CardBody,
   CardDescription,
@@ -16,6 +17,8 @@ import AdminUserListItems from "~/components/admin/admin-user-list-items";
 import AdminUserListPagination from "~/components/admin/admin-user-list-pagination";
 import type { CreateUserValues } from "~/utils/admin-user-types";
 import styles from "./admin-user-list.module.css";
+import { FREE_CHESS_ADMIN_ROLE } from "~/utils/roles";
+import RoleCheck from "~/utils/role-check";
 
 type AdminUserListProps = {
   /**
@@ -58,6 +61,15 @@ const AdminUserList = (props: AdminUserListProps) => {
   return (
     <>
       <Card>
+        <RoleCheck roles={[FREE_CHESS_ADMIN_ROLE]} match="any">
+          <Button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className={styles.create_button}
+          >
+            {t("create-user")}
+          </Button>
+        </RoleCheck>
         <CardHeader>
           <CardTitle>{t("users-title")}</CardTitle>
           <CardDescription>{t("users-description")}</CardDescription>

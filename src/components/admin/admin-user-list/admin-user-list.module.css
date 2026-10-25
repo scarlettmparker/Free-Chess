@@ -10,3 +10,10 @@
   width: 100%;
   height: 20rem;
 }
+
+.create_button {
+  position: absolute;
+  top: var(--lg);
+  right: var(--xl);
+  z-index: 1;
+}
