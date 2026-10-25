@@ -1,4 +1,9 @@
-import { Piece, SlidingMoveBehavior } from '~/game/piece/piece';
+import {
+  LeaperMoveBehavior,
+  PawnMoveBehavior,
+  Piece,
+  SlidingMoveBehavior,
+} from '~/game/piece/piece';
 import { PieceFactory } from '~/game/piece/piece-factory';
 import type { PieceDefinition } from '~/game/piece/piece-definition';
 import { pieceRegistry } from '~/game/piece/piece-registry';
@@ -224,6 +229,8 @@ export function deserializeGameState(json: SerializedGameState): GameState {
       if (behavior.getDiagonal()) {
         behavior.setDiagonalAttackTables(diagonalLo, diagonalHi, diagonalBits);
       }
+    } else if (behavior instanceof LeaperMoveBehavior || behavior instanceof PawnMoveBehavior) {
+      behavior.initializeAttacks();
     }
   }
 
