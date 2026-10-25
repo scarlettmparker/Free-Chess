@@ -4,8 +4,13 @@ import { makeMove } from '~/game/move/move';
 import { getMoveTarget } from '~/game/move/move-def';
 import { playMoveSound, preloadPieceSounds } from '~/game/sound/play';
 import { mountGame } from '~/utils';
+import { resetGameState } from '~/game/init/game';
 import { setStoredSession } from '~/utils/connect';
-import { deserializeGameState, type SerializedGameState } from '~/utils/game-serialize';
+import {
+  deserializeGameState,
+  serializeGameState,
+  type SerializedGameState,
+} from '~/utils/game-serialize';
 import { buildBoardView, emptyBoardView } from '~/utils/game-view';
 import { useMatchmakingSocket } from './use-matchmaking-socket';
 
@@ -17,22 +22,44 @@ export function useChessSession() {
   const [selectedSquare, setSelectedSquare] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [version, setVersion] = useState(0);
+  const [history, setHistory] = useState<SerializedGameState[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(0);
 
   const refresh = useCallback(() => setVersion((value) => value + 1), []);
 
+  const rebuildHistory = useCallback((moves: number[]) => {
+    mountGame();
+    const snapshots = [serializeGameState(gameState)];
+    for (const move of moves) {
+      if (makeMove(move, moveType.ALL_MOVES, 0)) {
+        gameState.moveHistory.push(move);
+        snapshots.push(serializeGameState(gameState));
+      }
+    }
+    setHistory(snapshots);
+    setHistoryIndex(snapshots.length - 1);
+  }, []);
+
   const handleState = useCallback(
     (state: SerializedGameState) => {
-      Object.assign(gameState, deserializeGameState(state));
+      rebuildHistory(state.moveHistory ?? []);
       setSelectedSquare(null);
       refresh();
     },
-    [refresh],
+    [rebuildHistory, refresh],
   );
 
+  /**
+   * Applies an opponent move and appends it to the viewed history.
+   *
+   * @param move Encoded move from the opponent.
+   */
   const handleOpponentMove = useCallback(
     (move: number) => {
       if (makeMove(move, moveType.ALL_MOVES, 0)) {
         gameState.moveHistory.push(move);
+        setHistory((previous) => [...previous, serializeGameState(gameState)]);
+        setHistoryIndex((previous) => previous + 1);
       }
       playMoveSound(move);
       setSelectedSquare(null);
@@ -54,6 +81,8 @@ export function useChessSession() {
 
   useEffect(() => {
     mountGame();
+    setHistory([serializeGameState(gameState)]);
+    setHistoryIndex(0);
     setMounted(true);
     refresh();
   }, [refresh]);
@@ -65,10 +94,15 @@ export function useChessSession() {
   }, []);
 
   const view = useMemo(
-    () => (mounted ? buildBoardView(selectedSquare, playerColor) : emptyBoardView(playerColor)),
-    [mounted, selectedSquare, playerColor, version],
+    () => (mounted ? buildBoardView(selectedSquare, playerColor, historyIndex) : emptyBoardView(playerColor)),
+    [mounted, selectedSquare, playerColor, version, historyIndex],
   );
 
+  /**
+   * Selects or plays a square.
+   *
+   * @param key Square index.
+   */
   const selectSquare = useCallback(
     (key: number) => {
       if (!mounted || !view.canMove) return;
@@ -80,6 +114,14 @@ export function useChessSession() {
         );
         if (move !== undefined && makeMove(move, moveType.ALL_MOVES, 0)) {
           gameState.moveHistory.push(move);
+          setHistory((previous) => {
+            const base =
+              historyIndex < previous.length - 1
+                ? previous.slice(0, historyIndex + 1)
+                : previous;
+            return [...base, serializeGameState(gameState)];
+          });
+          setHistoryIndex(historyIndex < history.length - 1 ? historyIndex + 1 : history.length);
           setSelectedSquare(null);
           sendMove(move);
           playMoveSound(move);
@@ -90,8 +132,76 @@ export function useChessSession() {
 
       setSelectedSquare(square.selectable ? key : null);
     },
-    [mounted, view, selectedSquare, sendMove, refresh],
+    [mounted, view, selectedSquare, sendMove, refresh, history, historyIndex],
   );
+
+  /**
+   * Moves to the previous historical position.
+   */
+  const goBack = useCallback(() => {
+    if (historyIndex <= 0) return;
+    const move = gameState.moveHistory[historyIndex - 1];
+    resetGameState();
+    Object.assign(gameState, deserializeGameState(history[historyIndex - 1]));
+    setHistoryIndex(historyIndex - 1);
+    setSelectedSquare(null);
+    if (move !== undefined) playMoveSound(move);
+    refresh();
+  }, [history, historyIndex, refresh]);
+
+  /**
+   * Moves to the next historical position.
+   */
+  const goForward = useCallback(() => {
+    if (historyIndex >= history.length - 1) return;
+    const move = gameState.moveHistory[historyIndex];
+    resetGameState();
+    Object.assign(gameState, deserializeGameState(history[historyIndex + 1]));
+    setHistoryIndex(historyIndex + 1);
+    setSelectedSquare(null);
+    if (move !== undefined) playMoveSound(move);
+    refresh();
+  }, [history, historyIndex, refresh]);
+
+  /**
+   * Jumps to the most recent position.
+   */
+  const goLatest = useCallback(() => {
+    if (historyIndex === history.length - 1) return;
+    const move = gameState.moveHistory[history.length - 2];
+    resetGameState();
+    Object.assign(gameState, deserializeGameState(history[history.length - 1]));
+    setHistoryIndex(history.length - 1);
+    setSelectedSquare(null);
+    if (move !== undefined) playMoveSound(move);
+    refresh();
+  }, [history, historyIndex, refresh]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.tagName === 'SELECT' ||
+        target?.isContentEditable
+      ) {
+        return;
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        goBack();
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        goForward();
+      } else if (event.key === ' ') {
+        event.preventDefault();
+        goLatest();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goBack, goForward, goLatest]);
 
   return { view, status, playerColor, selectSquare };
 }

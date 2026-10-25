@@ -136,10 +136,16 @@ function mapMoves(legalMoves: number[]): Map<string, MoveList> {
 
 /**
  * Snapshots the engine into an immutable board view.
+ *
+ * @param selectedSquare Square selected by the user, or null.
+ * @param playerColor Colour assigned to this client, or null.
+ * @param viewMoveIndex Move-history index to highlight, or the latest move when omitted.
+ * @returns The board view.
  */
 export function buildBoardView(
   selectedSquare: number | null,
   playerColor: PlayerColor | null,
+  viewMoveIndex?: number,
 ): BoardView {
   const candidates: MoveList = { moves: [], count: 0 };
   generateMoves(candidates, gameState.pieces);
@@ -154,7 +160,10 @@ export function buildBoardView(
 
   const pieces = mapPieces();
   const movesByPieceAndSquare = mapMoves(legalMoves);
-  const latestMove = gameState.moveHistory[gameState.moveHistory.length - 1] ?? null;
+  const moveCount = gameState.moveHistory.length;
+  const viewedIndex =
+    viewMoveIndex == null ? moveCount : Math.max(0, Math.min(viewMoveIndex, moveCount));
+  const latestMove = viewedIndex > 0 ? gameState.moveHistory[viewedIndex - 1] ?? null : null;
   const latestSource = latestMove == null ? -1 : getMoveSource(latestMove);
   const latestTarget = latestMove == null ? -1 : getMoveTarget(latestMove);
 
@@ -164,7 +173,11 @@ export function buildBoardView(
       : (movesByPieceAndSquare.get(`${pieces[selectedSquare]}-${selectedSquare}`) ?? null);
 
   const gameOver = sideMoves.length === 0;
-  const canMove = playerColor != null && playerColor === gameState.side && !gameOver;
+  const canMove =
+    playerColor != null &&
+    playerColor === gameState.side &&
+    !gameOver &&
+    viewedIndex === moveCount;
 
   const squares: SquareView[] = pieces.map((pieceId, key) => {
     const isWhitePiece = pieceId != null && gameState.whitePieceIds.includes(pieceId);

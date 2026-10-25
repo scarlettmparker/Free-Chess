@@ -101,9 +101,9 @@ export function serializeGameState(gs: GameState): SerializedGameState {
   }
 
   const serialized = {
-    whitePieceIds: gs.whitePieceIds,
-    blackPieceIds: gs.blackPieceIds,
-    kingPieceId: gs.kingPieceId,
+    whitePieceIds: [...gs.whitePieceIds],
+    blackPieceIds: [...gs.blackPieceIds],
+    kingPieceId: [...gs.kingPieceId],
     pieces: gs.pieces.map(serializePiece),
     bitboards: gs.bitboards.map((bb) => ({
       pieceId: bb.pieceId,
@@ -112,16 +112,16 @@ export function serializeGameState(gs: GameState): SerializedGameState {
     occupancies: [0, 1, 2].map((i) =>
       ((BigInt(gs.occHi[i]) << 32n) | BigInt(gs.occLo[i])).toString(),
     ),
-    checked: gs.checked,
+    checked: [...gs.checked],
     side: gs.side,
     enpassant: gs.enpassant,
     castle: gs.castle.toString(),
     globalMove: gs.globalMove,
     nodes: gs.nodes,
-    moves: gs.moves,
+    moves: { ...gs.moves },
     whiteMoves: Array.from(gs.whiteMoves.entries()),
     blackMoves: Array.from(gs.blackMoves.entries()),
-    moveHistory: gs.moveHistory,
+    moveHistory: [...gs.moveHistory],
   };
   return serialized;
 }
@@ -186,10 +186,10 @@ export function deserializeGameState(json: SerializedGameState): GameState {
   const gs = {
     whiteMoves: new Map(json.whiteMoves),
     blackMoves: new Map(json.blackMoves),
-    whitePieceIds: json.whitePieceIds,
-    blackPieceIds: json.blackPieceIds,
+    whitePieceIds: [...json.whitePieceIds],
+    blackPieceIds: [...json.blackPieceIds],
     pieces: json.pieces.map((p) => deserializePiece(p, currentPieces)),
-    kingPieceId: json.kingPieceId ?? [10, 11],
+    kingPieceId: [...(json.kingPieceId ?? [10, 11])],
     bitboards: json.bitboards.map((bb) => {
       const v = BigInt(bb.bitboard);
       return {
@@ -200,14 +200,14 @@ export function deserializeGameState(json: SerializedGameState): GameState {
     }),
     occLo: Uint32Array.from(json.occupancies.map((o) => Number(BigInt(o) & 0xffffffffn) >>> 0)),
     occHi: Uint32Array.from(json.occupancies.map((o) => Number(BigInt(o) >> 32n) >>> 0)),
-    checked: json.checked,
+    checked: [...json.checked],
     side: json.side,
     enpassant: json.enpassant,
     castle: Number(json.castle),
     globalMove: json.globalMove,
-    moves: json.moves,
+    moves: { ...json.moves },
     nodes: json.nodes,
-    moveHistory: json.moveHistory,
+    moveHistory: [...json.moveHistory],
   };
 
   const { straightLo, straightHi, straightBits, diagonalLo, diagonalHi, diagonalBits } =

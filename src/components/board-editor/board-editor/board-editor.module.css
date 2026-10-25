@@ -6,11 +6,19 @@
 }
 
 .body {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   align-items: flex-start;
   gap: var(--lg);
+}
+
+.create_board_button {
+  position: absolute;
+  top: var(--lg);
+  right: var(--xl);
+  z-index: 1;
 }
 
 .list_panel {
