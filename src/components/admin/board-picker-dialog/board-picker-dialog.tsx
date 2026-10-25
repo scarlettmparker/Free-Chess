@@ -1,6 +1,6 @@
-import { Suspense, useState } from 'react';
-import { useTranslation } from '@sun/i18n';
-import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
+import { Suspense, useState } from "react";
+import { useTranslation } from "@sun/i18n";
+import { executeMutation, makeCacheKey, revalidatePageData } from "@sun/ssr";
 import {
   Button,
   Dialog,
@@ -8,10 +8,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@sun/components';
-import BoardPickerContent from '~/components/admin/board-picker-content';
-import type { BoardLayoutDto } from '~/utils/board-layout-types';
-import styles from './board-picker-dialog.module.css';
+} from "@sun/components";
+import BoardPickerContent from "~/components/admin/board-picker-content";
+import type { BoardLayoutDto } from "~/utils/board-layout-types";
+import styles from "./board-picker-dialog.module.css";
 
 type BoardPickerDialogProps = {
   /**
@@ -33,7 +33,7 @@ type BoardPickerDialogProps = {
  */
 const BoardPickerDialog = (props: BoardPickerDialogProps) => {
   const { open, onClose, onReset } = props;
-  const { t } = useTranslation('admin');
+  const { t } = useTranslation("admin");
   const [selected, setSelected] = useState<BoardLayoutDto | null>(null);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,11 +46,11 @@ const BoardPickerDialog = (props: BoardPickerDialogProps) => {
     setStarting(true);
     setError(null);
     try {
-      await executeMutation('game/reset', { boardLayoutId: selected.id });
-      revalidatePageData([makeCacheKey('adminSessions', {})]);
+      await executeMutation("game/reset", { boardLayoutId: selected.id });
+      revalidatePageData([makeCacheKey("adminSessions", {})]);
       onReset();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('action-failed'));
+      setError(err instanceof Error ? err.message : t("action-failed"));
     } finally {
       setStarting(false);
     }
@@ -73,12 +73,15 @@ const BoardPickerDialog = (props: BoardPickerDialogProps) => {
       }}
     >
       <DialogHeader>
-        <DialogTitle>{t('reset-board-title')}</DialogTitle>
+        <DialogTitle>{t("reset-board-title")}</DialogTitle>
       </DialogHeader>
       <DialogBody>
         <div className={styles.body}>
           <Suspense fallback={null}>
-            <BoardPickerContent selectedId={selected?.id ?? null} onSelect={setSelected} />
+            <BoardPickerContent
+              selectedId={selected?.id ?? null}
+              onSelect={setSelected}
+            />
           </Suspense>
           {error ? (
             <p className={styles.error} aria-live="polite">
@@ -89,15 +92,14 @@ const BoardPickerDialog = (props: BoardPickerDialogProps) => {
       </DialogBody>
       <DialogFooter>
         <Button type="button" variant="secondary" onClick={handleClose}>
-          {t('cancel')}
+          {t("cancel")}
         </Button>
         <Button
           type="button"
-          variant="destructive"
           disabled={!selected || starting}
           onClick={handleStart}
         >
-          {t('start-game')}
+          {t("start-game")}
         </Button>
       </DialogFooter>
     </Dialog>
