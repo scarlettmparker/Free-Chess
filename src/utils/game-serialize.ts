@@ -100,10 +100,10 @@ export function serializeGameState(gs: GameState): SerializedGameState {
     };
   }
 
-  const serialized = {
+  const serialized: SerializedGameState = {
     whitePieceIds: [...gs.whitePieceIds],
     blackPieceIds: [...gs.blackPieceIds],
-    kingPieceId: [...gs.kingPieceId],
+    kingPieceId: [gs.kingPieceId[0], gs.kingPieceId[1]],
     pieces: gs.pieces.map(serializePiece),
     bitboards: gs.bitboards.map((bb) => ({
       pieceId: bb.pieceId,
@@ -183,13 +183,16 @@ export function deserializeGameState(json: SerializedGameState): GameState {
 
   const currentPieces = gameState?.pieces ?? [];
 
-  const gs = {
+  const gs: GameState = {
     whiteMoves: new Map(json.whiteMoves),
     blackMoves: new Map(json.blackMoves),
     whitePieceIds: [...json.whitePieceIds],
     blackPieceIds: [...json.blackPieceIds],
     pieces: json.pieces.map((p) => deserializePiece(p, currentPieces)),
-    kingPieceId: [...(json.kingPieceId ?? [10, 11])],
+    kingPieceId: [
+      json.kingPieceId?.[0] ?? 10,
+      json.kingPieceId?.[1] ?? 11,
+    ] as [number, number],
     bitboards: json.bitboards.map((bb) => {
       const v = BigInt(bb.bitboard);
       return {

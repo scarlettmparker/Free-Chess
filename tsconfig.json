@@ -14,11 +14,14 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "jsxImportSource": "preact",
 
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
-      "~server/*": ["./server/src/*"]
+      "~server/*": ["./server/src/*"],
+      "react": ["./node_modules/preact/compat"],
+      "react-dom": ["./node_modules/preact/compat"]
     },
 
     "strict": true,

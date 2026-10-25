@@ -102,7 +102,7 @@ const BoardEditor = () => {
                       <DropdownMenu>
                         <DropdownMenuTrigger
                           asChild
-                          onClick={(event: React.MouseEvent) => {
+                          onClick={(event: React.MouseEvent<HTMLElement>) => {
                             event.stopPropagation();
                             event.preventDefault();
                           }}

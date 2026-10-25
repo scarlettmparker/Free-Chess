@@ -14,6 +14,7 @@
     "preview": "NODE_ENV=production bun --preload ./css-plugin.ts server.js",
     "analyze": "ANALYZE=1 bun run build",
     "lint": "bunx oxlint",
+    "typecheck": "bunx tsc --noEmit",
     "lint:fix": "bunx oxlint --fix",
     "fmt": "bunx oxfmt \"**/*.{js,jsx,mjs,cjs,ts,tsx,json}\"",
     "fmt:check": "bunx oxfmt --check \"**/*.{js,jsx,mjs,cjs,ts,tsx,json}\"",
