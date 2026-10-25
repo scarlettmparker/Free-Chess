@@ -1,6 +1,7 @@
 import { Suspense, useTransition } from 'react';
 import { useOutlet, useSearchParams } from 'react-router-dom';
 import AdminCardSkeleton from '~/components/admin/admin-card-skeleton';
+import AdminPageSkeleton from '~/components/admin/admin-page-skeleton';
 
 import AdminUserList from '~/components/admin/admin-user-list';
 import AdminUserPlaceholder from '~/components/admin/admin-user-placeholder';
@@ -37,19 +38,21 @@ const Users = () => {
   };
 
   return (
-    <div className={styles.layout}>
-      <div className={styles.list_panel}>
-        <AdminUserList
-          search={search}
-          page={page}
-          onSearch={handleSearch}
-          onPageChange={handlePageChange}
-        />
+    <Suspense fallback={<AdminPageSkeleton />}>
+      <div className={styles.layout}>
+        <div className={styles.list_panel}>
+          <AdminUserList
+            search={search}
+            page={page}
+            onSearch={handleSearch}
+            onPageChange={handlePageChange}
+          />
+        </div>
+        <div className={styles.detail_panel}>
+          <Suspense fallback={<AdminCardSkeleton />}>{outlet ?? <AdminUserPlaceholder />}</Suspense>
+        </div>
       </div>
-      <div className={styles.detail_panel}>
-        <Suspense fallback={<AdminCardSkeleton />}>{outlet ?? <AdminUserPlaceholder />}</Suspense>
-      </div>
-    </div>
+    </Suspense>
   );
 };
 

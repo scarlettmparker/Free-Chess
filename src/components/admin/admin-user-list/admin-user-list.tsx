@@ -1,24 +1,24 @@
-import { Suspense, useState } from 'react';
-import { useTranslation } from '@sun/i18n';
-import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
+import { Suspense, useState } from "react";
+import { useTranslation } from "@sun/i18n";
+import { executeMutation, makeCacheKey, revalidatePageData } from "@sun/ssr";
 import {
-  Button,
   Card,
   CardBody,
   CardDescription,
   CardHeader,
+  Button,
   CardTitle,
   SearchBar,
   Skeleton,
-} from '@sun/components';
-import CreateUserDialog from '~/components/admin/create-user-dialog';
-import AdminUserListFooter from '~/components/admin/admin-user-list-footer';
-import AdminUserListItems from '~/components/admin/admin-user-list-items';
-import AdminUserListPagination from '~/components/admin/admin-user-list-pagination';
-import type { CreateUserValues } from '~/utils/admin-user-types';
-import RoleCheck from '~/utils/role-check';
-import styles from './admin-user-list.module.css';
-import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
+} from "@sun/components";
+import CreateUserDialog from "~/components/admin/create-user-dialog";
+import AdminUserListFooter from "~/components/admin/admin-user-list-footer";
+import AdminUserListItems from "~/components/admin/admin-user-list-items";
+import AdminUserListPagination from "~/components/admin/admin-user-list-pagination";
+import type { CreateUserValues } from "~/utils/admin-user-types";
+import RoleCheck from "~/utils/role-check";
+import styles from "./admin-user-list.module.css";
+import { FREE_CHESS_ADMIN_ROLE } from "~/utils/roles";
 
 type AdminUserListProps = {
   /**
@@ -44,14 +44,14 @@ type AdminUserListProps = {
  */
 const AdminUserList = (props: AdminUserListProps) => {
   const { search, page, onSearch, onPageChange } = props;
-  const { t } = useTranslation('admin');
+  const { t } = useTranslation("admin");
   const [searchInput, setSearchInput] = useState(search);
   const [createOpen, setCreateOpen] = useState(false);
 
   const handleCreate = async (values: CreateUserValues) => {
-    await executeMutation('user/create', values);
+    await executeMutation("user/create", values);
     revalidatePageData([
-      makeCacheKey('adminUsers', {
+      makeCacheKey("adminUsers", {
         page: String(page),
         search: search || undefined,
       }),
@@ -62,8 +62,8 @@ const AdminUserList = (props: AdminUserListProps) => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>{t('users-title')}</CardTitle>
-          <CardDescription>{t('users-description')}</CardDescription>
+          <CardTitle>{t("users-title")}</CardTitle>
+          <CardDescription>{t("users-description")}</CardDescription>
         </CardHeader>
         <CardBody>
           <div className={styles.toolbar}>
@@ -71,7 +71,7 @@ const AdminUserList = (props: AdminUserListProps) => {
               value={searchInput}
               onChange={setSearchInput}
               onSearch={onSearch}
-              placeholder={t('search-placeholder')}
+              placeholder={t("search-placeholder")}
             />
             <RoleCheck roles={[FREE_CHESS_ADMIN_ROLE]} match="any">
               <Button type="button" onClick={() => setCreateOpen(true)}>
@@ -88,10 +88,18 @@ const AdminUserList = (props: AdminUserListProps) => {
         </Suspense>
       </Card>
       <Suspense fallback={null}>
-        <AdminUserListPagination search={search} page={page} onPageChange={onPageChange} />
+        <AdminUserListPagination
+          search={search}
+          page={page}
+          onPageChange={onPageChange}
+        />
       </Suspense>
       {createOpen && (
-        <CreateUserDialog open onClose={() => setCreateOpen(false)} onSubmit={handleCreate} />
+        <CreateUserDialog
+          open
+          onClose={() => setCreateOpen(false)}
+          onSubmit={handleCreate}
+        />
       )}
     </>
   );
