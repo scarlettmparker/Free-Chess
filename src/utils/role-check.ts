@@ -4,7 +4,7 @@ import { RoleCheck as RoleCheckComponent } from '@sun/ssr/react';
 /**
  * React-typed view of the Preact role gate.
  */
-const RoleCheck = RoleCheckComponent as unknown as ComponentType<{
+const RoleCheck = RoleCheckComponent as ComponentType<{
   /**
    * Roles the user must hold.
    */

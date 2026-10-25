@@ -95,7 +95,7 @@ defineMutation({
 
 defineMutation({
   path: 'game/list-sessions',
-  async handler(_body: Record<string, never>, context) {
+  async handler(_, context) {
     await requireGame(context.cookie);
     const result = await runAdminCommand('list');
     return result;

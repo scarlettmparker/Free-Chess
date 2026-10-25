@@ -202,7 +202,7 @@ function toPieceDto(row: PieceRow): PieceDefinitionDto {
     isKing: Boolean(row.is_king),
     promotionTargets: JSON.parse(row.promotion_targets) as number[],
     promotionRanks: JSON.parse(row.promotion_ranks) as number[],
-    moveStates: JSON.parse(row.move_states) as unknown[],
+    moveStates: JSON.parse(row.move_states),
     stateTransition: row.state_transition,
     edgeReset: Boolean(row.edge_reset),
     sprite: {

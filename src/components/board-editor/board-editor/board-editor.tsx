@@ -27,8 +27,8 @@ import styles from './board-editor.module.css';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
-const EllipsisIcon = EllipsisVerticalOutline as unknown as IconComponent;
-const TrashIcon = TrashOutline as unknown as IconComponent;
+const EllipsisIcon = EllipsisVerticalOutline as IconComponent;
+const TrashIcon = TrashOutline as IconComponent;
 
 /**
  * Board layout editor page.
