@@ -20,12 +20,9 @@
     "test": "bun --bun x vitest run --passWithNoTests",
     "test:watch": "bun --bun x vitest",
     "test:coverage": "bun --bun x vitest run --coverage --passWithNoTests",
-    "db:migrate": "bun server/scripts/migrate.ts",
     "db:migrate:game": "bun server/scripts/migrate-game.ts",
-    "db:backup": "bun server/scripts/backup.ts",
     "db:export-to-sun": "bun server/scripts/export-to-sun.ts",
-    "db:import-to-sun": "bun server/scripts/import-to-sun.ts",
-    "auth:create-admin": "bun server/scripts/create-admin.ts"
+    "db:import-to-sun": "bun server/scripts/import-to-sun.ts"
   },
   "dependencies": {
     "@fastify/compress": "^8.3.1",
@@ -39,7 +36,6 @@
     "@sun/ssr": "^0.10.0",
     "@sun/themes": "^0.2.10",
     "@sun/utils": "^0.2.0",
-    "better-auth": "^1.7.12",
     "cookie": "^1.1.1",
     "dotenv": "^16.5.0",
     "fastify": "^5.9.0",
@@ -64,7 +60,6 @@
     "@types/react-dom": "^19.1.2",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.1.12",
-    "auth": "^1.7.12",
     "bun-types": "1.4.3",
     "jsdom": "^27.0.0",
     "oxfmt": "^0.74.0",

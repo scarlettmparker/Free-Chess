@@ -4,7 +4,6 @@
  */
 
 import { defineLoader } from '@sun/ssr';
-import { isGoogleConfigured } from '~/server/auth';
 
 /**
  * Sign-in providers available on the login page.
@@ -19,6 +18,6 @@ export type LoginOptions = {
 defineLoader({
   pattern: 'loginOptions',
   async loader() {
-    return { loginOptions: { google: isGoogleConfigured() } };
+    return { loginOptions: { google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) } };
   },
 });

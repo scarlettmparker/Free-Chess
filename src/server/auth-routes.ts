@@ -15,10 +15,10 @@ import { safeRedirect } from './redirect.ts';
  */
 export function registerAuthRoutes(app: SunApp, _auth: unknown) {
   app.post('/__login', async (request, reply) => {
-    const body = (request.body ?? {}) as Record<string, unknown>;
+    const body = (request.body ?? {}) as { email?: string; password?: string; redirect?: string };
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
     const password = typeof body.password === 'string' ? body.password : '';
-    const redirectTo = safeRedirect(body.redirect ?? (request.query as Record<string, unknown>).redirect);
+    const redirectTo = safeRedirect(body.redirect ?? (request.query as { redirect?: string }).redirect);
 
     if (!email || !password) {
       reply.redirect(`/login?error=invalid&redirect=${encodeURIComponent(redirectTo)}`);
@@ -40,9 +40,9 @@ export function registerAuthRoutes(app: SunApp, _auth: unknown) {
   });
 
   app.post('/__magic-link', async (request, reply) => {
-    const body = (request.body ?? {}) as Record<string, unknown>;
+    const body = (request.body ?? {}) as { email?: string; redirect?: string };
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
-    const redirectTo = safeRedirect(body.redirect ?? (request.query as Record<string, unknown>).redirect);
+    const redirectTo = safeRedirect(body.redirect ?? (request.query as { redirect?: string }).redirect);
 
     if (email) {
       await requestMagicLink(email);
@@ -51,7 +51,7 @@ export function registerAuthRoutes(app: SunApp, _auth: unknown) {
   });
 
   app.get('/__magic-link/verify', async (request, reply) => {
-    const query = (request.query ?? {}) as Record<string, unknown>;
+    const query = (request.query ?? {}) as { token?: string; redirect?: string };
     const token = typeof query.token === 'string' ? query.token : '';
     const redirectTo = safeRedirect(query.redirect);
 
@@ -83,7 +83,7 @@ export function registerAuthRoutes(app: SunApp, _auth: unknown) {
   });
 
   app.get('/api/auth/callback/google', async (request, reply) => {
-    const query = (request.query ?? {}) as Record<string, unknown>;
+    const query = (request.query ?? {}) as { code?: string; state?: string };
     const code = typeof query.code === 'string' ? query.code : '';
     const redirectTo = safeRedirect(query.state);
     if (!code) {

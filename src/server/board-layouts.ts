@@ -145,7 +145,7 @@ function toLayoutDto(row: BoardLayoutRow): BoardLayoutDto {
  */
 function isPlacementShape(placement: unknown): placement is BoardPlacement {
   if (typeof placement !== 'object' || placement === null) return false;
-  const entry = placement as Record<string, unknown>;
+  const entry = placement as { definitionId?: unknown; color?: unknown; square?: unknown };
   return (
     Number.isInteger(entry.definitionId) &&
     (entry.color === 0 || entry.color === 1) &&

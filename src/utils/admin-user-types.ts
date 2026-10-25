@@ -142,7 +142,7 @@ export type AdminUserPage = {
 };
 
 /**
- * Raw user record returned by better-auth.
+ * Raw user record.
  */
 type UserRecord = {
   /**
@@ -184,7 +184,7 @@ type UserRecord = {
 };
 
 /**
- * Raw session record returned by better-auth.
+ * Raw session record.
  */
 type SessionRecord = {
   /**
@@ -229,7 +229,7 @@ function isoDate(value: Date | string | null | undefined) {
 }
 
 /**
- * Converts a better-auth user record.
+ * Converts a account record.
  *
  * @param user Raw user record.
  * @returns User shape used by the admin UI.
@@ -249,7 +249,7 @@ export function toAdminUser(user: UserRecord): AdminUser {
 }
 
 /**
- * Converts a better-auth session record.
+ * Converts a session record.
  *
  * @param session Raw session record.
  * @returns Session shape used by the admin UI.

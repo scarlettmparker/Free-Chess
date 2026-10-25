@@ -4,37 +4,36 @@
  */
 
 import { defineLoader } from '@sun/ssr';
-import { executeDocument } from '@sun/api';
-import { callerHeaders } from '~/server/admin-auth';
-import { auth } from '~/server/auth-instance';
-import type { Permission } from '~/server/permissions';
-import { getSession, requirePermission } from '~/server/session';
+import { executeDocument, getCookieValue } from '@sun/api';
+import { MyRolesDocument } from '~/generated/graphql';
+import { AUTH_COOKIE } from '~/utils/auth';
 import { ListAccountsDocument, GetAccountDocument, type ListAccountsQuery, type GetAccountQuery } from '~/generated/graphql';
 import {
   emptyUserPage,
-  toAdminUserSession,
   type AdminUserPage,
 } from './admin-user-types';
 
 const PAGE_SIZE = 20;
 
 /**
- * Checks the caller's permission without throwing.
+ * Checks whether the caller may read admin data.
  *
  * @param cookie Raw request cookie header.
- * @param permission Permission the caller must hold.
  * @returns True when the caller may read the data.
  */
-async function canRead(cookie: string | undefined, permission: Permission) {
-  const session = await getSession(auth, cookie);
-  return requirePermission(auth, session, permission);
+async function canRead(cookie: string | undefined): Promise<boolean> {
+  const token = getCookieValue(cookie, AUTH_COOKIE);
+  if (!token) return false;
+  const res = await executeDocument<{ gaiaQueries: { myRoles: string[] } }>(MyRolesDocument, {}, token);
+  const roles = res.success ? (res.data?.gaiaQueries.myRoles ?? []) : [];
+  return roles.includes('admin') || roles.includes('user-admin');
 }
 
 defineLoader({
   pattern: 'adminUsers',
   async loader(params, context) {
     const page = Math.max(0, Number(params.page ?? 0) || 0);
-    const allowed = await canRead(context.cookie, { user: ['list'] } satisfies Permission);
+    const allowed = await canRead(context.cookie);
     if (!allowed) {
       return { adminUsers: emptyUserPage(page, PAGE_SIZE) };
     }
@@ -74,7 +73,7 @@ defineLoader({
   pattern: 'adminUser',
   async loader(params, context) {
     const id = typeof params.id === 'string' ? params.id : '';
-    const allowed = await canRead(context.cookie, { user: ['get'] } satisfies Permission);
+    const allowed = await canRead(context.cookie);
     if (!allowed || !id) {
       return { adminUser: null };
     }
@@ -107,22 +106,7 @@ defineLoader({
 
 defineLoader({
   pattern: 'adminUserSessions',
-  async loader(params, context) {
-    const id = typeof params.id === 'string' ? params.id : '';
-    const allowed = await canRead(context.cookie, { session: ['list'] } satisfies Permission);
-    if (!allowed || !id) {
-      return { adminUserSessions: [] };
-    }
-
-    try {
-      const result = await auth.api.listUserSessions({
-        body: { userId: id },
-        headers: callerHeaders(context.cookie),
-      });
-      return { adminUserSessions: result.sessions.map(toAdminUserSession) };
-    } catch (error) {
-      console.error('Failed to load admin user sessions:', error);
-      return { adminUserSessions: [] };
-    }
+  async loader() {
+    return { adminUserSessions: [] };
   },
 });

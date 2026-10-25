@@ -4,9 +4,9 @@
  */
 
 import { defineMutation, MutationError } from '@sun/ssr';
-import type { Permission } from '~/server/permissions';
-import { auth } from '~/server/auth-instance';
-import { getSession, requirePermission } from '~/server/session';
+import { executeDocument, getCookieValue } from '@sun/api';
+import { MyRolesDocument } from '~/generated/graphql';
+import { AUTH_COOKIE } from '~/utils/auth';
 import { getLayout, loadLayout } from '~/server/board-layouts';
 import { validateBoardLayout } from '~/game/board/validate-layout';
 import { runAdminCommand, type AdminColor } from './admin-command';
@@ -46,19 +46,20 @@ const clearCommandByColor: Record<AdminColor, 'cw' | 'cb' | 'clear'> = {
  * @param cookie Raw request cookie header.
  * @param permission Permission the caller must hold.
  */
-async function requireGame(cookie: string | undefined, permission: Permission) {
-  const session = await getSession(auth, cookie);
-  const allowed = await requirePermission(auth, session, permission);
-  if (!allowed || !session) {
+async function requireGame(cookie: string | undefined) {
+  const token = getCookieValue(cookie, AUTH_COOKIE);
+  if (!token) throw new MutationError('Forbidden', 403);
+  const res = await executeDocument<{ gaiaQueries: { myRoles: string[] } }>(MyRolesDocument, {}, token);
+  const roles = res.success ? (res.data?.gaiaQueries.myRoles ?? []) : [];
+  if (!roles.includes('admin') && !roles.includes('game-admin')) {
     throw new MutationError('Forbidden', 403);
   }
-  return session;
 }
 
 defineMutation({
   path: 'game/reset',
   async handler(body: ResetBody, context) {
-    await requireGame(context.cookie, { game: ['reset'] } satisfies Permission);
+    await requireGame(context.cookie);
     if (body.boardLayoutId !== undefined) {
       const layout = getLayout(body.boardLayoutId);
       if (!layout) {
@@ -81,7 +82,7 @@ defineMutation({
 defineMutation({
   path: 'game/clear',
   async handler(body: ClearBody, context) {
-    await requireGame(context.cookie, { game: ['clear'] } satisfies Permission);
+    await requireGame(context.cookie);
     const command = body.color ? clearCommandByColor[body.color] : undefined;
     if (!command) {
         throw new MutationError('Invalid colour', 400);
@@ -94,10 +95,8 @@ defineMutation({
 
 defineMutation({
   path: 'game/list-sessions',
-  async handler(_body: Record<string, unknown>, context) {
-    await requireGame(context.cookie, {
-      game: ['list-sessions'],
-    } satisfies Permission);
+  async handler(_body: Record<string, never>, context) {
+    await requireGame(context.cookie);
     const result = await runAdminCommand('list');
     return result;
   },

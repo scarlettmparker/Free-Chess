@@ -2,6 +2,7 @@ import { executeDocument } from "@sun/api";
 import {
   LoginDocument,
   MeDocument,
+  MyRolesDocument,
   RequestMagicLinkDocument,
   VerifyMagicLinkDocument,
   LoginWithGoogleDocument,
@@ -75,6 +76,19 @@ export async function loginWithGoogle(code: string, redirectUri: string): Promis
   const res = await executeDocument<LoginWithGoogleMutation>(LoginWithGoogleDocument, { code, redirectUri });
   if (!res.success || !res.data) return null;
   return res.data.gaiaMutations.loginWithGoogle?.token ?? null;
+}
+
+/**
+ * Returns the signed-in account's roles.
+ *
+ * @param token the JWT
+ * @returns role names
+ */
+export async function getCurrentRoles(token: string | undefined): Promise<string[]> {
+  if (!token) return [];
+  const res = await executeDocument<{ gaiaQueries: { myRoles: string[] } }>(MyRolesDocument, {}, token);
+  if (!res.success) return [];
+  return res.data?.gaiaQueries.myRoles ?? [];
 }
 
 export async function getCurrentUser(token: string | undefined): Promise<MeQuery["gaiaQueries"]["me"] | null> {
