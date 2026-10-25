@@ -51,6 +51,15 @@ export function useChessSession() {
   const handleState = useCallback(
     (state: SerializedGameState, initial?: SerializedGameState) => {
       rebuildHistory(initial, state.moveHistory ?? []);
+      gameState.checked = [...state.checked];
+      gameState.gameOver = Boolean(state.gameOver);
+      gameState.result = state.result ?? null;
+      setHistory((previous) => {
+        if (previous.length === 0) return previous;
+        const next = [...previous];
+        next[next.length - 1] = serializeGameState(gameState);
+        return next;
+      });
       setSelectedSquare(null);
       refresh();
     },

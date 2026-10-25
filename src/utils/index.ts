@@ -91,21 +91,15 @@ function reindexBitboards(): void {
  * @param definitions Definitions referenced by the layout.
  */
 function mountPlacedPieces(placements: BoardPlacement[], definitions: PieceDefinition[]): void {
-  const placedKings = new Set(
-    definitions
-      .filter(
-        (definition) =>
-          definition.isKing &&
-          placements.some((placement) => placement.definitionId === definition.id),
-      )
-      .map((definition) => definition.id),
+  const placed = new Set(
+    placements.map((placement) => `${placement.definitionId}:${placement.color}`),
   );
 
   for (const definition of definitions) {
-    if (definition.isKing && !placedKings.has(definition.id)) continue;
     let base = pieceRegistry.getEngineBaseId(definition.id);
     if (base === undefined) base = pieceRegistry.register(definition);
     for (const color of [0, 1] as const) {
+      if (definition.isKing && !placed.has(`${definition.id}:${color}`)) continue;
       const engineId = base + color;
       if (gameState.pieces.some((piece) => piece.getId() === engineId)) continue;
       const piece = definition.legacy

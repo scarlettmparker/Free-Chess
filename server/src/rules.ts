@@ -125,6 +125,23 @@ export function validateServerMove(move: number): boolean {
 }
 
 /**
+ * Reason a move cannot be accepted, or null when it can be attempted.
+ *
+ * @param move Encoded move.
+ * @param color Colour held by the caller.
+ * @returns Rejection reason, or null.
+ */
+export function checkServerMove(
+  move: number,
+  color: number,
+): 'game-over' | 'not-your-turn' | 'illegal-move' | null {
+  if (gameState.gameOver) return 'game-over';
+  if (gameState.side !== color) return 'not-your-turn';
+  if (!validateServerMove(move)) return 'illegal-move';
+  return null;
+}
+
+/**
  * Checks whether the side to move has at least one legal move.
  *
  * @returns True when a legal move exists.
@@ -197,9 +214,7 @@ export function resetGameStatus(): void {
 }
 
 /**
- * Updates check, draw and game-over state after a move has been applied.
- *
- * @param move Encoded move that was just applied.
+ * Recomputes check, draw and game-over state for the current position.
  */
 export function evaluateGameStatus(): void {
   const key = positionKey();

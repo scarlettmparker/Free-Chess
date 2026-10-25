@@ -1,6 +1,6 @@
 import type { ServerWebSocket } from 'bun';
 import { sessions, assignColor, attachSession as openSession, detachSession } from './sessions.ts';
-import { isEncodedMove, resetGameStatus, updateGameStatus, validateServerMove } from './rules.ts';
+import { checkServerMove, isEncodedMove, resetGameStatus, updateGameStatus } from './rules.ts';
 import { adminCommands, isAdminAuthorized, runCommand } from './admin.ts';
 import { captureInitialState, getInitialState } from './initial-state.ts';
 import { adminToken } from '../../config.js';
@@ -220,17 +220,14 @@ function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
       return;
     }
 
-    if (gameState.gameOver) {
-      rejectMove(ws, 'game-over');
+    const side = color === 'white' ? 0 : 1;
+    const rejection = checkServerMove(move, side);
+    if (rejection !== null) {
+      rejectMove(ws, rejection);
       return;
     }
 
-    if (gameState.side !== (color === 'white' ? 0 : 1)) {
-      rejectMove(ws, 'not-your-turn');
-      return;
-    }
-
-    if (!validateServerMove(move) || makeMove(move, moveType.ALL_MOVES, 0) !== 1) {
+    if (makeMove(move, moveType.ALL_MOVES, 0) !== 1) {
       rejectMove(ws, 'illegal-move');
       return;
     }

@@ -9,6 +9,7 @@ import type { PieceDefinition } from '~/game/piece/piece-definition';
 import { encodeMove, getMoveCastle, getMoveSource, getMoveTarget } from '~/game/move/move-def';
 import { loadTestPosition, mountGame } from '~/utils';
 import {
+  checkServerMove,
   checkedForSideToMove,
   evaluateGameStatus,
   hasLegalMoves,
@@ -185,6 +186,59 @@ describe('validateServerMove', () => {
   });
 });
 
+describe('checkServerMove', () => {
+  test('accepts a legal move for the side to move', () => {
+    loadTestPosition(startPosition);
+    resetGameStatus();
+    const move = findMove('e2', 'e4')!;
+
+    expect(checkServerMove(move, colors.WHITE)).toBeNull();
+  });
+
+  test('rejects a move for the wrong colour', () => {
+    loadTestPosition(startPosition);
+    resetGameStatus();
+    const move = findMove('e2', 'e4')!;
+
+    expect(checkServerMove(move, colors.BLACK)).toBe('not-your-turn');
+  });
+
+  test('rejects an illegal move', () => {
+    loadTestPosition(startPosition);
+    resetGameStatus();
+    const move = encodeMove(
+      notToRawPos['e2'],
+      notToRawPos['e5'],
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    );
+
+    expect(checkServerMove(move, colors.WHITE)).toBe('illegal-move');
+  });
+
+  test('rejects every move after the game is over', () => {
+    loadTestPosition(foolsMate);
+    resetGameStatus();
+    evaluateGameStatus();
+    const move = encodeMove(
+      notToRawPos['a2'],
+      notToRawPos['a3'],
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+    );
+
+    expect(checkServerMove(move, colors.WHITE)).toBe('game-over');
+  });
+});
+
 describe('game result', () => {
   test('detects checkmate', () => {
     loadTestPosition(startPosition);
@@ -325,6 +379,48 @@ describe('custom piece state transitions', () => {
     play('e5', 'e4');
 
     expect(gameState.whiteMoves.get(Number(`${notToRawPos['e4']}${piece!.getId()}`))).toBe(0);
+  });
+
+  test('edgeReset returns the piece to its first state at the board edge', () => {
+    const kingDefinition = BUILTIN_DEFINITIONS.find(
+      (definition) => definition.slug === 'king',
+    ) as PieceDefinition;
+    const edgePiece: PieceDefinition = {
+      id: 104,
+      slug: 'edge-piece',
+      name: 'Edge Piece',
+      isKing: false,
+      promotionTargets: [],
+      promotionRanks: [],
+      moveStates: [
+        {
+          index: 0,
+          vectors: [{ dx: 0, dy: 1, range: 'step', capture: 'optional' }],
+        },
+        {
+          index: 1,
+          vectors: [{ dx: 0, dy: -1, range: 'step', capture: 'optional' }],
+        },
+      ],
+      stateTransition: 'advance',
+      edgeReset: true,
+      sprite: { headKey: 'pawn-head', bodyKey: 'pawn-body', footKey: 'pawn-foot' },
+    };
+
+    mountGame({
+      placements: [
+        { definitionId: 1, color: 0, square: notToRawPos['e1'] },
+        { definitionId: 1, color: 1, square: notToRawPos['h8'] },
+        { definitionId: 104, color: 0, square: notToRawPos['d7'] },
+      ],
+      definitions: [kingDefinition, edgePiece],
+    });
+    resetGameStatus();
+
+    const piece = gameState.pieces.find((candidate) => candidate.getDefinitionId() === 104);
+    play('d7', 'd8');
+
+    expect(gameState.whiteMoves.get(Number(`${notToRawPos['d8']}${piece!.getId()}`))).toBe(0);
   });
 
   test('first-move-only vectors are unavailable after the piece moves', () => {
