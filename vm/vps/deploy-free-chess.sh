@@ -97,7 +97,7 @@ deploy() {
     routes messages src server public
 
   remote "sudo lxc exec '$CONTAINER' -- mkdir -p /opt/free-chess /var/lib/free-chess"
-  remote "sudo lxc exec '$CONTAINER' -- bash -c 'find /opt/free-chess -mindepth 1 -maxdepth 1 ! -name node_modules -exec rm -rf {} +'"
+  remote "sudo lxc exec '$CONTAINER' -- bash -c 'find /opt/free-chess -mindepth 1 -maxdepth 1 ! -name node_modules ! -name .env.production -exec rm -rf {} +'"
   rsync -az -e "ssh -i $SSH_KEY" "$app_tar" "$VPS:$REMOTE_TMP/free-chess.tgz"
   remote "sudo lxc exec '$CONTAINER' -- rm -f /tmp/free-chess.tgz /tmp/free-chess-deps.tgz"
   remote "sudo lxc file push -q -p --mode 0644 '$REMOTE_TMP/free-chess.tgz' '$CONTAINER/tmp/free-chess.tgz'"
