@@ -1,6 +1,6 @@
 import { Button } from '@sun/components';
 import { partUrl } from '~/components/chess/piece';
-import type { PieceDefinitionDto } from '~/utils/piece-types';
+import type { MedusaPieceDefinitionDto } from '~/utils/piece-types';
 import styles from './piece-palette.module.css';
 
 /**
@@ -10,7 +10,7 @@ export type PaletteSelection = {
   /**
    * Selected definition id.
    */
-  definitionId: number;
+  definitionId: string;
   /**
    * Selected colour.
    */
@@ -21,7 +21,7 @@ type PiecePaletteProps = {
   /**
    * Placeable definitions.
    */
-  definitions: PieceDefinitionDto[];
+  definitions: MedusaPieceDefinitionDto[];
   /**
    * Row colour.
    */
@@ -47,6 +47,7 @@ const PiecePalette = (props: PiecePaletteProps) => {
   return (
     <div className={styles.carousel}>
       {definitions.map((definition) => {
+        if (!definition.sprite) return null;
         const active = selection.definitionId === definition.id && selection.color === color;
         return (
           <Button

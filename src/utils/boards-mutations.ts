@@ -1,7 +1,7 @@
 import { defineMutation, MutationError } from '@sun/ssr';
 import { executeDocument } from '@sun/api';
 import { SaveBoardLayoutDocument, DeleteBoardLayoutDocument, type SaveBoardLayoutMutation, type DeleteBoardLayoutMutation } from '~/generated/graphql';
-import type { BoardLayoutInput } from '~/server/board-layouts';
+import type { BoardLayoutInput } from '~/utils/board-layout-types';
 
 /**
  * Saves a board layout.

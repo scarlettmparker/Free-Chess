@@ -5,7 +5,11 @@ query ListBoardLayouts {
       slug
       name
       description
-      placements
+      placements {
+        definitionId
+        color
+        square
+      }
       isSystem
       createdAt
       updatedAt

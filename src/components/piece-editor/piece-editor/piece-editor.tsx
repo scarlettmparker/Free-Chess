@@ -4,6 +4,7 @@ import { useTranslation } from '@sun/i18n';
 import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
 import { usePageData } from '@sun/ssr/react';
 import {
+  Badge,
   Button,
   Card,
   CardBody,
@@ -22,7 +23,7 @@ import {
 } from '@sun/components';
 import { EllipsisVerticalOutline, TrashOutline } from 'preact-heroicons';
 import PieceForm from '~/components/piece-editor/piece-form';
-import type { PieceDefinitionDto } from '~/utils/piece-types';
+import type { MedusaPieceDefinitionDto } from '~/utils/piece-types';
 import styles from './piece-editor.module.css';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -35,11 +36,11 @@ const TrashIcon = TrashOutline as IconComponent;
  */
 const PieceEditor = () => {
   const { t } = useTranslation('admin');
-  const { data } = usePageData<PieceDefinitionDto[]>('pieces', 'pieces', {});
-  const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<PieceDefinitionDto | null>(null);
+  const { data } = usePageData<MedusaPieceDefinitionDto[]>('pieces', 'pieces', {});
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MedusaPieceDefinitionDto | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const selected = data?.find((piece: PieceDefinitionDto) => piece.id === selectedId) ?? null;
+  const selected = data?.find((piece: MedusaPieceDefinitionDto) => piece.id === selectedId) ?? null;
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -63,7 +64,7 @@ const PieceEditor = () => {
               <CardTitle>{t('pieces')}</CardTitle>
             </CardHeader>
             <CardBody className={styles.list}>
-              {(data ?? []).map((piece: PieceDefinitionDto) => (
+              {(data ?? []).map((piece: MedusaPieceDefinitionDto) => (
                 <Button
                   key={piece.id}
                   variant={piece.id === selectedId ? 'default' : 'secondary'}
@@ -71,8 +72,8 @@ const PieceEditor = () => {
                   onClick={() => setSelectedId(piece.id)}
                 >
                   <span className={styles.piece_name}>{piece.name || t('unnamed-piece')}</span>
-                  {piece.ownerName && piece.ownerName !== 'System' ? (
-                    <span className={styles.owner_badge}>{piece.ownerName}</span>
+                  {piece.isSystem ? (
+                    <Badge variant="secondary">{t('system-piece')}</Badge>
                   ) : null}
                   {piece.isSystem ? null : (
                     <span className={styles.piece_actions}>
@@ -105,7 +106,7 @@ const PieceEditor = () => {
                   )}
                 </Button>
               ))}
-              <Button variant="secondary" onClick={() => setSelectedId(-1)}>
+              <Button variant="secondary" onClick={() => setSelectedId(null)}>
                 {t('new-piece')}
               </Button>
             </CardBody>
@@ -120,9 +121,11 @@ const PieceEditor = () => {
                 </ScrollArea>
               </CardBody>
             </Card>
-            <Button className={styles.save_button} type="submit" form="piece-form">
-              {t('save')}
-            </Button>
+            {selected?.isSystem ? null : (
+              <Button className={styles.save_button} type="submit" form="piece-form">
+                {t('save')}
+              </Button>
+            )}
           </div>
         </div>
       </div>

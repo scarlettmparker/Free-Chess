@@ -3,15 +3,15 @@ import { useTranslation } from '@sun/i18n';
 import { usePageData } from '@sun/ssr/react';
 import { Button, ScrollArea } from '@sun/components';
 import BoardPreview from '~/components/admin/board-preview';
-import type { BoardLayoutDto } from '~/server/board-layouts';
-import type { PieceDefinitionDto } from '~/utils/piece-types';
+import type { BoardLayoutDto } from '~/utils/board-layout-types';
+import type { MedusaPieceDefinitionDto } from '~/utils/piece-types';
 import styles from './board-picker-content.module.css';
 
 type BoardPickerContentProps = {
   /**
    * Selected layout id.
    */
-  selectedId: number | null;
+  selectedId: string | null;
   /**
    * Selects a layout.
    */
@@ -25,8 +25,10 @@ const BoardPickerContent = (props: BoardPickerContentProps) => {
   const { selectedId, onSelect } = props;
   const { t } = useTranslation('admin');
   const { data: boards } = usePageData<BoardLayoutDto[]>('boards', 'boards', {});
-  const { data: pieces } = usePageData<PieceDefinitionDto[]>('pieces', 'pieces', {});
-  const sprites = new Map((pieces ?? []).map((piece) => [piece.id, piece.sprite]));
+  const { data: pieces } = usePageData<MedusaPieceDefinitionDto[]>('pieces', 'pieces', {});
+  const sprites = new Map(
+    (pieces ?? []).flatMap((piece) => (piece.sprite ? [[piece.id, piece.sprite] as const] : [])),
+  );
   const selected = (boards ?? []).find((layout) => layout.id === selectedId) ?? null;
 
   useEffect(() => {

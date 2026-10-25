@@ -8,11 +8,11 @@ type BoardGridProps = {
   /**
    * Current placements.
    */
-  placements: BoardPlacement[];
+  placements: BoardPlacement<string>[];
   /**
    * Sprites by definition id.
    */
-  sprites: Map<number, { headKey: string; bodyKey: string; footKey: string }>;
+  sprites: Map<string, { headKey: string; bodyKey: string; footKey: string }>;
   /**
    * Paint or erase one square.
    *
@@ -20,13 +20,17 @@ type BoardGridProps = {
    * @param add Whether to paint or erase.
    */
   onPaint: (square: number, add: boolean) => void;
+  /**
+   * Whether painting is disabled.
+   */
+  readOnly?: boolean;
 };
 
 /**
  * Eight by eight board grid with drag painting. Left click paints, right click erases.
  */
 const BoardGrid = (props: BoardGridProps) => {
-  const { placements, sprites, onPaint } = props;
+  const { placements, sprites, onPaint, readOnly = false } = props;
   const gridRef = useRef<HTMLDivElement | null>(null);
   const dragAdd = useRef<boolean | null>(null);
 
@@ -63,6 +67,7 @@ const BoardGrid = (props: BoardGridProps) => {
    * @param square Square index.
    */
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>, square: number) => {
+    if (readOnly) return;
     if (event.button !== 0 && event.button !== 2) return;
     event.preventDefault();
     const add = event.button === 0;
@@ -78,6 +83,7 @@ const BoardGrid = (props: BoardGridProps) => {
    * @param square Square index.
    */
   const handlePointerEnter = (event: PointerEvent<HTMLDivElement>, square: number) => {
+    if (readOnly) return;
     if (dragAdd.current === null) return;
     if (dragAdd.current && (event.ctrlKey || event.metaKey) && bySquare.has(square)) return;
     onPaint(square, dragAdd.current);

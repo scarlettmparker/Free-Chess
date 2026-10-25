@@ -4,6 +4,7 @@ import { useTranslation } from '@sun/i18n';
 import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
 import { usePageData } from '@sun/ssr/react';
 import {
+  Badge,
   Button,
   Card,
   CardBody,
@@ -22,7 +23,7 @@ import {
 } from '@sun/components';
 import { EllipsisVerticalOutline, TrashOutline } from 'preact-heroicons';
 import BoardForm from '~/components/board-editor/board-form';
-import type { BoardLayoutDto } from '~/server/board-layouts';
+import type { BoardLayoutDto } from '~/utils/board-layout-types';
 import styles from './board-editor.module.css';
 
 type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
@@ -36,7 +37,7 @@ const TrashIcon = TrashOutline as IconComponent;
 const BoardEditor = () => {
   const { t } = useTranslation('admin');
   const { data } = usePageData<BoardLayoutDto[]>('boards', 'boards', {});
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BoardLayoutDto | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const selected = data?.find((layout: BoardLayoutDto) => layout.id === selectedId) ?? null;
@@ -71,10 +72,12 @@ const BoardEditor = () => {
                   key={layout.id}
                   variant={layout.id === selectedId ? 'default' : 'secondary'}
                   className={styles.layout_button}
-                  disabled={layout.isSystem}
                   onClick={() => setSelectedId(layout.id)}
                 >
                   <span className={styles.layout_name}>{layout.name || t('unnamed-layout')}</span>
+                  {layout.isSystem ? (
+                    <Badge variant="secondary">{t('system-board')}</Badge>
+                  ) : null}
                   {layout.isSystem ? null : (
                     <span className={styles.layout_actions}>
                       <DropdownMenu>
@@ -117,13 +120,19 @@ const BoardEditor = () => {
             <Card>
               <CardBody>
                 <ScrollArea maxHeight="85vh" className={styles.scroll_area}>
-                  <BoardForm key={selectedId ?? 'new'} layout={selected} />
+                  <BoardForm
+                    key={selectedId ?? 'new'}
+                    layout={selected}
+                    readOnly={Boolean(selected?.isSystem)}
+                  />
                 </ScrollArea>
               </CardBody>
             </Card>
-            <Button className={styles.save_button} type="submit" form="board-form">
-              {t('save')}
-            </Button>
+            {selected?.isSystem ? null : (
+              <Button className={styles.save_button} type="submit" form="board-form">
+                {t('save')}
+              </Button>
+            )}
           </div>
         </div>
       </div>

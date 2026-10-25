@@ -4,10 +4,9 @@ import { executeMutation, makeCacheKey, revalidatePageData } from '@sun/ssr';
 import { usePageData } from '@sun/ssr/react';
 import { Form, FormField, FormItem, FormLabel, Input } from '@sun/components';
 import { validateBoardLayout } from '~/game/board/validate-layout';
-import type { BoardPlacement } from '~/game/board/validate-layout';
-import type { PieceDefinition } from '~/game/piece/piece-definition';
-import type { BoardLayoutDto, BoardLayoutInput } from '~/server/board-layouts';
-import type { PieceDefinitionDto } from '~/utils/piece-types';
+import type { BoardPlacement, LayoutDefinition } from '~/game/board/validate-layout';
+import type { BoardLayoutDto, BoardLayoutInput } from '~/utils/board-layout-types';
+import type { MedusaPieceDefinitionDto } from '~/utils/piece-types';
 import BoardGrid from '~/components/board-editor/board-grid';
 import PiecePalette from '~/components/board-editor/piece-palette';
 import type { PaletteSelection } from '~/components/board-editor/piece-palette';
@@ -18,26 +17,23 @@ type BoardFormProps = {
    * Layout to edit, or null for a new layout.
    */
   layout: BoardLayoutDto | null;
+  /**
+   * Whether the form is read-only.
+   */
+  readOnly?: boolean;
 };
 
 /**
- * Convert a piece DTO into an engine definition for validation.
+ * Convert a piece DTO into a definition for layout validation.
  *
  * @param dto Piece DTO.
- * @returns Engine definition.
+ * @returns Validation definition.
  */
-function dtoToDefinition(dto: PieceDefinitionDto): PieceDefinition {
+function dtoToDefinition(dto: MedusaPieceDefinitionDto): LayoutDefinition<string> {
   return {
     id: dto.id,
-    slug: dto.slug,
-    name: dto.name,
     isKing: dto.isKing,
-    promotionTargets: dto.promotionTargets,
-    promotionRanks: dto.promotionRanks,
-    moveStates: dto.moveStates as PieceDefinition['moveStates'],
-    stateTransition: dto.stateTransition as PieceDefinition['stateTransition'],
-    edgeReset: dto.edgeReset,
-    sprite: dto.sprite,
+    moveStates: dto.moveStates as LayoutDefinition<string>['moveStates'],
   };
 }
 
@@ -45,9 +41,9 @@ function dtoToDefinition(dto: PieceDefinitionDto): PieceDefinition {
  * Board layout editing form.
  */
 const BoardForm = (props: BoardFormProps) => {
-  const { layout } = props;
+  const { layout, readOnly = false } = props;
   const { t } = useTranslation('admin');
-  const { data: pieces } = usePageData<PieceDefinitionDto[]>('pieces', 'pieces', {});
+  const { data: pieces } = usePageData<MedusaPieceDefinitionDto[]>('pieces', 'pieces', {});
   const [form, setForm] = useState<BoardLayoutInput>(() => ({
     id: layout?.id,
     slug: layout?.slug ?? '',
@@ -60,13 +56,18 @@ const BoardForm = (props: BoardFormProps) => {
     if (king) return { definitionId: king.id, color: 0 };
     const first = pieces?.[0];
     if (first) return { definitionId: first.id, color: 0 };
-    return { definitionId: -1, color: 0 };
+    return { definitionId: '', color: 0 };
   });
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const definitions = useMemo(() => (pieces ?? []).map(dtoToDefinition), [pieces]);
   const sprites = useMemo(
-    () => new Map((pieces ?? []).map((piece) => [piece.id, piece.sprite])),
+    () =>
+      new Map(
+        (pieces ?? []).flatMap((piece) =>
+          piece.sprite ? [[piece.id, piece.sprite] as const] : [],
+        ),
+      ),
     [pieces],
   );
   const issues = useMemo(() => {
@@ -82,6 +83,7 @@ const BoardForm = (props: BoardFormProps) => {
    */
   const paintCell = useCallback(
     (square: number, add: boolean) => {
+      if (readOnly) return;
       if (!add) {
         setForm((prev) => {
           if (!prev.placements.some((placement) => placement.square === square)) return prev;
@@ -93,7 +95,7 @@ const BoardForm = (props: BoardFormProps) => {
         return;
       }
       if (!sprites.has(selection.definitionId)) return;
-      const placement: BoardPlacement = {
+      const placement: BoardPlacement<string> = {
         definitionId: selection.definitionId,
         color: selection.color,
         square,
@@ -106,7 +108,7 @@ const BoardForm = (props: BoardFormProps) => {
         ],
       }));
     },
-    [selection, sprites],
+    [selection, sprites, readOnly],
   );
 
   /**
@@ -116,6 +118,7 @@ const BoardForm = (props: BoardFormProps) => {
    */
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (readOnly) return;
     setSaveError(null);
     const slug = form.name.toLowerCase().replace(/\s+/g, '-');
     try {
@@ -135,6 +138,7 @@ const BoardForm = (props: BoardFormProps) => {
           <FormItem>
             <Input
               value={form.name}
+              disabled={readOnly}
               placeholder={t('board-name-placeholder')}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setForm({ ...form, name: event.currentTarget.value })
@@ -147,6 +151,7 @@ const BoardForm = (props: BoardFormProps) => {
           <FormItem>
             <Input
               value={form.description ?? ''}
+              disabled={readOnly}
               placeholder={t('board-description-placeholder')}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setForm({ ...form, description: event.currentTarget.value || null })
@@ -155,19 +160,28 @@ const BoardForm = (props: BoardFormProps) => {
           </FormItem>
         </FormField>
       </div>
-      <PiecePalette
-        definitions={pieces ?? []}
-        color={1}
-        selection={selection}
-        onSelect={setSelection}
+      {readOnly ? null : (
+        <PiecePalette
+          definitions={pieces ?? []}
+          color={1}
+          selection={selection}
+          onSelect={setSelection}
+        />
+      )}
+      <BoardGrid
+        placements={form.placements}
+        sprites={sprites}
+        onPaint={paintCell}
+        readOnly={readOnly}
       />
-      <BoardGrid placements={form.placements} sprites={sprites} onPaint={paintCell} />
-      <PiecePalette
-        definitions={pieces ?? []}
-        color={0}
-        selection={selection}
-        onSelect={setSelection}
-      />
+      {readOnly ? null : (
+        <PiecePalette
+          definitions={pieces ?? []}
+          color={0}
+          selection={selection}
+          onSelect={setSelection}
+        />
+      )}
       {issues.length > 0 ? (
         <ul className={styles.issues}>
           {issues.map((issue) => (

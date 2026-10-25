@@ -1,5 +1,5 @@
 import { partUrl } from '~/components/chess/piece';
-import type { BoardLayoutDto } from '~/server/board-layouts';
+import type { BoardLayoutDto } from '~/utils/board-layout-types';
 import styles from './board-preview.module.css';
 
 type BoardPreviewProps = {
@@ -10,7 +10,7 @@ type BoardPreviewProps = {
   /**
    * Sprites by definition id.
    */
-  sprites: Map<number, { headKey: string; bodyKey: string; footKey: string }>;
+  sprites: Map<string, { headKey: string; bodyKey: string; footKey: string }>;
 };
 
 /**

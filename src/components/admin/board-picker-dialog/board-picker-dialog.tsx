@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from '@sun/components';
 import BoardPickerContent from '~/components/admin/board-picker-content';
-import type { BoardLayoutDto } from '~/server/board-layouts';
+import type { BoardLayoutDto } from '~/utils/board-layout-types';
 import styles from './board-picker-dialog.module.css';
 
 type BoardPickerDialogProps = {

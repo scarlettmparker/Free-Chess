@@ -34,6 +34,7 @@
 .piece_button {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--md);
   width: 100%;
 }
@@ -45,6 +46,7 @@
   pointer-events: none;
   max-width: 60%;
 }
+
 
 .piece_actions {
   margin-left: auto;

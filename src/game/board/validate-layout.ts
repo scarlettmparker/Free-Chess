@@ -1,13 +1,18 @@
 import type { MoveVector, PieceDefinition } from '~/game/piece/piece-definition';
 
 /**
+ * Piece definition id accepted by layout validation.
+ */
+type LayoutId = string | number;
+
+/**
  * Placement of one piece on the board.
  */
-export interface BoardPlacement {
+export interface BoardPlacement<Id = number> {
   /**
    * Piece definition id.
    */
-  definitionId: number;
+  definitionId: Id;
   /**
    * Piece colour, 0 = white, 1 = black.
    */
@@ -17,6 +22,16 @@ export interface BoardPlacement {
    */
   square: number;
 }
+
+/**
+ * Definition fields used by layout validation.
+ */
+export type LayoutDefinition<Id = number> = Pick<PieceDefinition, 'isKing' | 'moveStates'> & {
+  /**
+   * Piece definition id.
+   */
+  id: Id;
+};
 
 /**
  * Machine-readable layout rejection reasons.
@@ -88,7 +103,7 @@ function attackedSquares(
   vectors: MoveVector[],
   source: number,
   color: 0 | 1,
-  occupied: Map<number, BoardPlacement>,
+  occupied: Map<number, BoardPlacement<LayoutId>>,
 ): number[] {
   const targets: number[] = [];
   for (const v of vectors) {
@@ -123,9 +138,9 @@ function attackedSquares(
 function isAttacked(
   square: number,
   byColor: 0 | 1,
-  placements: BoardPlacement[],
-  byDef: Map<number, PieceDefinition>,
-  occupied: Map<number, BoardPlacement>,
+  placements: BoardPlacement<LayoutId>[],
+  byDef: Map<LayoutId, LayoutDefinition<LayoutId>>,
+  occupied: Map<number, BoardPlacement<LayoutId>>,
 ): boolean {
   for (const p of placements) {
     if (p.color !== byColor) continue;
@@ -150,9 +165,9 @@ function isAttacked(
  * @returns Reachable target squares before king-safety filtering.
  */
 function pseudoMoves(
-  p: BoardPlacement,
-  def: PieceDefinition,
-  occupied: Map<number, BoardPlacement>,
+  p: BoardPlacement<LayoutId>,
+  def: LayoutDefinition<LayoutId>,
+  occupied: Map<number, BoardPlacement<LayoutId>>,
 ): number[] {
   const vectors = def.moveStates[0]?.vectors ?? [];
   const targets: number[] = [];
@@ -202,12 +217,12 @@ function pseudoMoves(
  * @returns Validation result with rejection reasons.
  */
 export function validateBoardLayout(
-  placements: BoardPlacement[],
-  definitions: PieceDefinition[],
+  placements: BoardPlacement<LayoutId>[],
+  definitions: LayoutDefinition<LayoutId>[],
 ): LayoutValidationResult {
   const errors: LayoutValidationError[] = [];
   const byDef = new Map(definitions.map((def) => [def.id, def]));
-  const occupied = new Map<number, BoardPlacement>();
+  const occupied = new Map<number, BoardPlacement<LayoutId>>();
 
   for (const p of placements) {
     if (!byDef.has(p.definitionId)) errors.push('unknown-piece');

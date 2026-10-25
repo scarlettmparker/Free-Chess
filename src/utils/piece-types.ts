@@ -1,3 +1,5 @@
+import type { ListPieceSetsQuery, ListPiecesQuery } from '~/generated/graphql';
+
 export type PieceSpriteDto = {
   /**
    * Head part key.
@@ -121,3 +123,12 @@ export type PieceSetDto = {
    */
   members: PieceSetMemberDto[];
 };
+
+export type MedusaPieceDefinitionDto =
+  ListPiecesQuery['medusaQueries']['pieces'][number];
+
+export type MedusaPieceSetMemberDto =
+  ListPieceSetsQuery['medusaQueries']['pieceSets'][number]['members'][number];
+
+export type MedusaPieceSetDto =
+  ListPieceSetsQuery['medusaQueries']['pieceSets'][number];

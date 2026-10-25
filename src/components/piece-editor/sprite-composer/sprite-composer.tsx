@@ -20,6 +20,10 @@ type SpriteComposerProps = {
    * Called when a part changes.
    */
   onChange: (part: 'head' | 'body' | 'foot', key: string) => void;
+  /**
+   * Whether the composer is read-only.
+   */
+  readOnly?: boolean;
 };
 
 const PARTS = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn', 'balloon', 'pogo', 'spongebob'];
@@ -28,10 +32,11 @@ const PARTS = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn', 'balloon', '
  * Interactive sprite composer with live preview.
  */
 const SpriteComposer = (props: SpriteComposerProps) => {
-  const { headKey, bodyKey, footKey, onChange } = props;
+  const { headKey, bodyKey, footKey, onChange, readOnly = false } = props;
   const { t } = useTranslation('admin');
 
   const cycle = (part: 'head' | 'body' | 'foot', current: string, delta: number) => {
+    if (readOnly) return;
     const base = current.split('-')[0] || PARTS[0];
     const index = PARTS.indexOf(base);
     const next = PARTS[(index + delta + PARTS.length) % PARTS.length];
@@ -45,22 +50,24 @@ const SpriteComposer = (props: SpriteComposerProps) => {
         <img src={partUrl(bodyKey, 0)} alt={t('piece-body')} />
         <img src={partUrl(footKey, 0)} alt={t('piece-foot')} />
       </div>
-      <div className={styles.controls}>
-        {(['head', 'body', 'foot'] as const).map((part) => {
-          const value = part === 'head' ? headKey : part === 'body' ? bodyKey : footKey;
-          return (
-            <div key={part} className={styles.row}>
-              <Button variant="secondary" onClick={() => cycle(part, value, -1)}>
-                {'<'}
-              </Button>
-              <span className={styles.key}>{t(`${part}-key`)}</span>
-              <Button variant="secondary" onClick={() => cycle(part, value, 1)}>
-                {'>'}
-              </Button>
-            </div>
-          );
-        })}
-      </div>
+      {readOnly ? null : (
+        <div className={styles.controls}>
+          {(['head', 'body', 'foot'] as const).map((part) => {
+            const value = part === 'head' ? headKey : part === 'body' ? bodyKey : footKey;
+            return (
+              <div key={part} className={styles.row}>
+                <Button variant="secondary" onClick={() => cycle(part, value, -1)}>
+                  {'<'}
+                </Button>
+                <span className={styles.key}>{t(`${part}-key`)}</span>
+                <Button variant="secondary" onClick={() => cycle(part, value, 1)}>
+                  {'>'}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

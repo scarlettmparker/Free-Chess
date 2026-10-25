@@ -181,6 +181,8 @@
     "piece-name-placeholder": "My piece",
     "reset-board-title": "Reset game board",
     "start-game": "Start",
-    "no-layouts": "No board layouts yet"
+    "no-layouts": "No board layouts yet",
+    "system-piece": "System",
+    "system-board": "System"
   }
 }

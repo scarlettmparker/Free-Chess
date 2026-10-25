@@ -25,13 +25,17 @@ type MoveGridProps = {
    * @param add Whether to add or remove the vector.
    */
   onPaint: (dx: number, dy: number, add: boolean) => void;
+  /**
+   * Whether painting is disabled.
+   */
+  readOnly?: boolean;
 };
 
 /**
  * 15 by 15 move grid matching the game board.
  */
 const MoveGrid = (props: MoveGridProps) => {
-  const { vectors, sprite, moveType, onPaint } = props;
+  const { vectors, sprite, moveType, onPaint, readOnly = false } = props;
   const gridRef = useRef<HTMLDivElement | null>(null);
   const dragAdd = useRef<boolean | null>(null);
 
@@ -62,6 +66,7 @@ const MoveGrid = (props: MoveGridProps) => {
     !add || moveType !== 'slide' || isCompassDirection(dx, dy);
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>, dx: number, dy: number) => {
+    if (readOnly) return;
     if (event.button !== 0 && event.button !== 2) return;
     event.preventDefault();
     const add = event.button === 0;
@@ -77,6 +82,7 @@ const MoveGrid = (props: MoveGridProps) => {
   };
 
   const handlePointerEnter = (event: PointerEvent<HTMLDivElement>, dx: number, dy: number) => {
+    if (readOnly) return;
     if (dragAdd.current === null) return;
     if (!canPaint(dx, dy, dragAdd.current)) return;
     if (

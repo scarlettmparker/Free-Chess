@@ -15,15 +15,15 @@ import MoveGrid from '~/components/piece-editor/move-grid';
 import MoveToolbar from '~/components/piece-editor/move-toolbar';
 import SpriteComposer from '~/components/piece-editor/sprite-composer';
 import StateTabs from '~/components/piece-editor/state-tabs';
-import type { PieceDefinitionDto } from '~/utils/piece-types';
-import type { PieceInput } from '~/server/game-pieces';
+import type { MedusaPieceDefinitionDto } from '~/utils/piece-types';
+import type { PieceInput } from '~/generated/graphql';
 import styles from './piece-form.module.css';
 
 type PieceFormProps = {
   /**
    * Piece to edit.
    */
-  piece: PieceDefinitionDto | null;
+  piece: MedusaPieceDefinitionDto | null;
   /**
    * Whether the form is read-only.
    */
@@ -49,6 +49,13 @@ type FormVector = {
   capture: string;
 };
 
+const TRANSITION_LABEL_KEYS: Record<string, string> = {
+  none: 'state-none',
+  advance: 'state-advance',
+  advanceReverseAtEdge: 'state-advance-reverse',
+  cycle: 'state-cycle',
+};
+
 type FormState = {
   /**
    * Zero based state index.
@@ -66,8 +73,9 @@ type FormState = {
  * @param moveStates Raw move states.
  * @returns Typed move states.
  */
-function normalizeStates(moveStates: unknown[]): FormState[] {
-  return (moveStates.length ? moveStates : [{ index: 0, vectors: [] }]) as FormState[];
+function normalizeStates(moveStates: unknown): FormState[] {
+  const states = Array.isArray(moveStates) ? moveStates : [];
+  return (states.length ? states : [{ index: 0, vectors: [] }]) as FormState[];
 }
 
 /**
@@ -92,9 +100,10 @@ const PieceForm = (props: PieceFormProps) => {
   const [stateIndex, setStateIndex] = useState(0);
   const [moveType, setMoveType] = useState<'step' | 'slide' | 'hop'>('step');
   const [capture, setCapture] = useState<'optional' | 'required' | 'forbidden'>('optional');
-  const [canPromote, setCanPromote] = useState((piece?.promotionTargets.length ?? 0) > 0);
+  const [canPromote, setCanPromote] = useState((piece?.promotionTargets?.length ?? 0) > 0);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  const transitionLabel = t(TRANSITION_LABEL_KEYS[form.stateTransition] ?? 'state-none');
   const states = normalizeStates(form.moveStates);
   const current = states[stateIndex] ?? states[0];
   const vectors = current?.vectors ?? [];
@@ -108,6 +117,7 @@ const PieceForm = (props: PieceFormProps) => {
    */
   const paintCell = useCallback(
     (dx: number, dy: number, add: boolean) => {
+      if (readOnly) return;
       setForm((prev) => {
         const prevStates = normalizeStates(prev.moveStates);
         const typedVectors = prevStates[stateIndex]?.vectors ?? [];
@@ -129,7 +139,7 @@ const PieceForm = (props: PieceFormProps) => {
         return { ...prev, moveStates: nextStates };
       });
     },
-    [stateIndex, moveType, capture],
+    [stateIndex, moveType, capture, readOnly],
   );
 
   /**
@@ -139,6 +149,7 @@ const PieceForm = (props: PieceFormProps) => {
    */
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (readOnly) return;
     setSaveError(null);
     const slug = form.name.toLowerCase().replace(/\s+/g, '-');
     try {
@@ -160,26 +171,32 @@ const PieceForm = (props: PieceFormProps) => {
    * @param part Part slot to change.
    * @param key New part key.
    */
-  const handlePartChange = useCallback((part: 'head' | 'body' | 'foot', key: string) => {
-    setForm((prev) => ({ ...prev, sprite: { ...prev.sprite, [`${part}Key`]: key } }));
-  }, []);
+  const handlePartChange = useCallback(
+    (part: 'head' | 'body' | 'foot', key: string) => {
+      if (readOnly) return;
+      setForm((prev) => ({ ...prev, sprite: { ...prev.sprite, [`${part}Key`]: key } }));
+    },
+    [readOnly],
+  );
 
   /**
    * Appends an empty move state and selects it.
    */
   const handleAddState = useCallback(() => {
+    if (readOnly) return;
     setForm((prev) => {
       const prevStates = normalizeStates(prev.moveStates);
       const next = [...prevStates, { index: prevStates.length, vectors: [] }];
       setStateIndex(next.length - 1);
       return { ...prev, moveStates: next };
     });
-  }, []);
+  }, [readOnly]);
 
   /**
    * Removes the active move state when more than one exists.
    */
   const handleDeleteState = useCallback(() => {
+    if (readOnly) return;
     setForm((prev) => {
       const prevStates = normalizeStates(prev.moveStates);
       if (prevStates.length <= 1) return prev;
@@ -187,7 +204,7 @@ const PieceForm = (props: PieceFormProps) => {
       setStateIndex(Math.max(0, stateIndex - 1));
       return { ...prev, moveStates: next };
     });
-  }, [stateIndex]);
+  }, [stateIndex, readOnly]);
 
   return (
     <Form id="piece-form" className={styles.form} onSubmit={handleSave}>
@@ -208,48 +225,52 @@ const PieceForm = (props: PieceFormProps) => {
         <FormField name="stateTransition">
           <FormLabel>{t('state-transition')}</FormLabel>
           <FormItem>
-            <Select
-              value={form.stateTransition}
-              disabled={readOnly}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                setForm({ ...form, stateTransition: event.currentTarget.value })
-              }
-            >
-              <SelectOption value="none">{t('state-none')}</SelectOption>
-              <SelectOption value="advance">{t('state-advance')}</SelectOption>
-              <SelectOption value="advanceReverseAtEdge">{t('state-advance-reverse')}</SelectOption>
-              <SelectOption value="cycle">{t('state-cycle')}</SelectOption>
-            </Select>
+            {readOnly ? (
+              <Input value={transitionLabel} disabled />
+            ) : (
+              <Select
+                value={form.stateTransition}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                  setForm({ ...form, stateTransition: event.currentTarget.value })
+                }
+              >
+                <SelectOption value="none">{t('state-none')}</SelectOption>
+                <SelectOption value="advance">{t('state-advance')}</SelectOption>
+                <SelectOption value="advanceReverseAtEdge">{t('state-advance-reverse')}</SelectOption>
+                <SelectOption value="cycle">{t('state-cycle')}</SelectOption>
+              </Select>
+            )}
           </FormItem>
         </FormField>
       </div>
-      <div className={styles.checkbox_row}>
-        <Checkbox
-          id="isKing"
-          name="isKing"
-          className={styles.checkbox}
-          label={t('piece-king')}
-          checked={form.isKing}
-          disabled={readOnly}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-            setForm({ ...form, isKing: event.currentTarget.checked })
-          }
-        />
-        <Checkbox
-          id="canPromote"
-          name="canPromote"
-          className={styles.checkbox}
-          label={t('can-promote')}
-          checked={canPromote}
-          disabled={readOnly}
-          onChange={(event) => setCanPromote(event.currentTarget.checked)}
-        />
-      </div>
+      {readOnly ? null : (
+        <div className={styles.checkbox_row}>
+          <Checkbox
+            id="isKing"
+            name="isKing"
+            className={styles.checkbox}
+            label={t('piece-king')}
+            checked={form.isKing}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              setForm({ ...form, isKing: event.currentTarget.checked })
+            }
+          />
+          <Checkbox
+            id="canPromote"
+            name="canPromote"
+            className={styles.checkbox}
+            label={t('can-promote')}
+            checked={canPromote}
+            onChange={(event) => setCanPromote(event.currentTarget.checked)}
+          />
+        </div>
+      )}
       <SpriteComposer
         headKey={form.sprite.headKey}
         bodyKey={form.sprite.bodyKey}
         footKey={form.sprite.footKey}
         onChange={handlePartChange}
+        readOnly={readOnly}
       />
       <StateTabs
         count={states.length}
@@ -257,14 +278,23 @@ const PieceForm = (props: PieceFormProps) => {
         onSelect={setStateIndex}
         onAdd={handleAddState}
         onDelete={handleDeleteState}
+        readOnly={readOnly}
       />
-      <MoveToolbar
+      {readOnly ? null : (
+        <MoveToolbar
+          moveType={moveType}
+          capture={capture}
+          onMoveTypeChange={setMoveType}
+          onCaptureChange={setCapture}
+        />
+      )}
+      <MoveGrid
+        vectors={vectors}
+        sprite={form.sprite}
         moveType={moveType}
-        capture={capture}
-        onMoveTypeChange={setMoveType}
-        onCaptureChange={setCapture}
+        onPaint={paintCell}
+        readOnly={readOnly}
       />
-      <MoveGrid vectors={vectors} sprite={form.sprite} moveType={moveType} onPaint={paintCell} />
       {saveError ? <p className={styles.error}>{saveError}</p> : null}
     </Form>
   );

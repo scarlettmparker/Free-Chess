@@ -364,7 +364,7 @@ type BoardLayout {
   id: ID!
   isSystem: Boolean!
   name: String!
-  placements: JSON
+  placements: [BoardPlacement!]!
   slug: String!
   updatedAt: DateTime
 }
@@ -373,13 +373,25 @@ input BoardLayoutInput {
   description: String
   id: ID
   name: String!
-  placements: JSON
+  placements: [BoardPlacementInput!]!
   slug: String!
 }
 
 type BoardLayoutResponse {
   boardLayout: BoardLayout!
   message: String!
+}
+
+type BoardPlacement {
+  color: Int!
+  definitionId: ID!
+  square: Int!
+}
+
+input BoardPlacementInput {
+  color: Int!
+  definitionId: ID!
+  square: Int!
 }
 
 """ Represents a storage bucket."""
@@ -1832,6 +1844,7 @@ input PersonInput {
 
 type Piece {
   createdAt: DateTime
+  createdBy: ID
   description: String
   edgeReset: Boolean!
   id: ID!
@@ -1839,8 +1852,9 @@ type Piece {
   isSystem: Boolean!
   moveStates: JSON
   name: String!
+  ownerName: String
   promotionRanks: [Int!]
-  promotionTargets: [Int!]
+  promotionTargets: [ID!]
   slug: String!
   sprite: PieceSprite
   stateTransition: String!
@@ -1855,7 +1869,7 @@ input PieceInput {
   moveStates: JSON
   name: String!
   promotionRanks: [Int!]
-  promotionTargets: [Int!]
+  promotionTargets: [ID!]
   slug: String!
   sprite: PieceSpriteInput!
   stateTransition: String!
