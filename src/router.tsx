@@ -1,5 +1,6 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { useRoutes, type RouteObject } from 'react-router-dom';
+import { preloadableLazy as lazy } from '@sun/ssr';
 import AdminPageSkeleton from '~/components/admin/admin-page-skeleton';
 import AdminCardSkeleton from '~/components/admin/admin-card-skeleton';
 

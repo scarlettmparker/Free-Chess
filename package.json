@@ -31,7 +31,7 @@
     "@sun/components": "0.12.15",
     "@sun/i18n": "^0.1.1",
     "@sun/shared": "^0.2.12",
-    "@sun/ssr": "^0.10.0",
+    "@sun/ssr": "^0.10.5",
     "@sun/themes": "^0.2.10",
     "@sun/utils": "^0.2.0",
     "cookie": "^1.1.1",
