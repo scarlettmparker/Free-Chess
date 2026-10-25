@@ -89,6 +89,7 @@ push_file() {
 deploy() {
   local app_tar tmp
   build
+  remote "mkdir -p $REMOTE_TMP"
   app_tar="$(mktemp -d)/free-chess.tgz"
   tar -czf "$app_tar" -C "$REPO" \
     dist/client dist/server server.js config.js config.d.ts css-plugin.ts \
