@@ -1,0 +1,18 @@
+query AuditLogs($pagination: PaginationInput) {
+  medusaQueries {
+    auditLogs(pagination: $pagination) {
+      total
+      items {
+        id
+        createdAt
+        actorId
+        actorEmail
+        action
+        target
+        outcome
+        detail
+        ip
+      }
+    }
+  }
+}

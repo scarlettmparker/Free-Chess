@@ -1,0 +1,11 @@
+mutation SavePieceSet($input: PieceSetInput!) {
+  medusaMutations {
+    savePieceSet(input: $input) {
+      message
+      pieceSet {
+        id
+        name
+      }
+    }
+  }
+}

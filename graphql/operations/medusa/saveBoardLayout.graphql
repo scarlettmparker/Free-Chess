@@ -1,0 +1,12 @@
+mutation SaveBoardLayout($input: BoardLayoutInput!) {
+  medusaMutations {
+    saveBoardLayout(input: $input) {
+      message
+      boardLayout {
+        id
+        slug
+        name
+      }
+    }
+  }
+}

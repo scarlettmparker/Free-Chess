@@ -1,0 +1,22 @@
+query GetPiece($id: ID!) {
+  medusaQueries {
+    piece(id: $id) {
+      id
+      slug
+      name
+      description
+      isKing
+      promotionTargets
+      promotionRanks
+      moveStates
+      stateTransition
+      edgeReset
+      isSystem
+      sprite {
+        headKey
+        bodyKey
+        footKey
+      }
+    }
+  }
+}

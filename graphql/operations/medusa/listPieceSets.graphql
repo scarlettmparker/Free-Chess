@@ -1,0 +1,15 @@
+query ListPieceSets {
+  medusaQueries {
+    pieceSets {
+      id
+      name
+      description
+      startingFen
+      isSystem
+      members {
+        slot
+        pieceDefinitionId
+      }
+    }
+  }
+}

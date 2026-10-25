@@ -1,27 +1,21 @@
-/**
- * @fileoverview Admin audit log loader.
- * @module utils/audit-data
- */
-
 import { defineLoader } from '@sun/ssr';
-import { listAudit } from '~/server/audit';
-import { auth } from '~/server/auth-instance';
-import type { Permission } from '~/server/permissions';
-import { getSession, requirePermission } from '~/server/session';
+import { executeDocument } from '@sun/api';
+import { AuditLogsDocument, type AuditLogsQuery } from '~/generated/graphql';
 
+/**
+ * Loads the admin audit log.
+ */
 defineLoader({
   pattern: 'adminAudit',
-  async loader(_params, context) {
-    const session = await getSession(auth, context.cookie);
-    const allowed = await requirePermission(auth, session, {
-      audit: ['read'],
-    } satisfies Permission);
-    if (!allowed) {
-      return { adminAudit: [] };
-    }
-
+  async loader() {
     try {
-      return { adminAudit: listAudit(200) };
+      const result = await executeDocument<AuditLogsQuery>(AuditLogsDocument, {
+        pagination: { page: 0, size: 200 },
+      });
+      if (result?.success && result.data) {
+        return { adminAudit: result.data.medusaQueries.auditLogs.items ?? [] };
+      }
+      return { adminAudit: [] };
     } catch (error) {
       console.error('Failed to load audit log:', error);
       return { adminAudit: [] };

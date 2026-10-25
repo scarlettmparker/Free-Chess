@@ -1,46 +1,32 @@
 import { defineMutation, MutationError } from '@sun/ssr';
-import { auth } from '~/server/auth-instance';
-import { getSession, requirePermission } from '~/server/session';
-import { saveLayout, deleteLayout } from '~/server/board-layouts';
+import { executeDocument } from '@sun/api';
+import { SaveBoardLayoutDocument, DeleteBoardLayoutDocument, type SaveBoardLayoutMutation, type DeleteBoardLayoutMutation } from '~/generated/graphql';
 import type { BoardLayoutInput } from '~/server/board-layouts';
-import type { Permission } from '~/server/permissions';
 
 /**
- * Guard a mutation with a permission check.
- *
- * @param cookie Request cookie.
- * @param permission Required permission.
- * @returns Authenticated session.
- */
-async function guard(cookie: string | undefined, permission: Permission) {
-  const session = await getSession(auth, cookie);
-  if (!session) throw new MutationError('Forbidden', 403);
-  const allowed = await requirePermission(auth, session, permission);
-  if (!allowed) throw new MutationError('Forbidden', 403);
-  return session;
-}
-
-/**
- * Save a board layout.
+ * Saves a board layout.
  */
 defineMutation({
   path: 'boards/save',
-  async handler(body: BoardLayoutInput, context) {
-    await guard(context.cookie, { board: ['create'] } satisfies Permission);
-    const id = saveLayout(body);
-    return { id };
+  async handler(body: BoardLayoutInput) {
+    const result = await executeDocument<SaveBoardLayoutMutation>(SaveBoardLayoutDocument, { input: body });
+    if (!result.success || !result.data?.medusaMutations.saveBoardLayout.boardLayout) {
+      throw new MutationError(result.error ?? 'Failed to save board layout');
+    }
+    return { id: result.data.medusaMutations.saveBoardLayout.boardLayout.id };
   },
 });
 
 /**
- * Delete a board layout.
+ * Deletes a board layout.
  */
 defineMutation({
   path: 'boards/delete',
-  async handler(body: { id: number }, context) {
-    await guard(context.cookie, { board: ['delete'] } satisfies Permission);
-    const ok = deleteLayout(body.id);
-    if (!ok) throw new MutationError('Cannot delete board layout', 400);
+  async handler(body: { id: number | string }) {
+    const result = await executeDocument<DeleteBoardLayoutMutation>(DeleteBoardLayoutDocument, { id: String(body.id) });
+    if (!result.success || !result.data?.medusaMutations.deleteBoardLayout.ok) {
+      throw new MutationError(result.error ?? 'Cannot delete board layout');
+    }
     return { ok: true };
   },
 });

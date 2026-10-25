@@ -1,48 +1,96 @@
 import { defineLoader } from '@sun/ssr';
-import { listPieces, getPiece, listSets, getSet } from '~/server/game-pieces';
+import { executeDocument } from '@sun/api';
+import {
+  ListPiecesDocument,
+  GetPieceDocument,
+  ListPieceSetsDocument,
+  GetPieceSetDocument,
+  type ListPiecesQuery,
+  type GetPieceQuery,
+  type ListPieceSetsQuery,
+  type GetPieceSetQuery,
+} from '~/generated/graphql';
 
 /**
- * List all piece definitions.
+ * Lists all piece definitions.
  */
 defineLoader({
   pattern: 'pieces',
   async loader() {
-    return { pieces: listPieces() };
+    try {
+      const result = await executeDocument<ListPiecesQuery>(ListPiecesDocument);
+      if (result?.success && result.data) {
+        return { pieces: result.data.medusaQueries.pieces ?? [] };
+      }
+      return { pieces: [] };
+    } catch (error) {
+      console.error('Failed to fetch pieces:', error);
+      return { pieces: [] };
+    }
   },
 });
 
 /**
- * Get one piece definition.
+ * Gets one piece definition.
  *
- * @param params Route params.
+ * @param params route params
  */
 defineLoader({
   pattern: 'pieces/:id',
   async loader(params) {
-    const id = Number(params.id);
-    return { piece: getPiece(id) };
+    const id = params.id as string;
+    if (!id) return null;
+    try {
+      const result = await executeDocument<GetPieceQuery>(GetPieceDocument, { id });
+      if (result?.success && result.data) {
+        return { piece: result.data.medusaQueries.piece ?? null };
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to fetch piece:', error);
+      return null;
+    }
   },
 });
 
 /**
- * List all piece sets.
+ * Lists all piece sets.
  */
 defineLoader({
   pattern: 'piecesets',
   async loader() {
-    return { pieceSets: listSets() };
+    try {
+      const result = await executeDocument<ListPieceSetsQuery>(ListPieceSetsDocument);
+      if (result?.success && result.data) {
+        return { pieceSets: result.data.medusaQueries.pieceSets ?? [] };
+      }
+      return { pieceSets: [] };
+    } catch (error) {
+      console.error('Failed to fetch piece sets:', error);
+      return { pieceSets: [] };
+    }
   },
 });
 
 /**
- * Get one piece set.
+ * Gets one piece set.
  *
- * @param params Route params.
+ * @param params route params
  */
 defineLoader({
   pattern: 'piecesets/:id',
   async loader(params) {
-    const id = Number(params.id);
-    return { pieceSet: getSet(id) };
+    const id = params.id as string;
+    if (!id) return null;
+    try {
+      const result = await executeDocument<GetPieceSetQuery>(GetPieceSetDocument, { id });
+      if (result?.success && result.data) {
+        return { pieceSet: result.data.medusaQueries.pieceSet ?? null };
+      }
+      return null;
+    } catch (error) {
+      console.error('Failed to fetch piece set:', error);
+      return null;
+    }
   },
 });

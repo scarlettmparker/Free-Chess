@@ -1,55 +1,36 @@
-/**
- * @fileoverview Session-backed page data shared by the app shell.
- * @module utils/global-data
- */
-
 import { defineLoader } from '@sun/ssr';
-import { auth } from '~/server/auth-instance';
-import { getSession, rolesOf } from '~/server/session';
+import { executeDocument } from '@sun/api';
+import { getCookieValue } from '@sun/api';
+import { MeDocument, MyRolesDocument, type MeQuery } from '~/generated/graphql';
+import { AUTH_COOKIE } from '~/utils/auth';
 
 /**
- * Account fields shown in the app shell.
+ * Loads the signed-in account for the app shell.
  */
-export type CurrentUser = {
-  /**
-   * Account id.
-   */
-  id: string;
-  /**
-   * Email address used for sign-in.
-   */
-  email: string;
-  /**
-   * Display name.
-   */
-  name: string;
-  /**
-   * Comma-separated role field from better-auth.
-   */
-  role: string;
-};
-
 defineLoader({
   pattern: 'currentUser',
   async loader(_params, context) {
-    const session = await getSession(auth, context.cookie);
-    const user = session?.user;
-    const currentUser: CurrentUser | null = user
-      ? {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role || 'user',
-        }
-      : null;
-    return { currentUser };
+    const token = getCookieValue((context as { cookie?: string } | undefined)?.cookie, AUTH_COOKIE);
+    if (!token) return { currentUser: null };
+    const meRes = await executeDocument<MeQuery>(MeDocument, {}, token);
+    if (!meRes.success || !meRes.data?.gaiaQueries.me) return { currentUser: null };
+    return { currentUser: meRes.data.gaiaQueries.me };
   },
 });
 
+/**
+ * Loads the signed-in account's roles.
+ */
 defineLoader({
   pattern: 'currentRoles',
   async loader(_params, context) {
-    const session = await getSession(auth, context.cookie);
-    return { currentRoles: rolesOf(session?.user) };
+    const token = getCookieValue((context as { cookie?: string } | undefined)?.cookie, AUTH_COOKIE);
+    if (!token) return { currentRoles: [] };
+    const rolesRes = await executeDocument<{ gaiaQueries: { myRoles: string[] } }>(
+      MyRolesDocument,
+      {},
+      token,
+    );
+    return { currentRoles: rolesRes.success ? (rolesRes.data?.gaiaQueries.myRoles ?? []) : [] };
   },
 });

@@ -1,0 +1,12 @@
+mutation SavePiece($input: PieceInput!) {
+  medusaMutations {
+    savePiece(input: $input) {
+      message
+      piece {
+        id
+        slug
+        name
+      }
+    }
+  }
+}

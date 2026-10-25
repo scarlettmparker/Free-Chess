@@ -1,0 +1,22 @@
+query ListPieces {
+  medusaQueries {
+    pieces {
+      id
+      slug
+      name
+      description
+      isKing
+      promotionTargets
+      promotionRanks
+      moveStates
+      stateTransition
+      edgeReset
+      isSystem
+      sprite {
+        headKey
+        bodyKey
+        footKey
+      }
+    }
+  }
+}

@@ -1,71 +1,76 @@
 import { defineMutation, MutationError } from '@sun/ssr';
-import { auth } from '~/server/auth-instance';
-import { getSession, requirePermission } from '~/server/session';
-import { savePiece, deletePiece, saveSet, deleteSet } from '~/server/game-pieces';
-import type { PieceInput, PieceSetInput } from '~/server/game-pieces';
-import type { Permission } from '~/server/permissions';
+import { executeDocument } from '@sun/api';
+import {
+  SavePieceDocument,
+  DeletePieceDocument,
+  SavePieceSetDocument,
+  DeletePieceSetDocument,
+  type SavePieceMutation,
+  type DeletePieceMutation,
+  type SavePieceSetMutation,
+  type DeletePieceSetMutation,
+  type PieceInput,
+  type PieceSetInput,
+} from '~/generated/graphql';
 
 /**
- * Guard a mutation with a permission check.
- *
- * @param cookie Request cookie.
- * @param permission Required permission.
- * @returns Authenticated session.
- */
-async function guard(cookie: string | undefined, permission: Permission) {
-  const session = await getSession(auth, cookie);
-  if (!session) throw new MutationError('Forbidden', 403);
-  const allowed = await requirePermission(auth, session, permission);
-  if (!allowed) throw new MutationError('Forbidden', 403);
-  return session;
-}
-
-/**
- * Save a piece definition.
+ * Saves a piece definition.
  */
 defineMutation({
   path: 'pieces/save',
-  async handler(body: PieceInput, context) {
-    await guard(context.cookie, { piece: ['create'] } satisfies Permission);
-    const id = savePiece(body);
-    return { id };
+  async handler(body: PieceInput) {
+    const result = await executeDocument<SavePieceMutation>(SavePieceDocument, { input: body });
+    if (!result.success || !result.data?.medusaMutations.savePiece.piece) {
+      throw new MutationError(result.error ?? 'Failed to save piece');
+    }
+    return { id: result.data.medusaMutations.savePiece.piece.id };
   },
 });
 
 /**
- * Delete a piece definition.
+ * Deletes a piece definition.
  */
 defineMutation({
   path: 'pieces/delete',
-  async handler(body: { id: number }, context) {
-    await guard(context.cookie, { piece: ['delete'] } satisfies Permission);
-    const ok = deletePiece(body.id);
-    if (!ok) throw new MutationError('Cannot delete piece', 400);
+  async handler(body: { id: number | string }) {
+    const result = await executeDocument<DeletePieceMutation>(DeletePieceDocument, {
+      id: String(body.id),
+    });
+    if (!result.success || !result.data?.medusaMutations.deletePiece.ok) {
+      throw new MutationError(result.error ?? 'Cannot delete piece');
+    }
     return { ok: true };
   },
 });
 
 /**
- * Save a piece set.
+ * Saves a piece set.
  */
 defineMutation({
   path: 'piecesets/save',
-  async handler(body: PieceSetInput, context) {
-    await guard(context.cookie, { pieceset: ['create'] } satisfies Permission);
-    const id = saveSet(body);
-    return { id };
+  async handler(body: PieceSetInput) {
+    const result = await executeDocument<SavePieceSetMutation>(SavePieceSetDocument, {
+      input: body,
+    });
+    if (!result.success || !result.data?.medusaMutations.savePieceSet.pieceSet) {
+      throw new MutationError(result.error ?? 'Failed to save piece set');
+    }
+    return { id: result.data.medusaMutations.savePieceSet.pieceSet.id };
   },
 });
 
 /**
- * Delete a piece set.
+ * Deletes a piece set.
  */
 defineMutation({
   path: 'piecesets/delete',
-  async handler(body: { id: number }, context) {
-    await guard(context.cookie, { pieceset: ['delete'] } satisfies Permission);
-    const ok = deleteSet(body.id);
-    if (!ok) throw new MutationError('Cannot delete piece set', 400);
+  async handler(body: { id: number | string }) {
+    const result = await executeDocument<DeletePieceSetMutation>(DeletePieceSetDocument, {
+      id: String(body.id),
+    });
+    if (!result.success || !result.data?.medusaMutations.deletePieceSet.ok) {
+      throw new MutationError(result.error ?? 'Cannot delete piece set');
+    }
     return { ok: true };
   },
 });

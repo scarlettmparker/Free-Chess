@@ -1,0 +1,7 @@
+mutation DeletePiece($id: ID!) {
+  medusaMutations {
+    deletePiece(id: $id) {
+      ok
+    }
+  }
+}

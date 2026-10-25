@@ -4,10 +4,20 @@ import { createRenderer } from '@sun/ssr/renderer';
 import { autoDiscoverRegistrations } from '@sun/ssr/server';
 import { setI18n } from '@sun/i18n';
 import { Router, routes } from './router';
+import { configureApi } from '@sun/api';
+import { clientSecret } from '../config.js';
+import { AUTH_COOKIE } from './utils/auth';
 import Layout from './components/layout';
 import NotFound from './routes/not-found';
 import { createI18nInstance } from './utils/i18n';
 import './utils/configure-framework';
+
+configureApi({
+  authCookie: AUTH_COOKIE,
+  clientId: 'free-chess',
+  clientSecret,
+  appBaseUrl: process.env.BETTER_AUTH_URL || 'http://localhost:5179',
+});
 
 autoDiscoverRegistrations(import.meta.glob('./**/*-data.ts', { eager: true }));
 autoDiscoverRegistrations(import.meta.glob('./**/*-mutations.ts', { eager: true }));

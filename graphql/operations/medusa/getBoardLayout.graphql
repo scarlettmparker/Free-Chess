@@ -1,0 +1,14 @@
+query GetBoardLayout($id: ID!) {
+  medusaQueries {
+    boardLayout(id: $id) {
+      id
+      slug
+      name
+      description
+      placements
+      isSystem
+      createdAt
+      updatedAt
+    }
+  }
+}

@@ -1,0 +1,2709 @@
+"""This directive allows results to be deferred during execution"""
+directive @defer(
+  """Deferred behaviour is controlled by this argument"""
+  if: Boolean! = true
+
+  """A unique label that represents the fragment being deferred"""
+  label: String
+) on FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+"""
+This directive disables error propagation when a non nullable field returns null for the given operation.
+"""
+directive @experimental_disableErrorPropagation on MUTATION | QUERY | SUBSCRIPTION
+
+directive @extends on INTERFACE | OBJECT
+
+directive @external on FIELD_DEFINITION
+
+directive @key(fields: _FieldSet!) repeatable on INTERFACE | OBJECT
+
+directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
+
+directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
+
+type Account {
+  createdAt: DateTime
+  id: String!
+  personId: ID!
+  provider: String
+  remoteUsers: [RemoteUser!]
+  status: AccountStatus!
+  updatedAt: DateTime
+  username: String!
+}
+
+enum AccountStatus {
+  ACTIVE
+  DEACTIVATED
+  PENDING
+  SUSPENDED
+}
+
+type AddCommentResponse {
+  comment: ReaderComment!
+  message: String!
+}
+
+"""Result of adding an item to a checklist entry."""
+type AddItemResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+type AddRemoteObjectResponse {
+  message: String!
+  post: BlogPost!
+}
+
+"""Result of adding an item to a checklist template."""
+type AddTemplateItemResponse {
+  message: String!
+  template: ChecklistTemplate!
+}
+
+input AddTorrentInput {
+  bucket: String!
+  magnet: String
+  path: String
+  torrentFileBase64: String
+}
+
+""" Response payload for the addTorrent mutation."""
+type AddTorrentResponse {
+  job: TorrentJob!
+  message: String!
+}
+
+input AnnotationInput {
+  body: String!
+  endOffset: Int!
+  startOffset: Int!
+  textId: ID!
+}
+
+type Answer {
+  correct: Boolean!
+  correctAnswer: String!
+  createdAt: DateTime!
+  id: ID!
+  myAnswer: String!
+  questionId: ID!
+}
+
+input AnswerInput {
+  correct: Boolean!
+  correctAnswer: String!
+  myAnswer: String!
+}
+
+type ApiKey {
+  createdAt: DateTime
+  enabled: Boolean!
+  id: ID!
+  keyPrefix: String!
+  lastUsedAt: DateTime
+  name: String!
+  updatedAt: DateTime
+}
+
+type ApplyConfigurationResponse {
+  configuration: Configuration!
+  message: String!
+}
+
+"""Result of archiving a checklist entry."""
+type ArchiveChecklistResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+"""Result of archiving a checklist template."""
+type ArchiveTemplateResponse {
+  message: String!
+  template: ChecklistTemplate!
+}
+
+type ArchiveTextResponse {
+  message: String!
+  text: ReaderText!
+}
+
+type ArchiveThreadResponse {
+  message: String!
+  thread: ForumThread!
+}
+
+"""Result of attaching a remote object to a checklist detail."""
+type AttachChecklistObjectResponse {
+  id: ID!
+  message: String!
+}
+
+type AttachForumObjectResponse {
+  id: ID!
+  message: String!
+}
+
+type AttachReaderObjectResponse {
+  id: ID!
+  message: String!
+}
+
+type AttachedText {
+  id: String!
+  language: String!
+  level: String!
+  status: String!
+  title: String!
+}
+
+type AuditChainVerification {
+  brokenAt: DateTime
+  brokenId: ID
+  checked: Int!
+  intact: Boolean!
+  keyed: Boolean!
+}
+
+type AuditEvent {
+  correlationId: ID
+  createdAt: DateTime
+  durationMs: Long
+  endpoint: String
+  errorMessage: String
+  eventType: String
+  hasEncryptedBeforePayload: Boolean!
+  hasEncryptedPayload: Boolean!
+  httpStatus: Int
+  id: ID!
+  ipAddress: String
+  namespace: String
+  operationName: String
+  operationType: AuditOperationType
+  outcome: AuditOutcome
+  payloadBefore: String
+  payloadRedacted: String
+  prevHash: String
+  rowHash: String
+  targetEntity: String
+  targetEntityId: ID
+  userAgent: String
+  userId: ID
+  userName: String
+  userRoles: String
+}
+
+input AuditEventFilterInput {
+  eventType: String
+  eventTypes: [String!]
+  from: DateTime
+  namespace: String
+  outcome: AuditOutcome
+  outcomes: [AuditOutcome!]
+  search: String
+  targetEntity: String
+  targetEntityId: ID
+  to: DateTime
+  userId: ID
+  userIds: [ID!]
+}
+
+type AuditFacetValue {
+  count: Long!
+  label: String!
+  value: String!
+}
+
+type AuditFacets {
+  actors: [AuditFacetValue!]!
+  eventTypes: [AuditFacetValue!]!
+  outcomes: [AuditFacetValue!]!
+  totalCount: Long!
+}
+
+type AuditLog {
+  action: String!
+  actorEmail: String
+  actorId: ID
+  createdAt: DateTime
+  detail: String
+  id: ID!
+  ip: String
+  outcome: String!
+  target: String
+}
+
+type AuditLogPage {
+  items: [AuditLog!]!
+  total: Int!
+}
+
+enum AuditOperationType {
+  MUTATION
+  QUERY
+  REST
+}
+
+enum AuditOutcome {
+  FAILURE
+  SUCCESS
+}
+
+type AuditPage {
+  events: PagedAuditEvents!
+  facets: AuditFacets!
+}
+
+type AuditQueries {
+  auditEvent(id: ID!): AuditEvent
+  auditEventsByCorrelationId(correlationId: ID!): [AuditEvent!]!
+  auditPage(filter: AuditEventFilterInput, pagination: PaginationInput): AuditPage!
+  verifyAuditChain(namespace: String): AuditChainVerification!
+}
+
+type AuthResult {
+  accountId: ID!
+  personId: ID!
+  token: String!
+}
+
+type BlogDetail {
+  attachedTexts: [AttachedText!]!
+  galleryItems: [BlogGalleryItem!]!
+  linkedPosts: [BlogPost!]!
+  post: BlogPost!
+  propertySet: BlogPropertySet
+}
+
+type BlogGalleryItem {
+  id: ID!
+  imagePath: String
+  remoteObject: [String!]
+  title: String
+}
+
+type BlogMutations {
+  addRemoteObject(postId: ID!, target: String!): AddRemoteObjectResponse!
+  createBlogPost(input: BlogPostInput, title: String!): CreateBlogPostResponse!
+  createBlogPostType(description: String, name: String!): CreateBlogPostTypeResponse!
+  createBlogWithProperties(input: BlogWithPropertiesInput!): CreateBlogWithPropertiesResponse!
+  deleteBlogPost(id: ID!): DeleteBlogPostResponse!
+  ingestBlogFromSource(input: IngestBlogInput!): IngestBlogFromSourceResponse!
+  removeRemoteObject(postId: ID!, target: String!): RemoveRemoteObjectResponse!
+  updateBlogPost(id: ID!, input: BlogPostInput!): UpdateBlogPostResponse!
+  updateBlogWithProperties(id: ID!, input: BlogWithPropertiesInput!): UpdateBlogWithPropertiesResponse!
+}
+
+type BlogPost {
+  attachedTexts: [AttachedText!]
+  content: String
+  createdAt: DateTime
+  id: String!
+  language: String
+  parent: BlogPost
+  parentId: ID
+  remoteObject: [String!]
+  tags: [String!]
+  title: String!
+  type: BlogPostType
+  updatedAt: DateTime
+}
+
+input BlogPostInput {
+  content: String
+  language: String
+  parentId: ID
+  remoteObject: [String!]
+  tags: [String!]
+  typeId: ID
+}
+
+type BlogPostType {
+  description: String
+  id: ID!
+  name: String!
+}
+
+type BlogPropertySet {
+  entryName: String!
+  schema: BlogPropertySetSchema
+  values: JSON
+}
+
+type BlogPropertySetSchema {
+  id: ID!
+  name: String!
+  ownerKey: String
+  properties: JSON
+}
+
+type BlogQueries {
+  blogDetail(id: ID!): BlogDetail!
+  blogPostTypes: [BlogPostType!]!
+  children(pagination: PaginationInput, parentId: ID!): PagedBlogPosts!
+  listBlogPosts(pagination: PaginationInput): PagedBlogPosts!
+  listByRemoteObjects(ids: [String!]!): [BlogPost]
+  locateBlogPost(id: ID!): BlogPost
+}
+
+input BlogWithPropertiesInput {
+  content: String!
+  language: String
+  parentId: ID
+  propertySet: JSON
+  remoteObject: [String!]
+  tags: [String!]
+  title: String!
+  typeId: ID!
+}
+
+type BoardLayout {
+  createdAt: DateTime
+  description: String
+  id: ID!
+  isSystem: Boolean!
+  name: String!
+  placements: JSON
+  slug: String!
+  updatedAt: DateTime
+}
+
+input BoardLayoutInput {
+  description: String
+  id: ID
+  name: String!
+  placements: JSON
+  slug: String!
+}
+
+type BoardLayoutResponse {
+  boardLayout: BoardLayout!
+  message: String!
+}
+
+""" Represents a storage bucket."""
+type Bucket {
+  created: String
+  globalAliases: [String!]
+  id: String!
+  localAliases: [String!]
+}
+
+input BucketKeyInput {
+  bucket: String!
+  key: String!
+}
+
+type BulkCreateQuestionsResponse {
+  message: String!
+  questions: [Question!]!
+}
+
+""" Response payload for the cancelTorrent mutation."""
+type CancelTorrentResponse {
+  job: TorrentJob!
+  message: String!
+}
+
+enum CefrLevel {
+  A1
+  A2
+  B1
+  B2
+  C1
+  C2
+}
+
+type ChangePasswordResponse {
+  message: String!
+}
+
+"""A grouping for checklist items (e.g. chores, work, packing)."""
+type ChecklistCategory {
+  createdAt: DateTime
+  description: String
+  id: String!
+  name: String!
+  updatedAt: DateTime
+}
+
+input ChecklistCategoryInput {
+  description: String
+  id: ID
+  name: String!
+}
+
+"""Notes and remote-object links for an entry, template, or item."""
+type ChecklistDetail {
+  description: String
+  ownerId: ID!
+  remoteObject: [String!]
+}
+
+"""
+A dated checklist instance carrying a set of items with per-item status.
+"""
+type ChecklistEntry {
+  completedAt: DateTime
+  createdAt: DateTime
+  dueAt: DateTime
+  id: String!
+  name: String
+  status: String!
+  updatedAt: DateTime
+}
+
+input ChecklistEntryInput {
+  dueAt: DateTime
+  id: ID
+  name: String
+  status: String
+}
+
+"""An item linked to an entry, carrying its runtime status and ordering."""
+type ChecklistEntryItem {
+  entryId: ID!
+  icon: String
+  id: ID!
+  itemId: ID!
+  name: String
+  position: Int!
+  status: ItemStatus!
+}
+
+"""
+A reusable checklist item definition, optionally grouped into a category.
+"""
+type ChecklistItem {
+  categoryId: ID
+  createdAt: DateTime
+  description: String
+  icon: String
+  id: String!
+  lifecycleStatus: String!
+  name: String!
+  updatedAt: DateTime
+}
+
+input ChecklistItemInput {
+  categoryId: ID
+  description: String
+  icon: String
+  id: ID
+  lifecycleStatus: String
+  name: String!
+}
+
+"""Write operations for checklists."""
+type ChecklistMutations {
+  addItem(entryId: ID!, itemId: ID!, position: Int): AddItemResponse!
+  addTemplateItem(itemId: ID!, position: Int, templateId: ID!): AddTemplateItemResponse!
+  archiveChecklist(id: ID!): ArchiveChecklistResponse!
+  archiveTemplate(id: ID!): ArchiveTemplateResponse!
+  attachObject(ownerType: RemoteObjectType, source: ID!, target: ID!): AttachChecklistObjectResponse!
+  completeChecklist(id: ID!): CompleteChecklistResponse!
+  createCategory(description: String, name: String!): CreateCategoryResponse!
+  createChecklist(name: String): CreateChecklistResponse!
+  createChecklistFromTemplate(name: String, templateId: ID!): CreateChecklistFromTemplateResponse!
+  createChecklistFromTemplates(name: String, templateIds: [ID!]!): CreateChecklistFromTemplatesResponse!
+  createItem(categoryId: ID, description: String, icon: String, name: String!): CreateItemResponse!
+  createTemplate(description: String, itemIds: [ID!], name: String!): CreateTemplateResponse!
+  deleteChecklist(id: ID!): DeleteChecklistResponse!
+  detachObject(ownerType: RemoteObjectType, source: ID!, target: ID!): DetachObjectResponse!
+  removeItem(entryId: ID!, itemId: ID!): RemoveItemResponse!
+  removeTemplateItem(itemId: ID!, templateId: ID!): RemoveTemplateItemResponse!
+  retireItem(id: ID!): RetireItemResponse!
+  saveCategory(input: ChecklistCategoryInput!): SaveCategoryResponse!
+  saveChecklist(input: ChecklistEntryInput!): SaveChecklistResponse!
+  saveItem(input: ChecklistItemInput!): SaveItemResponse!
+  saveTemplate(input: ChecklistTemplateInput!): SaveTemplateResponse!
+  setItemStatus(entryId: ID!, itemId: ID!, status: ItemStatus!): SetItemStatusResponse!
+}
+
+"""Read operations for checklists."""
+type ChecklistQueries {
+  entry(id: ID!): ChecklistEntry
+  entryDetails(id: ID!): ChecklistDetail
+  entryItems(entryId: ID!, pagination: PaginationInput): PagedChecklistEntryItems!
+  item(id: ID!): ChecklistItem
+  itemDetails(id: ID!): ChecklistDetail
+  items(pagination: PaginationInput): PagedChecklistItems!
+  listCategories: [ChecklistCategory!]
+  listEntries: [ChecklistEntry!]
+  listTemplates: [ChecklistTemplate!]
+  locateRemoteObjects(ids: [String!]!): [RemoteObjectReference!]!
+  template(id: ID!): ChecklistTemplate
+  templateDetails(id: ID!): ChecklistDetail
+  templateItems(pagination: PaginationInput, templateId: ID!): PagedChecklistTemplateItems!
+}
+
+"""A reusable set of items that can seed new checklist entries."""
+type ChecklistTemplate {
+  createdAt: DateTime
+  description: String
+  id: String!
+  name: String!
+  status: String!
+  updatedAt: DateTime
+}
+
+input ChecklistTemplateInput {
+  description: String
+  id: ID
+  name: String!
+  status: String
+}
+
+"""An item linked to a template, carrying only its ordering position."""
+type ChecklistTemplateItem {
+  icon: String
+  id: ID!
+  itemId: ID!
+  name: String
+  position: Int!
+  templateId: ID!
+}
+
+input CommentInput {
+  annotationId: ID!
+  body: String!
+  parentId: ID
+}
+
+"""Result of completing a checklist entry."""
+type CompleteChecklistResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+"""A contributing complexity factor with a direction (up/down)."""
+type ComplexityFactor {
+  direction: String!
+  name: String!
+  value: Float!
+  weight: Float!
+}
+
+type Configuration {
+  content: JSON!
+  createdAt: DateTime
+  description: String
+  enabled: Boolean!
+  id: String!
+  lastAppliedAt: DateTime
+  lastApplyError: String
+  name: String!
+  updatedAt: DateTime
+}
+
+input ConfigurationInput {
+  content: JSON!
+  description: String
+  enabled: Boolean
+  name: String!
+}
+
+type ConfirmAccountReactivationResponse {
+  message: String!
+}
+
+type CreateAnnotationResponse {
+  annotation: ReaderAnnotation!
+  message: String!
+}
+
+type CreateBlogPostResponse {
+  message: String!
+  post: BlogPost!
+}
+
+type CreateBlogPostTypeResponse {
+  message: String!
+  type: BlogPostType!
+}
+
+type CreateBlogWithPropertiesResponse {
+  message: String!
+  post: BlogPost!
+}
+
+"""Result of creating a checklist category."""
+type CreateCategoryResponse {
+  category: ChecklistCategory!
+  message: String!
+}
+
+"""Result of creating a checklist entry from a single template."""
+type CreateChecklistFromTemplateResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+"""Result of creating a checklist entry from multiple templates."""
+type CreateChecklistFromTemplatesResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+"""Result of creating a checklist entry."""
+type CreateChecklistResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+type CreateConfigurationResponse {
+  configuration: Configuration!
+  message: String!
+}
+
+type CreateGalleryItemResponse {
+  item: GalleryItem!
+  message: String!
+}
+
+type CreateIpWhitelistEntryResponse {
+  entry: IpWhitelistEntry!
+  message: String!
+}
+
+"""Result of creating a checklist item."""
+type CreateItemResponse {
+  item: ChecklistItem!
+  message: String!
+}
+
+type CreatePersonResponse {
+  message: String!
+  person: Person!
+}
+
+type CreatePlaceResponse {
+  message: String!
+  place: Place!
+}
+
+input CreatePostInput {
+  body: String!
+  parentId: ID
+  threadId: ID!
+}
+
+type CreatePostResponse {
+  message: String!
+  post: ForumPost!
+}
+
+type CreatePrivateNoteResponse {
+  message: String!
+  note: PrivateNote!
+}
+
+type CreateRoleResponse {
+  message: String!
+  role: Role!
+}
+
+type CreateSourceResponse {
+  message: String!
+  source: ReaderSource!
+}
+
+"""Result of creating a checklist template."""
+type CreateTemplateResponse {
+  message: String!
+  template: ChecklistTemplate!
+}
+
+type CreateTextResponse {
+  message: String!
+  text: ReaderText!
+}
+
+input CreateThreadInput {
+  remoteObject: String!
+  title: String!
+}
+
+type CreateThreadResponse {
+  message: String!
+  thread: ForumThread!
+}
+
+"""A slightly refined version of RFC-3339 compliant DateTime Scalar"""
+scalar DateTime
+
+type DeactivateAccountResponse {
+  message: String!
+}
+
+type DeleteAnnotationResponse {
+  id: ID!
+  message: String!
+}
+
+type DeleteBlogPostResponse {
+  id: ID!
+  message: String!
+}
+
+"""Result of deleting a checklist entry."""
+type DeleteChecklistResponse {
+  id: ID!
+  message: String!
+}
+
+type DeleteCommentResponse {
+  id: ID!
+  message: String!
+}
+
+type DeleteConfigurationResponse {
+  id: ID!
+  message: String!
+}
+
+""" Response payload for the deleteFile mutation."""
+type DeleteFileResponse {
+  key: String!
+  message: String!
+}
+
+type DeleteIpWhitelistEntryResponse {
+  id: ID!
+  message: String!
+}
+
+""" Response payload for the deleteKey mutation."""
+type DeleteKeyResponse {
+  key: String!
+  message: String!
+}
+
+type DeletePersonResponse {
+  id: ID!
+  message: String!
+}
+
+type DeletePlaceResponse {
+  id: ID!
+  message: String!
+}
+
+type DeletePostResponse {
+  id: ID!
+  message: String!
+}
+
+type DeletePrivateNoteResponse {
+  id: ID!
+  message: String!
+}
+
+type DeletePropertyEntryResponse {
+  id: ID!
+  message: String!
+}
+
+type DeleteResponse {
+  ok: Boolean!
+}
+
+type DeleteRoleResponse {
+  id: ID!
+  message: String!
+}
+
+input DeleteSubtitleInput {
+  bucket: String!
+  subtitleKey: String!
+}
+
+""" Response payload for deleteSubtitle."""
+type DeleteSubtitleResponse {
+  key: String!
+  message: String!
+}
+
+"""Result of detaching a remote object from a checklist detail."""
+type DetachObjectResponse {
+  id: ID!
+  message: String!
+}
+
+enum DeviceStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+}
+
+type DiscordLoginResult {
+  accountId: ID!
+  readerAccountId: ID!
+  requiresReactivation: Boolean!
+  token: String!
+}
+
+type EditAnnotationResponse {
+  annotation: ReaderAnnotation!
+  message: String!
+}
+
+type EditCommentResponse {
+  comment: ReaderComment!
+  message: String!
+}
+
+type EditPostResponse {
+  message: String!
+  post: ForumPost!
+}
+
+type Entry {
+  definitions: [String!]!
+  sourceUrl: String
+  word: String!
+}
+
+enum EntryStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ErrorDetail {
+  """
+  The deadline expired before the operation could complete.
+  
+  For operations that change the state of the system, this error
+  may be returned even if the operation has completed successfully.
+  For example, a successful response from a server could have been
+  delayed long enough for the deadline to expire.
+  
+  HTTP Mapping: 504 Gateway Timeout
+  Error Type: UNAVAILABLE
+  """
+  DEADLINE_EXCEEDED
+
+  """
+  The server detected that the client is exhibiting a behavior that
+  might be generating excessive load.
+  
+  HTTP Mapping: 420 Enhance Your Calm
+  Error Type: UNAVAILABLE
+  """
+  ENHANCE_YOUR_CALM
+
+  """
+  The requested field is not found in the schema.
+  
+  This differs from `NOT_FOUND` in that `NOT_FOUND` should be used when a
+  query is valid, but is unable to return a result (if, for example, a
+  specific video id doesn't exist). `FIELD_NOT_FOUND` is intended to be
+  returned by the server to signify that the requested field is not known to exist.
+  This may be returned in lieu of failing the entire query.
+  See also `PERMISSION_DENIED` for cases where the
+  requested field is invalid only for the given user or class of users.
+  
+  HTTP Mapping: 404 Not Found
+  Error Type: BAD_REQUEST
+  """
+  FIELD_NOT_FOUND
+
+  """
+  The client specified an invalid argument.
+  
+  Note that this differs from `FAILED_PRECONDITION`.
+  `INVALID_ARGUMENT` indicates arguments that are problematic
+  regardless of the state of the system (e.g., a malformed file name).
+  
+  HTTP Mapping: 400 Bad Request
+  Error Type: BAD_REQUEST
+  """
+  INVALID_ARGUMENT
+
+  """
+  The provided cursor is not valid.
+  
+  The most common usage for this error is when a client is paginating
+  through a list that uses stateful cursors. In that case, the provided
+  cursor may be expired.
+  
+  HTTP Mapping: 404 Not Found
+  Error Type: NOT_FOUND
+  """
+  INVALID_CURSOR
+
+  """
+  Unable to perform operation because a required resource is missing.
+  
+  Example: Client is attempting to refresh a list, but the specified
+  list is expired. This requires an action by the client to get a new list.
+  
+  If the user is simply trying GET a resource that is not found,
+  use the NOT_FOUND error type. FAILED_PRECONDITION.MISSING_RESOURCE
+  is to be used particularly when the user is performing an operation
+  that requires a particular resource to exist.
+  
+  HTTP Mapping: 400 Bad Request or 500 Internal Server Error
+  Error Type: FAILED_PRECONDITION
+  """
+  MISSING_RESOURCE
+
+  """
+  Service Error.
+  
+  There is a problem with an upstream service.
+  
+  This may be returned if a gateway receives an unknown error from a service
+  or if a service is unreachable.
+  If a request times out which waiting on a response from a service,
+  `DEADLINE_EXCEEDED` may be returned instead.
+  If a service returns a more specific error Type, the specific error Type may
+  be returned instead.
+  
+  HTTP Mapping: 502 Bad Gateway
+  Error Type: UNAVAILABLE
+  """
+  SERVICE_ERROR
+
+  """
+  Request failed due to network errors.
+  
+  HTTP Mapping: 503 Unavailable
+  Error Type: UNAVAILABLE
+  """
+  TCP_FAILURE
+
+  """
+  Request throttled based on server concurrency limits.
+  
+  HTTP Mapping: 503 Unavailable
+  Error Type: UNAVAILABLE
+  """
+  THROTTLED_CONCURRENCY
+
+  """
+  Request throttled based on server CPU limits
+  
+  HTTP Mapping: 503 Unavailable.
+  Error Type: UNAVAILABLE
+  """
+  THROTTLED_CPU
+
+  """
+  The server detected that the client is exhibiting a behavior that
+  might be generating excessive load.
+  
+  HTTP Mapping: 429 Too Many Requests
+  Error Type: UNAVAILABLE
+  """
+  TOO_MANY_REQUESTS
+
+  """
+  The operation is not implemented or is not currently supported/enabled.
+  
+  HTTP Mapping: 501 Not Implemented
+  Error Type: BAD_REQUEST
+  """
+  UNIMPLEMENTED
+
+  """
+  Unknown error.
+  
+  This error should only be returned when no other error detail applies.
+  If a client sees an unknown errorDetail, it will be interpreted as UNKNOWN.
+  
+  HTTP Mapping: 500 Internal Server Error
+  """
+  UNKNOWN
+}
+
+enum ErrorType {
+  """
+  Bad Request.
+  
+  There is a problem with the request.
+  Retrying the same request is not likely to succeed.
+  An example would be a query or argument that cannot be deserialized.
+  
+  HTTP Mapping: 400 Bad Request
+  """
+  BAD_REQUEST
+
+  """
+  The operation was rejected because the system is not in a state
+  required for the operation's execution.  For example, the directory
+  to be deleted is non-empty, an rmdir operation is applied to
+  a non-directory, etc.
+  
+  Service implementers can use the following guidelines to decide
+  between `FAILED_PRECONDITION` and `UNAVAILABLE`:
+  
+  - Use `UNAVAILABLE` if the client can retry just the failing call.
+  - Use `FAILED_PRECONDITION` if the client should not retry until
+  the system state has been explicitly fixed.  E.g., if an "rmdir"
+       fails because the directory is non-empty, `FAILED_PRECONDITION`
+  should be returned since the client should not retry unless
+  the files are deleted from the directory.
+  
+  HTTP Mapping: 400 Bad Request or 500 Internal Server Error
+  """
+  FAILED_PRECONDITION
+
+  """
+  Internal error.
+  
+  An unexpected internal error was encountered. This means that some
+  invariants expected by the underlying system have been broken.
+  This error code is reserved for serious errors.
+  
+  HTTP Mapping: 500 Internal Server Error
+  """
+  INTERNAL
+
+  """
+  The requested entity was not found.
+  
+  This could apply to a resource that has never existed (e.g. bad resource id),
+  or a resource that no longer exists (e.g. cache expired.)
+  
+  Note to server developers: if a request is denied for an entire class
+  of users, such as gradual feature rollout or undocumented allowlist,
+  `NOT_FOUND` may be used. If a request is denied for some users within
+  a class of users, such as user-based access control, `PERMISSION_DENIED`
+  must be used.
+  
+  HTTP Mapping: 404 Not Found
+  """
+  NOT_FOUND
+
+  """
+  The caller does not have permission to execute the specified
+  operation.
+  
+  `PERMISSION_DENIED` must not be used for rejections
+  caused by exhausting some resource or quota.
+  `PERMISSION_DENIED` must not be used if the caller
+  cannot be identified (use `UNAUTHENTICATED`
+  instead for those errors).
+  
+  This error Type does not imply the
+  request is valid or the requested entity exists or satisfies
+  other pre-conditions.
+  
+  HTTP Mapping: 403 Forbidden
+  """
+  PERMISSION_DENIED
+
+  """
+  The request does not have valid authentication credentials.
+  
+  This is intended to be returned only for routes that require
+  authentication.
+  
+  HTTP Mapping: 401 Unauthorized
+  """
+  UNAUTHENTICATED
+
+  """
+  Currently Unavailable.
+  
+  The service is currently unavailable.  This is most likely a
+  transient condition, which can be corrected by retrying with
+  a backoff.
+  
+  HTTP Mapping: 503 Unavailable
+  """
+  UNAVAILABLE
+
+  """
+  Unknown error.
+  
+  For example, this error may be returned when
+  an error code received from another address space belongs to
+  an error space that is not known in this address space.  Also
+  errors raised by APIs that do not return enough error information
+  may be converted to this error.
+  
+  If a client sees an unknown errorType, it will be interpreted as UNKNOWN.
+  Unknown errors MUST NOT trigger any special behavior. These MAY be treated
+  by an implementation as being equivalent to INTERNAL.
+  
+  When possible, a more specific error should be provided.
+  
+  HTTP Mapping: 520 Unknown Error
+  """
+  UNKNOWN
+}
+
+type ExpireTailscaleDeviceResponse {
+  device: TailscaleDevice!
+  message: String!
+}
+
+type FatesMutations {
+  createPerson(input: PersonInput!): CreatePersonResponse!
+  createPlace(input: PlaceInput!): CreatePlaceResponse!
+  deletePerson(id: ID!): DeletePersonResponse!
+  deletePlace(id: ID!): DeletePlaceResponse!
+  savePerson(input: PersonInput!): SavePersonResponse!
+  savePlace(input: PlaceInput!): SavePlaceResponse!
+}
+
+type FatesQueries {
+  listPeople: [Person!]
+  listPlaces: [Place!]
+  person(id: ID!): Person
+  place(id: ID!): Place
+}
+
+input FetchSubtitleInput {
+  bucket: String!
+  fileId: Int
+  keyPath: String!
+  language: String
+  persist: Boolean
+  source: SubtitleSource!
+  subtitleKey: String
+}
+
+""" Response payload for fetchSubtitle."""
+type FetchSubtitleResponse {
+  subtitleKey: String
+  vtt: String!
+}
+
+""" Represents a file object in a bucket."""
+type File {
+  key: String!
+  lastModified: String
+  size: Int
+}
+
+""" Mutations for filestore operations including multipart upload support.
+"""
+type FilestoreMutations {
+  """ Adds a torrent from a magnet link or base64-encoded .torrent file."""
+  addTorrent(input: AddTorrentInput!): AddTorrentResponse!
+
+  """ Cancels a torrent download and clears its scratch files."""
+  cancelTorrent(jobId: String!): CancelTorrentResponse!
+
+  """ Delete a file."""
+  deleteFile(input: BucketKeyInput!): DeleteFileResponse!
+
+  """ Delete a key and propagate: recursively delete the key, all sub-keys and files under it.
+  """
+  deleteKey(input: BucketKeyInput!): DeleteKeyResponse!
+
+  """ Deletes a subtitle object."""
+  deleteSubtitle(input: DeleteSubtitleInput!): DeleteSubtitleResponse!
+
+  """ Fetches a subtitle and optionally persists it."""
+  fetchSubtitle(input: FetchSubtitleInput!): FetchSubtitleResponse!
+
+  """ Returns a presigned GET URL for direct browser download."""
+  getPresignedDownloadUrl(input: BucketKeyInput!): GetPresignedDownloadUrlResponse!
+
+  """ Returns a presigned PUT URL for direct browser-to-storage upload."""
+  getPresignedUploadUrl(input: PresignInput!): GetPresignedUploadUrlResponse!
+
+  """ Batch-presigns multiple PUT URLs for multi-file uploads."""
+  getPresignedUploadUrls(input: [PresignInput!]!): GetPresignedUploadUrlsResponse!
+
+  """ Pauses a torrent download."""
+  pauseTorrent(jobId: String!): PauseTorrentResponse!
+
+  """ Create a directory key (folder)."""
+  putKey(input: PutKeyInput!): PutKeyResponse!
+
+  """ Renames a single file or a directory prefix. Validates conflicts when merge is false.
+  """
+  renameKey(input: RenameKeyInput!): RenameKeyResponse!
+
+  """ Resumes a paused torrent download."""
+  resumeTorrent(jobId: String!): ResumeTorrentResponse!
+
+  """ Searches OpenSubtitles for a video."""
+  searchSubtitles(input: SearchSubtitlesInput!): [SubtitleSearchResult!]!
+}
+
+""" Queries for filestore operations."""
+type FilestoreQueries {
+  health: String
+  listBuckets: [Bucket!]
+
+  """ List all active image key details in a bucket."""
+  listImages(bucket: String!): [KeyDetail!]
+
+  """ List keys under a prefix, returning objects and directory entries."""
+  listKeys(bucket: String!, prefix: String): [KeyEntry!]
+
+  """ Locate a single key's metadata by bucket and key path."""
+  locate(bucket: String!, keyPath: String!): KeyDetail
+
+  """ Locate a single active image key detail by bucket and key path."""
+  locateImage(bucket: String!, keyPath: String!): KeyDetail
+
+  """ Searches Prowlarr for torrents matching the query."""
+  searchTorrents(query: String!): [TorrentSearchResult!]!
+
+  """ Lists subtitles for a video key."""
+  subtitles(bucket: String!, keyPath: String!): [Subtitle!]!
+
+  """ Look up a single torrent download job by id."""
+  torrentJob(jobId: String!): TorrentJob
+
+  """ List torrent download jobs, optionally filtered by bucket and status."""
+  torrentJobs(bucket: String, status: TorrentJobStatus): [TorrentJob!]
+}
+
+"""A single filter applied to a paginated query."""
+input FilterInput {
+  field: String!
+  operator: FilterOperator!
+  value: String!
+}
+
+"""Operators for FilterInput."""
+enum FilterOperator {
+  ENDS_WITH
+  EQUALS
+  GREATER_THAN
+  GREATER_THAN_OR_EQUAL
+  IN
+  LESS_THAN
+  LESS_THAN_OR_EQUAL
+  MATCHES
+  NOT_EQUALS
+  STARTS_WITH
+}
+
+type ForumObjectReference {
+  id: ID!
+  ownerId: ID!
+  ownerType: String!
+}
+
+"""A post in a discussion thread."""
+type ForumPost {
+  author: RemoteUser
+  authorProfile: ReaderAccount
+  body: String!
+  createdAt: DateTime
+  downvotes: Int!
+  id: String!
+  myVote: VoteValue
+  netScore: Int!
+  parentId: ID
+  status: PostStatus!
+  threadId: ID!
+  updatedAt: DateTime
+  upvotes: Int!
+}
+
+"""A discussion thread attached to a remote object."""
+type ForumThread {
+  createdAt: DateTime
+  id: String!
+  remoteObject: [String!]
+  status: ThreadStatus!
+  title: String!
+  updatedAt: DateTime
+}
+
+input ForumVoteInput {
+  postId: ID!
+  value: VoteValue!
+}
+
+type GaiaMutations {
+  applyConfiguration(id: ID!): ApplyConfigurationResponse!
+  changePassword(currentPassword: String!, newPassword: String!): ChangePasswordResponse!
+  confirmAccountReactivation(token: String!): ConfirmAccountReactivationResponse!
+  createConfiguration(input: ConfigurationInput!): CreateConfigurationResponse!
+  createIpWhitelistEntry(input: IpWhitelistEntryInput!): CreateIpWhitelistEntryResponse!
+  createRole(description: String, name: String!): CreateRoleResponse!
+  deactivateAccount: DeactivateAccountResponse!
+  deleteConfiguration(id: ID!): DeleteConfigurationResponse!
+  deleteIpWhitelistEntry(id: ID!): DeleteIpWhitelistEntryResponse!
+  deletePropertyEntry(entry: String!, name: String!, ownerKey: String!): DeletePropertyEntryResponse!
+  deleteRole(id: ID!): DeleteRoleResponse!
+  expireTailscaleDevice(id: ID!): ExpireTailscaleDeviceResponse!
+  issueApiKey(accountUsername: String!, name: String!): IssueApiKeyResponse!
+  login(input: LoginInput!): AuthResult
+  loginWithGoogle(code: String!, redirectUri: String!): AuthResult!
+  logout: LogoutResponse!
+  register(input: RegisterInput!): AuthResult
+  registerPropertySetSchema(input: PropertySetSchemaInput!): RegisterPropertySetSchemaResponse!
+  requestAccountReactivation(email: String!, provider: String!): RequestAccountReactivationResponse!
+  requestMagicLink(email: String!): RequestMagicLinkResponse!
+  requestPasswordReset(email: String!): RequestPasswordResetResponse!
+  resetPassword(newPassword: String!, token: String!): ResetPasswordResponse!
+  revokeApiKey(id: ID!): RevokeApiKeyResponse!
+  rotateApiKey(id: ID!): RotateApiKeyResponse!
+  saveRegistry(input: HubRegistryInput!): SaveRegistryResponse!
+  setAccountPermissions(accountId: ID!, permissions: [String!]!): SetAccountPermissionsResponse!
+  setAccountRoles(accountId: ID!, roleNames: [String!]!): SetAccountRolesResponse!
+  setProperty(entry: String!, input: SetPropertyInput!, name: String!, ownerKey: String!): SetPropertyResponse!
+  setRolePermissions(permissions: [String!]!, roleId: ID!): SetRolePermissionsResponse!
+  suspendAccount(id: ID!): SuspendAccountResponse!
+  unsuspendAccount(id: ID!): UnsuspendAccountResponse!
+  updateConfiguration(id: ID!, input: ConfigurationInput!): UpdateConfigurationResponse!
+  updateIpWhitelistEntry(id: ID!, input: IpWhitelistEntryInput!): UpdateIpWhitelistEntryResponse!
+  upsertPropertyEntry(entry: String!, input: UpsertPropertyEntryInput!, name: String!, ownerKey: String!): UpsertPropertyEntryResponse!
+  verifyMagicLink(token: String!): AuthResult!
+}
+
+type GaiaQueries {
+  accessibleCommandIntents(ownerKey: String!, propertySet: String!, remoteUserId: String!, remoteUserType: RemoteUserType!): [PropertySetEntry!]!
+  account(id: ID!): Account
+  accountPermissions(accountId: ID!): [String!]!
+  accountRoles(accountId: ID!): [String!]!
+  accounts(pagination: PaginationInput): PagedAccounts!
+  allPermissions: [String!]!
+  configuration(id: ID!): Configuration
+  configurations: [Configuration!]!
+  effectivePermissions(remoteUserId: String!, remoteUserType: RemoteUserType!): [String!]!
+  hubRegistry: HubRegistry
+  ipWhitelistEntries: [IpWhitelistEntry!]!
+  listAccounts: [Account!]
+  me: Account
+  myRoles: [String!]!
+  propertySet(entry: String, name: String!, ownerKey: String!): JSON
+  propertySetSchema(name: String!, ownerKey: String!): PropertySetSchema
+  propertySetSchemas(ownerKey: String): [PropertySetSchema!]!
+  propertySets(name: String!, ownerKey: String!): [PropertySetEntry!]!
+  role(id: ID!): Role
+  rolePermissions(roleId: ID!): [String!]!
+  roles: [Role!]!
+  tailscaleDevice(id: ID!): TailscaleDevice
+  tailscaleDevices: [TailscaleDevice!]!
+}
+
+type GalleryItem {
+  content: String
+  createdAt: DateTime
+  description: String
+  id: String!
+  imagePath: String
+  keyDetailId: ID
+  remoteObject: [String!]
+  title: String!
+  updatedAt: DateTime
+}
+
+input GalleryItemInput {
+  content: String
+  description: String
+  imagePath: String
+  keyDetailId: ID
+  remoteObject: [String!]
+  title: String!
+}
+
+type GalleryMutations {
+  create(input: GalleryItemInput): CreateGalleryItemResponse!
+}
+
+type GalleryQueries {
+  list: [GalleryItem]
+  listByRemoteObjects(ids: [String!]!): [GalleryItem]
+  locate(id: ID!): GalleryItem
+  locateGalleryItems(ids: [ID!]!): [GalleryItem]
+}
+
+""" Response payload for the getPresignedDownloadUrl mutation."""
+type GetPresignedDownloadUrlResponse {
+  message: String!
+  url: String!
+}
+
+""" Response payload for the getPresignedUploadUrl mutation."""
+type GetPresignedUploadUrlResponse {
+  message: String!
+  url: String!
+}
+
+""" Response payload for the getPresignedUploadUrls mutation."""
+type GetPresignedUploadUrlsResponse {
+  message: String!
+  urls: [String!]!
+}
+
+"""Write operations for the reader."""
+type HadesMutations {
+  addComment(input: CommentInput!): AddCommentResponse!
+  archiveText(id: ID!): ArchiveTextResponse!
+  attachObject(source: ID!, target: String!): AttachReaderObjectResponse!
+  createAnnotation(input: AnnotationInput!): CreateAnnotationResponse!
+  createPrivateNote(input: PrivateNoteInput!): CreatePrivateNoteResponse!
+  createSource(name: String!, url: String!): CreateSourceResponse!
+  createText(input: ReaderTextInput!): CreateTextResponse!
+  deleteAnnotation(id: ID!): DeleteAnnotationResponse!
+  deleteComment(id: ID!): DeleteCommentResponse!
+  deletePrivateNote(id: ID!): DeletePrivateNoteResponse!
+  discordLogin(code: String!, state: String!): DiscordLoginResult
+  editAnnotation(body: String!, id: ID!): EditAnnotationResponse!
+  editComment(body: String!, id: ID!): EditCommentResponse!
+  markViewed(textId: ID!): MarkViewedResponse!
+  removeVote(targetId: ID!, targetType: ReaderVoteTarget!): VoteReaderResponse!
+  shareNotes(input: ShareNotesInput!): ShareNotesResponse!
+  vote(input: VoteInput!): VoteReaderResponse!
+}
+
+"""Read operations for the reader."""
+type HadesQueries {
+  annotation(id: ID!): ReaderAnnotation
+  annotations(includeHidden: Boolean, pagination: PaginationInput, textId: ID!): PagedReaderAnnotations!
+  classifyTextLevel(text: String!): TextLevelAssessment
+  comments(annotationId: ID!, includeHidden: Boolean, pagination: PaginationInput): PagedReaderComments!
+  defineWord(dictionary: WordDictionary, scope: [WordScope!], word: String!): Word
+  locateReaderTexts(ids: [ID!]!): [ReaderText!]!
+  locateRemoteObjects(ids: [String!]!): [ReaderObjectReference!]!
+  myVote(targetId: ID!, targetType: ReaderVoteTarget!): VoteValue
+  privateNotes(pagination: PaginationInput, textId: ID!): PagedPrivateNotes!
+  readerAccount: ReaderAccount
+  readerAccounts(remoteUsers: [RemoteUserInput!]!): [ReaderAccount!]!
+  searchReaderAccounts(pagination: PaginationInput, query: String!): [ReaderAccount!]!
+  source(id: ID!): ReaderSource
+  sources: [ReaderSource!]
+  text(id: ID!): ReaderText
+  texts(pagination: PaginationInput): PagedReaderTexts!
+  viewedReaderTexts(pagination: PaginationInput): PagedReaderTexts!
+  viewedTexts(pagination: PaginationInput): PagedTextViews!
+}
+
+type HubApp {
+  description: String!
+  devPort: Int!
+  dir: String!
+  enabled: Boolean!
+  key: String!
+  name: String!
+  prodPort: Int!
+  self: Boolean!
+  url: String!
+}
+
+input HubAppInput {
+  description: String!
+  devPort: Int!
+  dir: String!
+  enabled: Boolean!
+  key: String!
+  name: String!
+  prodPort: Int!
+  self: Boolean!
+  url: String!
+}
+
+enum HubMode {
+  dev
+  serve
+}
+
+type HubRegistry {
+  apps: [HubApp!]!
+  mode: HubMode!
+}
+
+input HubRegistryInput {
+  apps: [HubAppInput!]!
+  mode: HubMode!
+}
+
+"""Write operations for forums."""
+type IcarusMutations {
+  archiveThread(id: ID!): ArchiveThreadResponse!
+  attachObject(source: ID!, target: String!): AttachForumObjectResponse!
+  createPost(input: CreatePostInput!): CreatePostResponse!
+  createThread(input: CreateThreadInput!): CreateThreadResponse!
+  deletePost(id: ID!): DeletePostResponse!
+  editPost(body: String!, id: ID!): EditPostResponse!
+  lockThread(id: ID!): LockThreadResponse!
+  removeVote(postId: ID!): RemoveVoteResponse!
+  vote(input: ForumVoteInput!): VoteForumResponse!
+}
+
+"""Read operations for forums."""
+type IcarusQueries {
+  locateRemoteObjects(ids: [String!]!): [ForumObjectReference!]!
+  myVote(postId: ID!): VoteValue
+  posts(includeHidden: Boolean, pagination: PaginationInput, threadId: ID!): PagedForumPosts!
+  thread(id: ID!): ForumThread
+  threadsFor(pagination: PaginationInput, remoteObject: String!): PagedForumThreads!
+}
+
+type IngestBlogFromSourceResponse {
+  message: String!
+  post: BlogPost!
+}
+
+input IngestBlogInput {
+  parentId: ID
+  sourceId: String!
+  sourceKind: SourceKind!
+  title: String!
+  typeName: String!
+}
+
+type IpWhitelistEntry {
+  createdAt: DateTime
+  description: String
+  enabled: Boolean!
+  id: ID!
+  immutable: Boolean!
+  pattern: String!
+  updatedAt: DateTime
+}
+
+input IpWhitelistEntryInput {
+  description: String
+  enabled: Boolean
+  immutable: Boolean
+  pattern: String!
+}
+
+type IssueApiKeyResponse {
+  apiKey: IssuedApiKey!
+  message: String!
+}
+
+type IssuedApiKey {
+  apiKey: ApiKey!
+  plaintextKey: String!
+}
+
+"""Status of an item within a checklist entry."""
+enum ItemStatus {
+  COMPLETE
+  FAILED
+  NOT_NEEDED
+  NOT_STARTED
+}
+
+"""A JSON scalar"""
+scalar JSON
+
+""" Detailed metadata for a specific key."""
+type KeyDetail {
+  archivedAt: String
+  bucket: String!
+  contentType: String
+  createdAt: String
+  description: String
+  id: String!
+  keyPath: String!
+  lastUpdatedAt: String
+  name: String
+  status: String!
+}
+
+""" Directory-like entry for a bucket key."""
+type KeyEntry {
+  description: String
+  isDirectory: Boolean!
+  key: String!
+  lastModified: String
+  name: String
+  size: Int
+
+  """ Present only when this key is an in-progress torrent download."""
+  torrent: TorrentDownload
+}
+
+"""Predicted probability for a single CEFR level."""
+type LevelProbability {
+  level: CefrLevel!
+  probability: Float!
+}
+
+type LinkQuestionResponse {
+  id: ID!
+  message: String!
+}
+
+type LockThreadResponse {
+  message: String!
+  thread: ForumThread!
+}
+
+input LoginInput {
+  password: String!
+  username: String!
+}
+
+type LogoutResponse {
+  message: String!
+}
+
+"""A 64-bit signed integer"""
+scalar Long
+
+""" Torrent metadata captured when a job is added."""
+type MagnetDetail {
+  comment: String
+  createdBy: String
+  displayName: String!
+  files: [TorrentFile!]
+  id: String!
+  infoHash: String!
+  infoHashVersion: String
+  isPrivate: Boolean!
+  pieceCount: Int
+  pieceLength: Long
+  sourceUri: String
+  totalSize: Long!
+  trackers: [String!]
+}
+
+type MarkViewedResponse {
+  message: String!
+  textId: ID!
+}
+
+type MedusaMutations {
+  deleteBoardLayout(id: ID!): DeleteResponse!
+  deletePiece(id: ID!): DeleteResponse!
+  deletePieceSet(id: ID!): DeleteResponse!
+  saveBoardLayout(input: BoardLayoutInput!): BoardLayoutResponse!
+  savePiece(input: PieceInput!): PieceResponse!
+  savePieceSet(input: PieceSetInput!): PieceSetResponse!
+}
+
+type MedusaQueries {
+  auditLogs(pagination: PaginationInput): AuditLogPage!
+  boardLayout(id: ID!): BoardLayout
+  boardLayoutBySlug(slug: String!): BoardLayout
+  boardLayouts: [BoardLayout!]!
+  piece(id: ID!): Piece
+  pieceSet(id: ID!): PieceSet
+  pieceSets: [PieceSet!]!
+  pieces: [Piece!]!
+}
+
+type Mutation {
+  blogMutations: BlogMutations!
+  checklistMutations: ChecklistMutations!
+  fatesMutations: FatesMutations!
+  filestoreMutations: FilestoreMutations!
+  gaiaMutations: GaiaMutations!
+  galleryMutations: GalleryMutations!
+  hadesMutations: HadesMutations!
+  icarusMutations: IcarusMutations!
+  medusaMutations: MedusaMutations!
+  questionMutations: QuestionMutations!
+}
+
+"""Generic page metadata for a paged list."""
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  page: Int!
+  size: Int!
+  totalCount: Int!
+  totalPages: Int!
+}
+
+type PagedAccounts {
+  items: [Account!]!
+  pageInfo: PageInfo!
+}
+
+type PagedAnswers {
+  items: [Answer!]!
+  pageInfo: PageInfo!
+}
+
+type PagedAuditEvents {
+  items: [AuditEvent!]!
+  pageInfo: PageInfo!
+}
+
+type PagedBlogPosts {
+  items: [BlogPost!]!
+  pageInfo: PageInfo!
+}
+
+"""A page of items linked to an entry."""
+type PagedChecklistEntryItems {
+  items: [ChecklistEntryItem!]!
+  pageInfo: PageInfo!
+}
+
+"""A page of checklist items."""
+type PagedChecklistItems {
+  items: [ChecklistItem!]!
+  pageInfo: PageInfo!
+}
+
+"""A page of items linked to a template."""
+type PagedChecklistTemplateItems {
+  items: [ChecklistTemplateItem!]!
+  pageInfo: PageInfo!
+}
+
+type PagedForumPosts {
+  items: [ForumPost!]!
+  pageInfo: PageInfo!
+}
+
+type PagedForumThreads {
+  items: [ForumThread!]!
+  pageInfo: PageInfo!
+}
+
+type PagedPrivateNotes {
+  items: [PrivateNote!]!
+  pageInfo: PageInfo!
+}
+
+type PagedQuestions {
+  items: [Question!]!
+  pageInfo: PageInfo!
+}
+
+type PagedReaderAnnotations {
+  items: [ReaderAnnotation!]!
+  pageInfo: PageInfo!
+}
+
+type PagedReaderComments {
+  items: [ReaderComment!]!
+  pageInfo: PageInfo!
+}
+
+type PagedReaderTexts {
+  items: [ReaderText!]!
+  pageInfo: PageInfo!
+}
+
+type PagedTextViews {
+  items: [TextView!]!
+  pageInfo: PageInfo!
+}
+
+"""Generic pagination, sort, and filter input."""
+input PaginationInput {
+  filters: [FilterInput!]
+  page: Int
+  size: Int
+  sortBy: String
+  sortDir: SortDirection
+  sorts: [SortInput!]
+}
+
+""" Response payload for the pauseTorrent mutation."""
+type PauseTorrentResponse {
+  job: TorrentJob!
+  message: String!
+}
+
+type Person {
+  createdAt: DateTime
+  displayName: String
+  email: String
+  firstName: String!
+  id: String!
+  lastName: String!
+  phone: String
+  place: Place
+  title: String
+  updatedAt: DateTime
+}
+
+input PersonInput {
+  displayName: String
+  email: String
+  firstName: String!
+  id: ID
+  lastName: String!
+  phone: String
+  placeId: ID
+  title: String
+}
+
+type Piece {
+  createdAt: DateTime
+  description: String
+  edgeReset: Boolean!
+  id: ID!
+  isKing: Boolean!
+  isSystem: Boolean!
+  moveStates: JSON
+  name: String!
+  promotionRanks: [Int!]
+  promotionTargets: [Int!]
+  slug: String!
+  sprite: PieceSprite
+  stateTransition: String!
+  updatedAt: DateTime
+}
+
+input PieceInput {
+  description: String
+  edgeReset: Boolean!
+  id: ID
+  isKing: Boolean!
+  moveStates: JSON
+  name: String!
+  promotionRanks: [Int!]
+  promotionTargets: [Int!]
+  slug: String!
+  sprite: PieceSpriteInput!
+  stateTransition: String!
+}
+
+type PieceResponse {
+  message: String!
+  piece: Piece!
+}
+
+type PieceSet {
+  createdAt: DateTime
+  description: String
+  id: ID!
+  isSystem: Boolean!
+  members: [PieceSetMember!]!
+  name: String!
+  startingFen: String!
+  updatedAt: DateTime
+}
+
+input PieceSetInput {
+  description: String
+  id: ID
+  members: [PieceSetMemberInput!]
+  name: String!
+  startingFen: String!
+}
+
+type PieceSetMember {
+  pieceDefinitionId: ID!
+  slot: String!
+}
+
+input PieceSetMemberInput {
+  pieceDefinitionId: ID!
+  slot: String!
+}
+
+type PieceSetResponse {
+  message: String!
+  pieceSet: PieceSet!
+}
+
+type PieceSprite {
+  bodyKey: String!
+  footKey: String!
+  headKey: String!
+}
+
+input PieceSpriteInput {
+  bodyKey: String!
+  footKey: String!
+  headKey: String!
+}
+
+type Place {
+  city: String
+  country: String
+  id: String!
+  line1: String
+  line2: String
+  postalCode: String
+  region: String
+}
+
+input PlaceInput {
+  city: String
+  country: String
+  id: ID
+  line1: String
+  line2: String
+  postalCode: String
+  region: String
+}
+
+enum PostStatus {
+  ACTIVE
+  DELETED
+  HIDDEN
+}
+
+""" Input for a single presigned-upload request."""
+input PresignInput {
+  bucket: String!
+  contentType: String
+  key: String!
+}
+
+"""A per-user private note anchored to a text range."""
+type PrivateNote {
+  author: RemoteUser
+  authorProfile: ReaderAccount
+  body: String!
+  createdAt: DateTime
+  endOffset: Int!
+  id: String!
+  remoteObject: [String!]
+  startOffset: Int!
+  textId: ID!
+  updatedAt: DateTime
+  visibility: PrivateNoteVisibility!
+}
+
+input PrivateNoteInput {
+  body: String!
+  endOffset: Int!
+  startOffset: Int!
+  textId: ID!
+}
+
+enum PrivateNoteVisibility {
+  PRIVATE
+  SHARED
+}
+
+type PropertySetEntry {
+  configurable: Boolean!
+  createdAt: DateTime
+  entryName: String!
+  id: String!
+  ownerKey: String!
+  propertySet: String!
+  status: EntryStatus!
+  updatedAt: DateTime
+  values: JSON!
+}
+
+type PropertySetSchema {
+  configurable: Boolean!
+  createdAt: DateTime
+  id: String!
+  name: String!
+  ownerKey: String
+  properties: JSON!
+  status: EntryStatus!
+  updatedAt: DateTime
+}
+
+input PropertySetSchemaInput {
+  configurable: Boolean
+  name: String!
+  ownerKey: String
+  properties: JSON!
+}
+
+input PutKeyInput {
+  bucket: String!
+  key: String
+}
+
+""" Response payload for the putKey mutation."""
+type PutKeyResponse {
+  key: String!
+  message: String!
+}
+
+type Query {
+  _service: _Service!
+  auditQueries: AuditQueries!
+  blogQueries: BlogQueries!
+  checklistQueries: ChecklistQueries!
+  fatesQueries: FatesQueries!
+  filestoreQueries: FilestoreQueries!
+  gaiaQueries: GaiaQueries!
+  galleryQueries: GalleryQueries!
+  hadesQueries: HadesQueries!
+  icarusQueries: IcarusQueries!
+  medusaQueries: MedusaQueries!
+  questionQueries: QuestionQueries!
+  stemPlayerQueries: StemPlayerQueries!
+  viewerQueries: ViewerQueries!
+  wikiQueries: WikiQueries!
+}
+
+type Question {
+  answer: String!
+  createdAt: DateTime!
+  explanation: String
+  id: ID!
+  remoteObject: [String!]!
+  stem: String!
+}
+
+input QuestionInput {
+  answer: String!
+  explanation: String
+  remoteObject: [String!]
+  stem: String!
+}
+
+type QuestionMutations {
+  bulkCreateQuestions(inputs: [QuestionInput!]!): BulkCreateQuestionsResponse!
+  linkQuestion(questionId: ID!, target: String!): LinkQuestionResponse!
+  submitAnswer(input: AnswerInput!, questionId: ID!): SubmitAnswerResponse!
+}
+
+type QuestionQueries {
+  listAnswers(pagination: PaginationInput, questionId: ID!): PagedAnswers!
+  listQuestions(pagination: PaginationInput, remoteObject: String): PagedQuestions!
+  locateQuestion(id: ID!): Question
+}
+
+"""Reader-specific profile for a member."""
+type ReaderAccount {
+  avatar: String
+  cefrLevel: CefrLevel
+  discordId: String!
+  discordUsername: String
+  gaiaAccountId: ID!
+  globalName: String
+  id: String!
+  roles: [ReaderRole!]!
+}
+
+"""A markdown explanation a user wrote for a position."""
+type ReaderAnnotation {
+  author: RemoteUser
+  authorProfile: ReaderAccount
+  body: String!
+  createdAt: DateTime
+  downvotes: Int!
+  id: String!
+  myVote: VoteValue
+  netScore: Int!
+  position: ReaderPosition
+  positionId: ID!
+  remoteObject: [String!]
+  replyCount: Int!
+  status: ReaderStatus!
+  updatedAt: DateTime
+  upvotes: Int!
+}
+
+"""A threaded reply on an annotation."""
+type ReaderComment {
+  annotationId: ID!
+  author: RemoteUser
+  authorProfile: ReaderAccount
+  body: String!
+  createdAt: DateTime
+  downvotes: Int!
+  id: String!
+  myVote: VoteValue
+  netScore: Int!
+  parentId: ID
+  status: ReaderStatus!
+  updatedAt: DateTime
+  upvotes: Int!
+}
+
+type ReaderObjectReference {
+  id: ID!
+  ownerId: ID!
+  ownerType: String!
+}
+
+"""A character range on a text."""
+type ReaderPosition {
+  endOffset: Int!
+  id: String!
+  startOffset: Int!
+  textId: ID!
+}
+
+"""A learner level granted by a Discord guild role."""
+type ReaderRole {
+  cefrLevel: CefrLevel
+  key: String!
+  name: String!
+}
+
+"""The website a reader text originated from."""
+type ReaderSource {
+  id: String!
+  name: String!
+  url: String!
+}
+
+enum ReaderStatus {
+  ACTIVE
+  HIDDEN
+}
+
+"""A foreign-language text that users annotate."""
+type ReaderText {
+  content: String!
+  createdAt: DateTime
+  id: String!
+  language: String!
+  level: CefrLevel!
+  ownerId: ID
+  sourceId: ID
+  status: ReaderTextStatus!
+  title: String!
+  updatedAt: DateTime
+}
+
+input ReaderTextInput {
+  content: String!
+  language: String!
+  level: CefrLevel!
+  ownerId: ID
+  sourceId: ID
+  title: String!
+}
+
+enum ReaderTextStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ReaderVoteTarget {
+  ANNOTATION
+  COMMENT
+}
+
+input RegisterInput {
+  displayName: String
+  email: String!
+  firstName: String!
+  lastName: String!
+  password: String!
+  username: String!
+}
+
+type RegisterPropertySetSchemaResponse {
+  message: String!
+  schema: PropertySetSchema!
+}
+
+type RelatedTopic {
+  extract: String
+  pageUrl: String!
+  title: String!
+}
+
+"""
+A generic reference returned by locateRemoteObjects: which checklist detail
+references a given foreign object.
+"""
+type RemoteObjectReference {
+  description: String
+  id: ID!
+  ownerId: ID!
+  ownerType: RemoteObjectType!
+}
+
+"""The kind of checklist entity that owns a detail."""
+enum RemoteObjectType {
+  ENTRY
+  ITEM
+  TEMPLATE
+}
+
+"""A user identity on a remote provider."""
+type RemoteUser {
+  id: String!
+  type: RemoteUserType!
+}
+
+input RemoteUserInput {
+  id: String!
+  type: RemoteUserType!
+}
+
+enum RemoteUserType {
+  DISCORD
+  FREE_CHESS
+}
+
+"""Result of removing an item from a checklist entry."""
+type RemoveItemResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+type RemoveRemoteObjectResponse {
+  message: String!
+  post: BlogPost!
+}
+
+"""Result of removing an item from a checklist template."""
+type RemoveTemplateItemResponse {
+  message: String!
+  template: ChecklistTemplate!
+}
+
+type RemoveVoteResponse {
+  message: String!
+  post: ForumPost!
+}
+
+input RenameKeyInput {
+  bucket: String!
+  merge: Boolean!
+  sourceKey: String!
+  targetKey: String!
+}
+
+""" Response payload for the renameKey mutation."""
+type RenameKeyResponse {
+  conflicts: [String!]!
+  hasConflicts: Boolean!
+  message: String!
+  success: Boolean!
+}
+
+type RequestAccountReactivationResponse {
+  message: String!
+}
+
+type RequestMagicLinkResponse {
+  message: String!
+}
+
+type RequestPasswordResetResponse {
+  message: String!
+}
+
+type ResetPasswordResponse {
+  message: String!
+}
+
+""" Response payload for the resumeTorrent mutation."""
+type ResumeTorrentResponse {
+  job: TorrentJob!
+  message: String!
+}
+
+"""Result of retiring a checklist item."""
+type RetireItemResponse {
+  item: ChecklistItem!
+  message: String!
+}
+
+type RevokeApiKeyResponse {
+  id: ID!
+  message: String!
+}
+
+type Role {
+  createdAt: DateTime
+  description: String
+  id: ID!
+  name: String!
+  updatedAt: DateTime
+}
+
+type RotateApiKeyResponse {
+  apiKey: IssuedApiKey!
+  message: String!
+}
+
+"""Result of saving a checklist category."""
+type SaveCategoryResponse {
+  category: ChecklistCategory!
+  message: String!
+}
+
+"""Result of saving a checklist entry."""
+type SaveChecklistResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+"""Result of saving a checklist item."""
+type SaveItemResponse {
+  item: ChecklistItem!
+  message: String!
+}
+
+type SavePersonResponse {
+  message: String!
+  person: Person!
+}
+
+type SavePlaceResponse {
+  message: String!
+  place: Place!
+}
+
+type SaveRegistryResponse {
+  message: String!
+  registry: HubRegistry!
+}
+
+"""Result of saving a checklist template."""
+type SaveTemplateResponse {
+  message: String!
+  template: ChecklistTemplate!
+}
+
+input SearchSubtitlesInput {
+  bucket: String!
+  keyPath: String!
+  language: String
+  query: String
+}
+
+type SetAccountPermissionsResponse {
+  accountId: ID!
+  message: String!
+  permissions: [String!]!
+}
+
+type SetAccountRolesResponse {
+  accountId: ID!
+  message: String!
+  roles: [String!]!
+}
+
+"""Result of setting an item's status within a checklist entry."""
+type SetItemStatusResponse {
+  entry: ChecklistEntry!
+  message: String!
+}
+
+input SetPropertyInput {
+  property: String!
+  value: JSON!
+}
+
+type SetPropertyResponse {
+  entry: PropertySetEntry!
+  message: String!
+}
+
+type SetRolePermissionsResponse {
+  message: String!
+  permissions: [String!]!
+  roleId: ID!
+}
+
+input ShareInput {
+  objectId: ID!
+  objectType: String!
+  relation: String!
+  subjectId: ID!
+  subjectType: String!
+}
+
+input ShareNotesInput {
+  subjectEmails: [String!]
+  subjectIds: [ID!]
+  textId: ID!
+}
+
+type ShareNotesResponse {
+  id: ID!
+  message: String!
+}
+
+type Song {
+  id: String!
+  name: String
+  path: String!
+  stems: [Stem]
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+input SortInput {
+  dir: SortDirection!
+  field: String!
+}
+
+enum SourceKind {
+  WIKIPEDIA
+  WIKTIONARY
+}
+
+type Stem {
+  name: String
+  path: String!
+}
+
+type StemPlayerQueries {
+  list: [Song]
+  locate(id: ID!): Song
+}
+
+type SubmitAnswerResponse {
+  answer: Answer!
+  message: String!
+}
+
+""" A subtitle object attached to a video key."""
+type Subtitle {
+  bucket: String!
+  createdAt: String
+  id: ID
+  keyPath: String!
+  language: String!
+  lastUpdatedAt: String
+  openSubtitlesFileId: Int
+  source: SubtitleSource!
+  subtitleKey: String!
+}
+
+""" A subtitle returned by an OpenSubtitles search."""
+type SubtitleSearchResult {
+  downloads: Int
+  fileId: Int
+  hearingImpaired: Boolean
+  label: String!
+  language: String!
+  rating: Float
+  source: SubtitleSource!
+  subtitleKey: String
+}
+
+""" Where a subtitle object came from."""
+enum SubtitleSource {
+  LOCAL
+  OPENSUBTITLES
+}
+
+type Summary {
+  extract: String
+  pageUrl: String
+  thumbnailUrl: String
+  title: String!
+}
+
+type SuspendAccountResponse {
+  account: Account!
+  message: String!
+}
+
+type TailscaleDevice {
+  createdAt: DateTime
+  expiredAt: DateTime
+  headscaleId: Long!
+  id: ID!
+  ipv4: String
+  lastSeen: String
+  name: String!
+  online: Boolean!
+  status: DeviceStatus!
+  updatedAt: DateTime
+}
+
+"""Predicted CEFR level with confidence and contributing factors."""
+type TextLevelAssessment {
+  confidence: Float!
+  factors: [ComplexityFactor!]!
+  level: CefrLevel!
+  probabilities: [LevelProbability!]!
+}
+
+"""A record that the current user has viewed a text."""
+type TextView {
+  textId: ID!
+  viewedAt: DateTime!
+}
+
+enum ThreadStatus {
+  ACTIVE
+  ARCHIVED
+  LOCKED
+}
+
+""" The live download state attached to a key while a torrent is in progress.
+"""
+type TorrentDownload {
+  downloadRateBps: Int
+  downloadedBytes: Long
+  errorMessage: String
+  etaSeconds: Int
+  jobId: String!
+  magnetDetailId: String
+  peersConnected: Int
+  progress: Float!
+  status: TorrentJobStatus!
+  totalBytes: Long
+}
+
+""" A single file declared within a torrent."""
+type TorrentFile {
+  indexInTorrent: Int!
+  path: String!
+  size: Long!
+}
+
+""" A single torrent download job tracked in the database."""
+type TorrentJob {
+  bucket: String!
+  completedAt: String
+  createdAt: String
+  downloadRateBps: Int
+  downloadedBytes: Long!
+  errorMessage: String
+  etaSeconds: Long
+  id: String!
+  infoHash: String!
+  magnetDetail: MagnetDetail
+  peersConnected: Int
+  progress: Float!
+  seedsConnected: Int
+  sourceType: String!
+  status: TorrentJobStatus!
+  targetKeyPath: String!
+  totalBytes: Long!
+  uploadRateBps: Int
+  uploadedBytes: Long!
+}
+
+""" Lifecycle state of a torrent download job."""
+enum TorrentJobStatus {
+  CANCELLED
+  COMPLETED
+  DOWNLOADING
+  FAILED
+  METADATA
+  PAUSED
+  QUEUED
+  TRANSCODING
+  UPLOADING
+}
+
+""" A torrent search result from Prowlarr."""
+type TorrentSearchResult {
+  leechers: Int!
+  magnet: String!
+  name: String!
+  publishDate: String
+  seeders: Int!
+  size: String!
+  sizeBytes: Long!
+}
+
+type UnsuspendAccountResponse {
+  account: Account!
+  message: String!
+}
+
+type UpdateBlogPostResponse {
+  message: String!
+  post: BlogPost!
+}
+
+type UpdateBlogWithPropertiesResponse {
+  message: String!
+  post: BlogPost!
+}
+
+type UpdateConfigurationResponse {
+  configuration: Configuration!
+  message: String!
+}
+
+type UpdateIpWhitelistEntryResponse {
+  entry: IpWhitelistEntry!
+  message: String!
+}
+
+input UpsertPropertyEntryInput {
+  values: JSON!
+}
+
+type UpsertPropertyEntryResponse {
+  entry: PropertySetEntry!
+  message: String!
+}
+
+"""Read operations for the viewer."""
+type ViewerQueries {
+  vncCredentials: VncCredentials!
+}
+
+"""Credentials the browser viewer needs to connect to the desktop."""
+type VncCredentials {
+  iframeSrc: String!
+}
+
+type VoteForumResponse {
+  message: String!
+  post: ForumPost!
+}
+
+input VoteInput {
+  targetId: ID!
+  targetType: ReaderVoteTarget!
+  value: VoteValue!
+}
+
+type VoteReaderResponse {
+  annotation: ReaderAnnotation
+  comment: ReaderComment
+  message: String!
+}
+
+enum VoteValue {
+  DOWN
+  UP
+}
+
+type WikiQueries {
+  wikipediaPage(title: String!): String
+  wikipediaRelatedTopics(title: String!): [RelatedTopic!]!
+  wikipediaSearch(query: String!): [Summary!]!
+  wikipediaSummary(title: String!): Summary
+  wiktionaryEntry(word: String!): Entry
+}
+
+"""A dictionary word with its translations, compounds, and related words."""
+type Word {
+  compounds: [WordEntry!]!
+  entries: [WordEntry!]!
+  id: ID!
+  relatedWords: [Word!]!
+  sourceUrl: String!
+  term: String!
+  wordType: String
+}
+
+"""Which WordReference dictionary to query."""
+enum WordDictionary {
+  ENGLISH
+  GREEK_ENGLISH
+}
+
+"""A single dictionary entry for a headword."""
+type WordEntry {
+  examples: [String!]!
+  id: ID!
+  note: String
+  sense: String
+  term: String!
+  translations: [WordTranslation!]!
+  wordType: String!
+}
+
+"""Which parts of a WordReference word page to include."""
+enum WordScope {
+  ALL_TRANSLATIONS
+  COMPOUNDS
+  EXAMPLES
+  RELATED_WORDS
+}
+
+"""A translated term under a word entry."""
+type WordTranslation {
+  term: String!
+  usageNotes: [String!]!
+  wordType: String
+}
+
+scalar _FieldSet
+
+type _Service {
+  sdl: String!
+}

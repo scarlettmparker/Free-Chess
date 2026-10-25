@@ -1,0 +1,7 @@
+mutation DeleteBoardLayout($id: ID!) {
+  medusaMutations {
+    deleteBoardLayout(id: $id) {
+      ok
+    }
+  }
+}

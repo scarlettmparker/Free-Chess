@@ -1,0 +1,14 @@
+query ListBoardLayouts {
+  medusaQueries {
+    boardLayouts {
+      id
+      slug
+      name
+      description
+      placements
+      isSystem
+      createdAt
+      updatedAt
+    }
+  }
+}

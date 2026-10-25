@@ -1,0 +1,9 @@
+mutation Login($input: LoginInput!) {
+  gaiaMutations {
+    login(input: $input) {
+      token
+      accountId
+      personId
+    }
+  }
+}

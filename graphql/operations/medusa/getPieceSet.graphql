@@ -1,0 +1,15 @@
+query GetPieceSet($id: ID!) {
+  medusaQueries {
+    pieceSet(id: $id) {
+      id
+      name
+      description
+      startingFen
+      isSystem
+      members {
+        slot
+        pieceDefinitionId
+      }
+    }
+  }
+}

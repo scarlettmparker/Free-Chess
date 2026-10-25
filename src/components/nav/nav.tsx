@@ -5,7 +5,7 @@ import { Button, Form } from '@sun/components';
 import { usePageData } from '@sun/ssr/react';
 import CsrfField from '~/utils/csrf-field';
 import RoleCheck from '~/utils/role-check';
-import type { CurrentUser } from '~/utils/global-data';
+import type { MeQuery } from '~/generated/graphql';
 import styles from './nav.module.css';
 
 /**
@@ -34,7 +34,7 @@ const Nav = () => {
  */
 const NavAccount = () => {
   const { t } = useTranslation('nav');
-  const { data: currentUser } = usePageData<CurrentUser | null>('currentUser', 'currentUser', {});
+  const { data: currentUser } = usePageData<MeQuery["gaiaQueries"]["me"] | null>('currentUser', 'currentUser', {});
 
   if (!currentUser) {
     return (
