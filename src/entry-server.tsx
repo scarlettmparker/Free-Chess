@@ -3,8 +3,10 @@ import { matchRoutes, StaticRouter } from 'react-router-dom';
 import { createRenderer } from '@sun/ssr/renderer';
 import { autoDiscoverRegistrations } from '@sun/ssr/server';
 import { setI18n } from '@sun/i18n';
+import { parseThemes } from '@sun/utils/property-set';
 import { Router, routes } from './router';
-import { configureApi } from '@sun/api';
+import { configureApi, executeDocument } from '@sun/api';
+import { PropertySetDocument, type PropertySetQuery } from './generated/graphql';
 import { clientSecret } from '../config.js';
 import { AUTH_COOKIE } from './utils/auth';
 import Layout from './components/layout';
@@ -24,6 +26,20 @@ autoDiscoverRegistrations(import.meta.glob('./**/*-mutations.ts', { eager: true 
 
 const renderer = createRenderer({
   title: 'Free Chess',
+  async resolveTheme() {
+    try {
+      const result = await executeDocument<PropertySetQuery>(PropertySetDocument, {
+        ownerKey: 'ReactApp',
+        name: 'themes',
+      });
+      if (!result.success) {
+        return { current: null, all: [] };
+      }
+      return parseThemes(result.data?.gaiaQueries.propertySet);
+    } catch {
+      return { current: null, all: [] };
+    }
+  },
   initI18n(locale, translations) {
     const instance = createI18nInstance();
     setI18n(instance);

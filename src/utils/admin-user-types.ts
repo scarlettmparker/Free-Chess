@@ -239,12 +239,12 @@ export function toAdminUser(user: UserRecord): AdminUser {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role || 'user',
+    role: user.role || "user",
     banned: Boolean(user.banned),
     banReason: user.banReason ?? null,
     banExpires: isoDate(user.banExpires),
-    createdAt: isoDate(user.createdAt) ?? '',
-    updatedAt: isoDate(user.updatedAt) ?? '',
+    createdAt: isoDate(user.createdAt) ?? "",
+    updatedAt: isoDate(user.updatedAt) ?? "",
   };
 }
 
@@ -258,9 +258,9 @@ export function toAdminUserSession(session: SessionRecord): AdminUserSession {
   return {
     id: session.id,
     token: session.token,
-    createdAt: isoDate(session.createdAt) ?? '',
-    updatedAt: isoDate(session.updatedAt) ?? '',
-    expiresAt: isoDate(session.expiresAt) ?? '',
+    createdAt: isoDate(session.createdAt) ?? "",
+    updatedAt: isoDate(session.updatedAt) ?? "",
+    expiresAt: isoDate(session.expiresAt) ?? "",
     ipAddress: session.ipAddress ?? null,
     userAgent: session.userAgent ?? null,
   };
@@ -273,7 +273,7 @@ export function toAdminUserSession(session: SessionRecord): AdminUserSession {
  * @param pageSize Accounts requested per page.
  * @returns Empty page.
  */
-export function emptyUserPage(page = 0, pageSize = 20): AdminUserPage {
+export function emptyUserPage(page = 0, pageSize = 10): AdminUserPage {
   return {
     users: [],
     total: 0,

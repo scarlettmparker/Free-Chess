@@ -1,0 +1,5 @@
+query propertySet($ownerKey: String!, $name: String!) {
+  gaiaQueries {
+    propertySet(ownerKey: $ownerKey, name: $name)
+  }
+}

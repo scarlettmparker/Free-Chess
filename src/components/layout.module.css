@@ -1,0 +1,10 @@
+.main {
+  min-height: 100vh;
+}
+
+.switcher {
+  position: fixed;
+  bottom: var(--lg);
+  right: var(--lg);
+  z-index: 201;
+}
