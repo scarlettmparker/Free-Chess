@@ -5,11 +5,16 @@
 
 import { defineMutation, MutationError } from '@sun/ssr';
 import { executeDocument, getCookieValue } from '@sun/api';
-import { MyRolesDocument } from '~/generated/graphql';
+import {
+  GetBoardLayoutDocument,
+  ListPiecesDocument,
+  MyRolesDocument,
+  type GetBoardLayoutQuery,
+  type ListPiecesQuery,
+} from '~/generated/graphql';
 import { AUTH_COOKIE } from '~/utils/auth';
 import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
-import { getLayout, loadLayout } from '~/server/board-layouts';
-import { validateBoardLayout } from '~/game/board/validate-layout';
+import { upsertSyncedLayout, type SyncedPlacement } from '~/server/board-layouts';
 import { runAdminCommand, type AdminColor } from './admin-command';
 
 /**
@@ -17,9 +22,9 @@ import { runAdminCommand, type AdminColor } from './admin-command';
  */
 type ResetBody = {
   /**
-   * Board layout id to start with.
+   * Sun board layout id to start with.
    */
-  boardLayoutId?: number;
+  boardLayoutId?: string;
 };
 
 /**
@@ -57,26 +62,54 @@ async function requireGame(cookie: string | undefined) {
   }
 }
 
+/**
+ * Mirrors a Sun board layout into the local engine database.
+ *
+ * @param id Sun board layout id.
+ * @returns Local layout id.
+ */
+async function syncLayout(id: string): Promise<number> {
+  const layoutResult = await executeDocument<GetBoardLayoutQuery>(GetBoardLayoutDocument, { id });
+  const layout = layoutResult.success ? layoutResult.data?.medusaQueries.boardLayout : null;
+  if (!layout) {
+    throw new MutationError('Board layout not found', 400);
+  }
+
+  const piecesResult = await executeDocument<ListPiecesQuery>(ListPiecesDocument);
+  const pieces = piecesResult.success ? (piecesResult.data?.medusaQueries.pieces ?? []) : [];
+  const slugById = new Map(pieces.map((piece) => [piece.id, piece.slug]));
+  const placements: SyncedPlacement[] = layout.placements.map((placement) => {
+    const definitionSlug = slugById.get(placement.definitionId);
+    if (!definitionSlug) {
+      throw new MutationError('Board layout refers to an unknown piece', 400);
+    }
+    return {
+      definitionSlug,
+      color: placement.color as 0 | 1,
+      square: placement.square,
+    };
+  });
+
+  return upsertSyncedLayout({
+    slug: layout.slug,
+    name: layout.name,
+    description: layout.description,
+    placements,
+  });
+}
+
 defineMutation({
   path: 'game/reset',
   async handler(body: ResetBody, context) {
     await requireGame(context.cookie);
+    let localLayoutId: number | undefined;
     if (body.boardLayoutId !== undefined) {
-      const layout = getLayout(body.boardLayoutId);
-      if (!layout) {
-        throw new MutationError('Board layout not found', 400);
-      }
-      const loaded = loadLayout(body.boardLayoutId);
-      if (!loaded) {
-        throw new MutationError('Board layout refers to unknown pieces', 400);
-      }
-      const validation = validateBoardLayout(loaded.placements, loaded.definitions);
-      if (!validation.ok) {
-        throw new MutationError(`Illegal starting position: ${validation.errors.join(', ')}`, 400);
-      }
+      localLayoutId = await syncLayout(body.boardLayoutId);
     }
-    const result = await runAdminCommand('reset', body.boardLayoutId === undefined ? {} : { body });
-    return result;
+    return runAdminCommand(
+      'reset',
+      localLayoutId === undefined ? {} : { body: { boardLayoutId: localLayoutId } },
+    );
   },
 });
 

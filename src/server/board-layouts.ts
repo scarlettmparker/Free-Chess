@@ -102,6 +102,40 @@ export type BoardLayoutInput = {
   placements: BoardPlacement[];
 };
 
+export type SyncedPlacement = {
+  /**
+   * Piece slug from the Sun piece registry.
+   */
+  definitionSlug: string;
+  /**
+   * Piece colour, 0 = white, 1 = black.
+   */
+  color: 0 | 1;
+  /**
+   * Square index, 0 = a8 through 63 = h1.
+   */
+  square: number;
+};
+
+export type SyncedLayoutInput = {
+  /**
+   * Layout slug.
+   */
+  slug: string;
+  /**
+   * Layout name.
+   */
+  name: string;
+  /**
+   * Layout description.
+   */
+  description: string | null;
+  /**
+   * Piece placements using Sun piece slugs.
+   */
+  placements: SyncedPlacement[];
+};
+
 /**
  * Loaded layout with engine definitions for mounting.
  */
@@ -254,6 +288,68 @@ export function getLayout(id: number): BoardLayoutDto | null {
   const row = db.query('SELECT * FROM board_layouts WHERE id = ?').get(id) as BoardLayoutRow | null;
   db.close();
   return row ? toLayoutDto(row) : null;
+}
+
+/**
+ * Sync a Sun board layout into the local engine database.
+ *
+ * @param input Layout from Sun, using piece slugs.
+ * @returns Local layout id.
+ */
+export function upsertSyncedLayout(input: SyncedLayoutInput): number {
+  const db = openGameDatabase();
+  const pieceRows = db.query('SELECT id, slug FROM piece_definitions').all() as {
+    id: number;
+    slug: string;
+  }[];
+  const idBySlug = new Map(pieceRows.map((row) => [row.slug, row.id]));
+  const placements: BoardPlacement[] = input.placements.map((placement) => {
+    const definitionId = idBySlug.get(placement.definitionSlug);
+    if (!definitionId) {
+      db.close();
+      throw new MutationError(`Unknown piece: ${placement.definitionSlug}`, 400);
+    }
+    return {
+      definitionId,
+      color: placement.color,
+      square: placement.square,
+    };
+  });
+  const definitions = loadLayoutDefinitions(db, placements);
+  if (!definitions) {
+    db.close();
+    throw new MutationError('Layout refers to unknown pieces', 400);
+  }
+  const validation = validateBoardLayout(placements, definitions);
+  if (!validation.ok) {
+    db.close();
+    throw new MutationError(`Illegal starting position: ${validation.errors.join(', ')}`, 400);
+  }
+
+  const now = new Date().toISOString();
+  const encoded = JSON.stringify(placements);
+  const existing = db.query('SELECT id FROM board_layouts WHERE slug = ?').get(input.slug) as {
+    id: number;
+  } | null;
+  if (existing) {
+    db.run(
+      `UPDATE board_layouts
+       SET name = ?, description = ?, placements = ?, updated_at = ?
+       WHERE id = ?`,
+      [input.name, input.description, encoded, now, existing.id],
+    );
+    db.close();
+    return existing.id;
+  }
+
+  db.run(
+    `INSERT INTO board_layouts (slug, name, description, placements, created_by, created_at, updated_at, is_system)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
+    [input.slug, input.name, input.description, encoded, null, now, now],
+  );
+  const id = Number((db.query('SELECT last_insert_rowid() AS id').get() as { id: number }).id);
+  db.close();
+  return id;
 }
 
 /**

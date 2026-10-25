@@ -25,12 +25,19 @@ remote() { ssh -i "$SSH_KEY" -o BatchMode=yes "$VPS" "$@"; }
 
 # Builds Free Chess and the ARM64 dependency tree.
 build() {
+  local log
   if [ "$SKIP_BUILD" = "0" ]; then
     log "build: Free Chess"
-    (cd "$REPO" && VITE_SERVER_BASE=https://chess.scarlettparker.co.uk \
+    log="$(mktemp "${TMPDIR:-/tmp}/free-chess-build.XXXXXX.log")"
+    if ! (cd "$REPO" && VITE_SERVER_BASE=https://chess.scarlettparker.co.uk \
       VITE_WS_URL=wss://chess-server.scarlettparker.co.uk \
       ALLOWED_HOSTS=chess.scarlettparker.co.uk,localhost \
-      "$BUN" run build >/tmp/opencode/free-chess-build.log 2>&1)
+      "$BUN" run build >"$log" 2>&1); then
+      cat "$log" >&2
+      rm -f "$log"
+      return 1
+    fi
+    rm -f "$log"
   fi
 
   log "deps: ARM64 node_modules"

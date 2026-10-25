@@ -14,6 +14,7 @@ import {
   saveLayout,
   deleteLayout,
   loadLayout,
+  upsertSyncedLayout,
 } from '~/server/board-layouts';
 import { validateBoardLayout } from '~/game/board/validate-layout';
 import { mountGame } from '~/utils/index';
@@ -119,6 +120,35 @@ test('duplicate slugs are rejected', () => {
   });
   expect(deleteLayout(id)).toBe(true);
   expect(getLayout(id)).toBeNull();
+});
+
+test('syncing a Sun layout resolves pieces by slug', () => {
+  const standard = listLayouts().find((layout) => layout.slug === 'standard');
+  const slugById = new Map(listPieces().map((piece) => [piece.id, piece.slug]));
+  const placements = standard!.placements.map((placement) => {
+    const definitionSlug = slugById.get(placement.definitionId);
+    if (!definitionSlug) throw new Error(`Unknown piece id ${placement.definitionId}`);
+    return { definitionSlug, color: placement.color as 0 | 1, square: placement.square };
+  });
+
+  const id = upsertSyncedLayout({
+    slug: 'synced-standard',
+    name: 'Synced Standard',
+    description: null,
+    placements,
+  });
+  expect(getLayout(id)).toMatchObject({ slug: 'synced-standard', name: 'Synced Standard' });
+  expect(loadLayout(id)?.placements).toHaveLength(standard!.placements.length);
+  expect(deleteLayout(id)).toBe(true);
+
+  expect(() =>
+    upsertSyncedLayout({
+      slug: 'synced-missing',
+      name: 'Missing',
+      description: null,
+      placements: [{ definitionSlug: 'not-a-piece', color: 0, square: 0 }],
+    }),
+  ).toThrow('Unknown piece: not-a-piece');
 });
 
 test('mounting the standard layout matches the default mount', () => {
