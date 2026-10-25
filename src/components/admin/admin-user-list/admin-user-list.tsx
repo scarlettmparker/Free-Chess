@@ -6,7 +6,6 @@ import {
   CardBody,
   CardDescription,
   CardHeader,
-  Button,
   CardTitle,
   SearchBar,
   Skeleton,
@@ -16,9 +15,7 @@ import AdminUserListFooter from "~/components/admin/admin-user-list-footer";
 import AdminUserListItems from "~/components/admin/admin-user-list-items";
 import AdminUserListPagination from "~/components/admin/admin-user-list-pagination";
 import type { CreateUserValues } from "~/utils/admin-user-types";
-import RoleCheck from "~/utils/role-check";
 import styles from "./admin-user-list.module.css";
-import { FREE_CHESS_ADMIN_ROLE } from "~/utils/roles";
 
 type AdminUserListProps = {
   /**
@@ -73,11 +70,6 @@ const AdminUserList = (props: AdminUserListProps) => {
               onSearch={onSearch}
               placeholder={t("search-placeholder")}
             />
-            <RoleCheck roles={[FREE_CHESS_ADMIN_ROLE]} match="any">
-              <Button type="button" onClick={() => setCreateOpen(true)}>
-                {t('create-user')}
-              </Button>
-            </RoleCheck>
           </div>
           <Suspense fallback={<Skeleton className={styles.skeleton} />}>
             <AdminUserListItems search={search} page={page} />

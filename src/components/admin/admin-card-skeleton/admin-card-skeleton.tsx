@@ -1,4 +1,4 @@
-import { Card, CardBody, CardHeader, Skeleton } from '@sun/components';
+import { Card, CardBody, Skeleton } from '@sun/components';
 import styles from './admin-card-skeleton.module.css';
 
 /**
@@ -6,15 +6,8 @@ import styles from './admin-card-skeleton.module.css';
  */
 const AdminCardSkeleton = () => (
   <Card>
-    <CardHeader>
-      <Skeleton />
-    </CardHeader>
     <CardBody>
-      <div className={styles.body}>
-        <Skeleton />
-        <Skeleton />
-        <Skeleton />
-      </div>
+      <Skeleton className={styles.skeleton} />
     </CardBody>
   </Card>
 );

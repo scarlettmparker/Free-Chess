@@ -29,7 +29,7 @@ const Audit = () => {
           </CardHeader>
           <CardBody>
             <ScrollArea maxHeight="80vh">
-              <Suspense fallback={<Skeleton />}>
+              <Suspense fallback={<Skeleton className={styles.skeleton} />}>
                 <AuditLog />
               </Suspense>
             </ScrollArea>
