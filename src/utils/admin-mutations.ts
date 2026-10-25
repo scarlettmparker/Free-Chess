@@ -15,6 +15,7 @@ import {
 import { AUTH_COOKIE } from '~/utils/auth';
 import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
 import { upsertSyncedLayout, type SyncedPlacement } from '~/server/board-layouts';
+import { syncPiece, type PieceInput } from '~/server/game-pieces';
 import { runAdminCommand, type AdminColor } from './admin-command';
 
 /**
@@ -77,6 +78,21 @@ async function syncLayout(id: string): Promise<number> {
 
   const piecesResult = await executeDocument<ListPiecesQuery>(ListPiecesDocument);
   const pieces = piecesResult.success ? (piecesResult.data?.medusaQueries.pieces ?? []) : [];
+  for (const piece of pieces) {
+    const { id: _id, isSystem: _isSystem, ...base } = piece;
+    const input: PieceInput = {
+      ...base,
+      promotionTargets: base.promotionTargets?.map(Number) ?? [],
+      promotionRanks: base.promotionRanks ?? [],
+      moveStates: Array.isArray(base.moveStates) ? base.moveStates : [],
+      sprite: base.sprite ?? {
+        headKey: 'pawn-head',
+        bodyKey: 'pawn-body',
+        footKey: 'pawn-foot',
+      },
+    };
+    syncPiece(input);
+  }
   const slugById = new Map(pieces.map((piece) => [piece.id, piece.slug]));
   const placements: SyncedPlacement[] = layout.placements.map((placement) => {
     const definitionSlug = slugById.get(placement.definitionId);

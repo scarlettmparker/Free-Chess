@@ -381,6 +381,31 @@ export function savePiece(input: PieceInput): number {
 }
 
 /**
+ * Sync a Sun piece definition into the local engine database.
+ *
+ * System pieces keep their local engine definitions. Custom pieces are
+ * inserted or updated by slug so move changes take effect on the next reset.
+ *
+ * @param input Piece from Sun.
+ * @returns Local piece id.
+ */
+export function syncPiece(input: PieceInput): number {
+  const db = openGameDatabase();
+  const existing = db
+    .query('SELECT id, is_system FROM piece_definitions WHERE slug = ?')
+    .get(input.slug) as { id: number; is_system: number } | null;
+  db.close();
+
+  if (!existing) {
+    return savePiece(input);
+  }
+  if (existing.is_system) {
+    return existing.id;
+  }
+  return savePiece({ ...input, id: existing.id });
+}
+
+/**
  * Delete a non-system piece.
  *
  * @param id Piece id.
