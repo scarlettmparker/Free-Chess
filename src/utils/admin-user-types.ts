@@ -56,9 +56,9 @@ export type AdminUser = {
    */
   name: string;
   /**
-   * Comma-separated role field.
+   * Roles granted to the account.
    */
-  role: string;
+  roles: string[];
   /**
    * Whether the account is banned.
    */
@@ -158,9 +158,9 @@ type UserRecord = {
    */
   name: string;
   /**
-   * Comma-separated role field.
+   * Roles granted to the account.
    */
-  role?: string | null;
+  roles?: string[] | null;
   /**
    * Ban flag.
    */
@@ -239,7 +239,7 @@ export function toAdminUser(user: UserRecord): AdminUser {
     id: user.id,
     email: user.email,
     name: user.name,
-    role: user.role || "user",
+    roles: user.roles ?? [],
     banned: Boolean(user.banned),
     banReason: user.banReason ?? null,
     banExpires: isoDate(user.banExpires),

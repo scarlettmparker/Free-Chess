@@ -28,6 +28,7 @@ type Account {
   personId: ID!
   provider: String
   remoteUsers: [RemoteUser!]
+  roles: [String!]!
   status: AccountStatus!
   updatedAt: DateTime
   username: String!

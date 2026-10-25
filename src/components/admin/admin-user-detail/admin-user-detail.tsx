@@ -23,7 +23,7 @@ import ConfirmDeleteUserDialog from '~/components/admin/confirm-delete-user-dial
 import EditUserDialog from '~/components/admin/edit-user-dialog';
 import ResetPasswordDialog from '~/components/admin/reset-password-dialog';
 import type { AdminUser, EditUserValues } from '~/utils/admin-user-types';
-import { ROLE_OPTIONS } from '~/utils/roles';
+import { FREE_CHESS_USER_ROLE, ROLE_OPTIONS, roleLabel } from '~/utils/roles';
 import styles from './admin-user-detail.module.css';
 
 type AdminUserDetailProps = {
@@ -127,17 +127,10 @@ const AdminUserDetail = (props: AdminUserDetailProps) => {
   }
 
   const currentRole =
-    user.role
-      .split(',')
-      .map((value) => value.trim())
-      .find((value) => ROLE_OPTIONS.includes(value as (typeof ROLE_OPTIONS)[number])) ?? 'user';
+    user.roles.find((value) => ROLE_OPTIONS.includes(value as (typeof ROLE_OPTIONS)[number])) ??
+    FREE_CHESS_USER_ROLE;
   const role = roleDraft ?? currentRole;
-  const roles = user.role
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean)
-    .map((value) => t(`role-${value}`) as string)
-    .join(', ');
+  const roles = user.roles.map((value) => roleLabel(value, t)).join(', ') || t('role-user');
 
   return (
     <>
@@ -216,7 +209,7 @@ const AdminUserDetail = (props: AdminUserDetailProps) => {
               <Select value={role} onChange={(event) => setRoleDraft(event.currentTarget.value)}>
                 {ROLE_OPTIONS.map((option) => (
                   <SelectOption key={option} value={option}>
-                    {t(`role-${option}`)}
+                    {roleLabel(option, t)}
                   </SelectOption>
                 ))}
               </Select>

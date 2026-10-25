@@ -16,7 +16,7 @@ import {
   SelectOption,
 } from '@sun/components';
 import type { CreateUserValues } from '~/utils/admin-user-types';
-import { ROLE_OPTIONS } from '~/utils/roles';
+import { FREE_CHESS_USER_ROLE, ROLE_OPTIONS, roleLabel } from '~/utils/roles';
 import styles from './create-user-dialog.module.css';
 
 type CreateUserDialogProps = {
@@ -43,7 +43,7 @@ const CreateUserDialog = (props: CreateUserDialogProps) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user');
+  const [role, setRole] = useState<string>(FREE_CHESS_USER_ROLE);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -56,7 +56,7 @@ const CreateUserDialog = (props: CreateUserDialogProps) => {
       setEmail('');
       setName('');
       setPassword('');
-      setRole('user');
+      setRole(FREE_CHESS_USER_ROLE);
       onClose();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : t('action-failed'));
@@ -124,7 +124,7 @@ const CreateUserDialog = (props: CreateUserDialogProps) => {
               >
                 {ROLE_OPTIONS.map((option) => (
                   <SelectOption key={option} value={option}>
-                    {t(`role-${option}`)}
+                    {roleLabel(option, t)}
                   </SelectOption>
                 ))}
               </Select>

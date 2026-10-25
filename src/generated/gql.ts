@@ -15,8 +15,8 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  */
 type Documents = {
     "mutation DeleteAccount($id: ID!) {\n  gaiaMutations {\n    deleteAccount(id: $id) {\n      message\n    }\n  }\n}": typeof types.DeleteAccountDocument,
-    "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}": typeof types.GetAccountDocument,
-    "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": typeof types.ListAccountsDocument,
+    "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      roles\n      createdAt\n      updatedAt\n    }\n  }\n}": typeof types.GetAccountDocument,
+    "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        roles\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": typeof types.ListAccountsDocument,
     "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}": typeof types.LoginDocument,
     "mutation LoginWithGoogle($code: String!, $redirectUri: String!) {\n  gaiaMutations {\n    loginWithGoogle(code: $code, redirectUri: $redirectUri) {\n      token\n    }\n  }\n}": typeof types.LoginWithGoogleDocument,
     "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}": typeof types.MeDocument,
@@ -45,8 +45,8 @@ type Documents = {
 };
 const documents: Documents = {
     "mutation DeleteAccount($id: ID!) {\n  gaiaMutations {\n    deleteAccount(id: $id) {\n      message\n    }\n  }\n}": types.DeleteAccountDocument,
-    "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}": types.GetAccountDocument,
-    "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": types.ListAccountsDocument,
+    "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      roles\n      createdAt\n      updatedAt\n    }\n  }\n}": types.GetAccountDocument,
+    "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        roles\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": types.ListAccountsDocument,
     "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}": types.LoginDocument,
     "mutation LoginWithGoogle($code: String!, $redirectUri: String!) {\n  gaiaMutations {\n    loginWithGoogle(code: $code, redirectUri: $redirectUri) {\n      token\n    }\n  }\n}": types.LoginWithGoogleDocument,
     "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}": types.MeDocument,
@@ -95,11 +95,11 @@ export function graphql(source: "mutation DeleteAccount($id: ID!) {\n  gaiaMutat
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}"): (typeof documents)["query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      createdAt\n      updatedAt\n    }\n  }\n}"];
+export function graphql(source: "query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      roles\n      createdAt\n      updatedAt\n    }\n  }\n}"): (typeof documents)["query GetAccount($id: ID!) {\n  gaiaQueries {\n    account(id: $id) {\n      id\n      username\n      status\n      roles\n      createdAt\n      updatedAt\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}"): (typeof documents)["query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}"];
+export function graphql(source: "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        roles\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}"): (typeof documents)["query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        roles\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

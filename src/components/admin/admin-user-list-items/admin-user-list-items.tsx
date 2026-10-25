@@ -3,6 +3,7 @@ import { useTranslation } from '@sun/i18n';
 import { Button } from '@sun/components';
 import { usePageData } from '@sun/ssr/react';
 import type { AdminUserPage } from '~/utils/admin-user-types';
+import { roleLabel } from '~/utils/roles';
 import styles from './admin-user-list-items.module.css';
 
 type AdminUserListItemsProps = {
@@ -45,7 +46,9 @@ const AdminUserListItems = (props: AdminUserListItemsProps) => {
             <span className={styles.list_name}>{user.email}</span>
             <span className={styles.list_meta}>{user.name}</span>
             <span className={styles.list_actions}>
-              {user.banned ? t('status-banned') : t(`role-${user.role}`)}
+              {user.banned
+                ? t('status-banned')
+                : user.roles.map((role) => roleLabel(role, t)).join(', ') || t('role-user')}
             </span>
           </Button>
         </Link>

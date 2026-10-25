@@ -5,6 +5,7 @@ query ListAccounts($pagination: PaginationInput) {
         id
         username
         status
+        roles
         createdAt
         updatedAt
       }

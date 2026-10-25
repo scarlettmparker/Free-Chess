@@ -4,6 +4,7 @@ query GetAccount($id: ID!) {
       id
       username
       status
+      roles
       createdAt
       updatedAt
     }
