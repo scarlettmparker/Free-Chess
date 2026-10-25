@@ -16,6 +16,8 @@ import {
 } from "~/generated/graphql";
 import { emptyUserPage, type AdminUserPage } from "./admin-user-types";
 
+const ADMIN_USERS_PAGE_SIZE = 10;
+
 /**
  * Checks whether the caller may read admin data.
  *
@@ -40,14 +42,14 @@ defineLoader({
     const page = Math.max(0, Number(params.page ?? 0) || 0);
     const allowed = await canRead(context.cookie);
     if (!allowed) {
-      return { adminUsers: emptyUserPage(page, 20) };
+      return { adminUsers: emptyUserPage(page, ADMIN_USERS_PAGE_SIZE) };
     }
 
     try {
       const result = await executeDocument<ListAccountsQuery>(
         ListAccountsDocument,
         {
-          pagination: { page, size: 20 },
+          pagination: { page, size: ADMIN_USERS_PAGE_SIZE },
         },
       );
       const items = result?.success
@@ -70,13 +72,13 @@ defineLoader({
         })),
         total,
         page,
-        pageSize: 10,
-        totalPages: Math.ceil(total / 20) || 1,
+        pageSize: ADMIN_USERS_PAGE_SIZE,
+        totalPages: Math.ceil(total / ADMIN_USERS_PAGE_SIZE) || 1,
       };
       return { adminUsers };
     } catch (error) {
       console.error("Failed to list admin users:", error);
-      return { adminUsers: emptyUserPage(page, 20) };
+      return { adminUsers: emptyUserPage(page, ADMIN_USERS_PAGE_SIZE) };
     }
   },
 });

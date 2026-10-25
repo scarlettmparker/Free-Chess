@@ -23,20 +23,16 @@ setI18n(i18n);
 
 initClientBootstrap({ i18n })
   .then(() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        ReactDOM.hydrateRoot(
-          document.getElementById("app") as HTMLElement,
-          <BrowserRouter>
-            <Layout>
-              <Suspense fallback={null}>
-                <Router />
-              </Suspense>
-            </Layout>
-          </BrowserRouter>,
-        );
-      });
-    });
+    ReactDOM.hydrateRoot(
+      document.getElementById("app") as HTMLElement,
+      <BrowserRouter>
+        <Layout>
+          <Suspense fallback={null}>
+            <Router />
+          </Suspense>
+        </Layout>
+      </BrowserRouter>,
+    );
   })
   .catch((error) => {
     console.error("Client bootstrap failed", error);

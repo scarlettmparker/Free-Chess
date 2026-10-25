@@ -35,7 +35,9 @@ const renderer = createRenderer({
       if (!result.success) {
         return { current: null, all: [] };
       }
-      return parseThemes(result.data?.gaiaQueries.propertySet);
+      const themes = parseThemes(result.data?.gaiaQueries.propertySet);
+      const sun = themes.all.find((theme) => theme.name === 'sun');
+      return { current: sun?.values ?? themes.current, all: themes.all };
     } catch {
       return { current: null, all: [] };
     }
