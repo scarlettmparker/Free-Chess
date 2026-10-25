@@ -4,9 +4,64 @@
  */
 import { renderApp } from '@sun/ssr/server';
 import { base, isProduction, manifestPath } from '../config.js';
-import { auth } from '../src/server/auth-instance.ts';
 import { registerAuthRoutes } from '../src/server/auth-routes.ts';
-import { getSession, hasAnyRole } from '../src/server/session.ts';
+
+const GRAPHQL_ENDPOINT = process.env.GRAPHQL_ENDPOINT || 'http://localhost:8083/graphql';
+
+/**
+ * Runs a GraphQL query against Sun (Gaia).
+ *
+ * @param {string} cookie JWT.
+ * @param {string} query GraphQL query text.
+ * @param {object} variables query variables.
+ * @returns {Promise<any>} query data.
+ */
+async function gaiaQuery(cookie, query, variables = {}) {
+  const res = await fetch(GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${cookie}`,
+      'X-Client-Id': 'free-chess',
+      'X-Client-Secret': process.env.CSRF_SECRET || process.env.BETTER_AUTH_SECRET || '',
+    },
+    body: JSON.stringify({ query, variables }),
+  });
+  const json = await res.json();
+  return json.data;
+}
+
+/**
+ * Resolves a session from the auth cookie.
+ *
+ * @param {string} cookie raw cookie header.
+ * @returns {Promise<object|null>} session.
+ */
+async function getSession(cookie) {
+  if (!cookie) return null;
+  const token = cookie.split(';').map((p) => p.trim()).find((p) => p.startsWith('free_chess_auth='))?.split('=')[1];
+  if (!token) return null;
+  try {
+    const data = await gaiaQuery(decodeURIComponent(token), 'query { gaiaQueries { me { id username } myRoles } }');
+    if (!data?.gaiaQueries?.me) return null;
+    return { user: { id: data.gaiaQueries.me.id, email: data.gaiaQueries.me.username, role: (data.gaiaQueries.myRoles || []).join(',') } };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Checks whether a session holds any allowed role.
+ *
+ * @param {object} session session payload.
+ * @param {string[]} allowed allowed roles.
+ * @returns {boolean} true when allowed.
+ */
+function hasAnyRole(session, allowed) {
+  if (!session) return false;
+  const held = new Set((session.user.role || 'user').split(',').map((r) => r.trim()).filter(Boolean));
+  return allowed.some((role) => held.has(role));
+}
 
 /**
  * Roles allowed into the admin area.
@@ -20,7 +75,7 @@ const ADMIN_ROLES = ['admin', 'game-admin', 'user-admin'];
  * @param {object} vite - The Vite dev server instance (optional, only in development).
  */
 export function setupRoutes(app, vite) {
-  registerAuthRoutes(app, auth);
+  registerAuthRoutes(app, null);
 
   /**
    * Catch-all route for server-side rendering of pages.

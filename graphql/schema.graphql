@@ -737,6 +737,10 @@ type DeactivateAccountResponse {
   message: String!
 }
 
+type DeleteAccountResponse {
+  message: String!
+}
+
 type DeleteAnnotationResponse {
   id: ID!
   message: String!
@@ -1325,6 +1329,7 @@ type GaiaMutations {
   createIpWhitelistEntry(input: IpWhitelistEntryInput!): CreateIpWhitelistEntryResponse!
   createRole(description: String, name: String!): CreateRoleResponse!
   deactivateAccount: DeactivateAccountResponse!
+  deleteAccount(id: ID!): DeleteAccountResponse!
   deleteConfiguration(id: ID!): DeleteConfigurationResponse!
   deleteIpWhitelistEntry(id: ID!): DeleteIpWhitelistEntryResponse!
   deletePropertyEntry(entry: String!, name: String!, ownerKey: String!): DeletePropertyEntryResponse!
@@ -1343,6 +1348,7 @@ type GaiaMutations {
   revokeApiKey(id: ID!): RevokeApiKeyResponse!
   rotateApiKey(id: ID!): RotateApiKeyResponse!
   saveRegistry(input: HubRegistryInput!): SaveRegistryResponse!
+  setAccountPassword(accountId: ID!, newPassword: String!): SetAccountPasswordResponse!
   setAccountPermissions(accountId: ID!, permissions: [String!]!): SetAccountPermissionsResponse!
   setAccountRoles(accountId: ID!, roleNames: [String!]!): SetAccountRolesResponse!
   setProperty(entry: String!, input: SetPropertyInput!, name: String!, ownerKey: String!): SetPropertyResponse!
@@ -2348,6 +2354,10 @@ input SearchSubtitlesInput {
   keyPath: String!
   language: String
   query: String
+}
+
+type SetAccountPasswordResponse {
+  message: String!
 }
 
 type SetAccountPermissionsResponse {

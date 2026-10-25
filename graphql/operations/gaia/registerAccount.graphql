@@ -1,0 +1,9 @@
+mutation RegisterAccount($input: RegisterInput!) {
+  gaiaMutations {
+    register(input: $input) {
+      accountId
+      personId
+      token
+    }
+  }
+}

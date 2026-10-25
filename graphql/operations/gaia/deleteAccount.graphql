@@ -1,0 +1,7 @@
+mutation DeleteAccount($id: ID!) {
+  gaiaMutations {
+    deleteAccount(id: $id) {
+      message
+    }
+  }
+}

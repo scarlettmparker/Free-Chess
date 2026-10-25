@@ -3,8 +3,7 @@
  * @module utils/admin-mutations
  */
 
-import { defineMutation, getRequestIp, MutationError } from '@sun/ssr';
-import { recordAudit } from '~/server/audit';
+import { defineMutation, MutationError } from '@sun/ssr';
 import type { Permission } from '~/server/permissions';
 import { auth } from '~/server/auth-instance';
 import { getSession, requirePermission } from '~/server/session';
@@ -59,7 +58,7 @@ async function requireGame(cookie: string | undefined, permission: Permission) {
 defineMutation({
   path: 'game/reset',
   async handler(body: ResetBody, context) {
-    const session = await requireGame(context.cookie, { game: ['reset'] } satisfies Permission);
+    await requireGame(context.cookie, { game: ['reset'] } satisfies Permission);
     if (body.boardLayoutId !== undefined) {
       const layout = getLayout(body.boardLayoutId);
       if (!layout) {
@@ -75,16 +74,6 @@ defineMutation({
       }
     }
     const result = await runAdminCommand('reset', body.boardLayoutId === undefined ? {} : { body });
-    recordAudit({
-      action: 'game.reset',
-      outcome: result.ok ? 'success' : 'failure',
-      detail:
-        body.boardLayoutId === undefined
-          ? result.message
-          : `${result.message} (layout ${body.boardLayoutId})`,
-      actor: session.user,
-      ip: getRequestIp(),
-    });
     return result;
   },
 });
@@ -92,29 +81,13 @@ defineMutation({
 defineMutation({
   path: 'game/clear',
   async handler(body: ClearBody, context) {
-    const session = await requireGame(context.cookie, { game: ['clear'] } satisfies Permission);
+    await requireGame(context.cookie, { game: ['clear'] } satisfies Permission);
     const command = body.color ? clearCommandByColor[body.color] : undefined;
     if (!command) {
-      recordAudit({
-        action: 'game.clear',
-        outcome: 'failure',
-        detail: 'Invalid colour',
-        target: body.color ?? null,
-        actor: session.user,
-        ip: getRequestIp(),
-      });
-      throw new MutationError('Invalid colour', 400);
+        throw new MutationError('Invalid colour', 400);
     }
 
     const result = await runAdminCommand(command);
-    recordAudit({
-      action: 'game.clear',
-      outcome: result.ok ? 'success' : 'failure',
-      detail: result.message,
-      target: body.color ?? null,
-      actor: session.user,
-      ip: getRequestIp(),
-    });
     return result;
   },
 });
@@ -122,17 +95,10 @@ defineMutation({
 defineMutation({
   path: 'game/list-sessions',
   async handler(_body: Record<string, unknown>, context) {
-    const session = await requireGame(context.cookie, {
+    await requireGame(context.cookie, {
       game: ['list-sessions'],
     } satisfies Permission);
     const result = await runAdminCommand('list');
-    recordAudit({
-      action: 'game.list-sessions',
-      outcome: 'success',
-      detail: result.message,
-      actor: session.user,
-      ip: getRequestIp(),
-    });
     return result;
   },
 });

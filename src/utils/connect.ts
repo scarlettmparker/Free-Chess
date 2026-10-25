@@ -110,7 +110,10 @@ export const connectWith = (
   });
 };
 
-/** Try restore -> white -> black; sets stored session and calls onSession for session messages. */
+/**
+ * Try restore -> white -> black; sets stored session and calls onSession for
+ * session messages.
+ */
 export const tryConnectFlow = async (
   baseUrl: string,
   onSession: (msg: SessionMsg) => void,
