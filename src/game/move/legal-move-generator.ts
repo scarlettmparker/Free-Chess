@@ -6,23 +6,9 @@ import { isSquareAttacked } from '~/game/board/attacks';
 import { addMove } from './move';
 import { encodeMove, MoveList } from './move-def';
 import { pieceRegistry } from '~/game/piece/piece-registry';
-import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
 import type { Piece } from '~/game/piece/piece';
 import type { PieceDefinition, MoveVector } from '~/game/piece/piece-definition';
-
-/**
- * Look up a piece definition.
- *
- * @param piece Piece to inspect.
- * @returns The piece definition.
- */
-function getDefinition(piece: Piece): PieceDefinition {
-  const def = pieceRegistry.getDefinition(piece.getDefinitionId());
-  if (def) return def;
-  const fallback = BUILTIN_DEFINITIONS.find((d) => d.slug === piece.getType());
-  if (fallback) return fallback;
-  throw new Error(`Unknown piece definition: ${piece.getType()}`);
-}
+import { getDefinition, getPieceState } from './piece-state';
 
 /**
  * Convert a source square plus an offset into a target square, or -1.
@@ -352,18 +338,9 @@ export const generateMove = (movesCopy: MoveList, piece: Piece) => {
   let bbLo = pieceBB.lo;
   let bbHi = pieceBB.hi;
 
-  const pieceMovesMap = color === colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
-
   while (bbLo !== 0 || bbHi !== 0) {
     const source = lsbIndex(bbLo, bbHi);
-
-    let stateIndex = 0;
-    if (def.stateTransition !== 'none' && def.moveStates.length > 0) {
-      const key = Number(`${source}${piece.getId()}`);
-      stateIndex = (pieceMovesMap.get(key) || 0) % def.moveStates.length;
-    }
-    const state = def.moveStates[stateIndex] ?? def.moveStates[0];
-    const vectors = state?.vectors ?? [];
+    const { vectors } = getPieceState(piece, source, def);
 
     for (const v of vectors) {
       if (v.firstMoveOnly && !v.doubleStep && piece.getFirstMove() >= 0) continue;
