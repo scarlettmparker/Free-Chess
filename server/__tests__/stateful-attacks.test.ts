@@ -3,7 +3,7 @@ import { isSquareAttacked } from '~/game/board/attacks';
 import { lsbIndex } from '~/game/board/bb';
 import { notToRawPos, rawPosToNot } from '~/game/board/square-helper';
 import { generateMoves } from '~/game/move/legal-move-generator';
-import { makeMove } from '~/game/move/move';
+import { applyMove, isLegalMove, makeMove, undoMove } from '~/game/move/move';
 import { getMoveSource, getMoveTarget } from '~/game/move/move-def';
 import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
 import type { PieceDefinition } from '~/game/piece/piece-definition';
@@ -16,13 +16,15 @@ const king = BUILTIN_DEFINITIONS.find(
 ) as PieceDefinition;
 
 /**
- * Mount a board where the black leaper starts on d4 and can reach a1 only
- * after its state advances.
+ * Mount a board where the black leaper starts on d4 and covers b1 after it
+ * advances to state 1.
+ *
+ * @param kingSquare Square for the white king.
  */
-function mountScenario(): void {
+function mountScenario(kingSquare = 'b1'): void {
   mountGame({
     placements: [
-      { definitionId: 1, color: 0, square: notToRawPos['b1'] },
+      { definitionId: 1, color: 0, square: notToRawPos[kingSquare] },
       { definitionId: 1, color: 1, square: notToRawPos['h8'] },
       { definitionId: 9001, color: 1, square: notToRawPos['d4'] },
     ],
@@ -69,7 +71,7 @@ function advanceLeaper(): number {
 }
 
 describe('stateful piece attacks', () => {
-  beforeEach(mountScenario);
+  beforeEach(() => mountScenario());
 
   test('advances the piece state after it moves', () => {
     const pieceId = advanceLeaper();
@@ -88,10 +90,34 @@ describe('stateful piece attacks', () => {
     expect(gameState.pieces.find((piece) => piece.getId() === pieceId)).toBeDefined();
   });
 
-  test.fails('flags check from the advanced state', () => {
+  test('flags check from the advanced state', () => {
     advanceLeaper();
 
     expect(isSquareAttacked(notToRawPos['b1'], colors.BLACK)).toBe(true);
     expect(checkedForSideToMove()).toEqual([true, false]);
+  });
+
+  test('rejects a king move into the advanced attack', () => {
+    mountScenario('a1');
+    advanceLeaper();
+
+    expect(isSquareAttacked(notToRawPos['b1'], colors.BLACK)).toBe(true);
+    expect(checkedForSideToMove()).toEqual([false, false]);
+
+    const kingMove = findMove('a1', 'b1');
+    expect(kingMove).toBeDefined();
+    expect(isLegalMove(kingMove!)).toBe(false);
+  });
+
+  test('restores the previous attack set when the move is undone', () => {
+    gameState.side = colors.BLACK;
+    const move = findMove('d4', 'd3');
+    expect(move).toBeDefined();
+
+    const undo = applyMove(move!);
+    expect(isSquareAttacked(notToRawPos['b1'], colors.BLACK)).toBe(true);
+
+    undoMove(move!, undo);
+    expect(isSquareAttacked(notToRawPos['b1'], colors.BLACK)).toBe(false);
   });
 });
