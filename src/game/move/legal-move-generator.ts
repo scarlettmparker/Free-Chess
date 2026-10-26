@@ -1,7 +1,7 @@
 import { colors, gameState, getBitboard } from '~/game/consts/board';
 import { getBit } from '~/game/board/bitboard';
 import { lsbIndex } from '~/game/board/bb';
-import { notToRawPos } from '~/game/board/square-helper';
+import { notToRawPos, offsetSquare } from '~/game/board/square-helper';
 import { isSquareAttacked } from '~/game/board/attacks';
 import { addMove } from './move';
 import { encodeMove, MoveList } from './move-def';
@@ -9,23 +9,6 @@ import { pieceRegistry } from '~/game/piece/piece-registry';
 import type { Piece } from '~/game/piece/piece';
 import type { PieceDefinition, MoveVector } from '~/game/piece/piece-definition';
 import { getDefinition, getPieceState } from './piece-state';
-
-/**
- * Convert a source square plus an offset into a target square, or -1.
- *
- * @param source Source square.
- * @param dx Horizontal offset.
- * @param dy Vertical offset.
- * @returns Target square or -1.
- */
-function offsetSquare(source: number, dx: number, dy: number): number {
-  const rankTop = source >> 3;
-  const file = source & 7;
-  const nrt = rankTop - dy;
-  const nf = file + dx;
-  if (nf < 0 || nf > 7 || nrt < 0 || nrt > 7) return -1;
-  return nrt * 8 + nf;
-}
 
 /**
  * Whether a square holds a piece of the moving side.

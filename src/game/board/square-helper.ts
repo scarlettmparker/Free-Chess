@@ -1,4 +1,21 @@
 /**
+ * Convert a source square plus a white-oriented offset into a target square.
+ *
+ * @param source Source square.
+ * @param dx Horizontal offset.
+ * @param dy Vertical offset.
+ * @returns Target square, or -1 when it leaves the board.
+ */
+export function offsetSquare(source: number, dx: number, dy: number): number {
+  const rankTop = source >> 3;
+  const file = source & 7;
+  const targetRank = rankTop - dy;
+  const targetFile = file + dx;
+  if (targetFile < 0 || targetFile > 7 || targetRank < 0 || targetRank > 7) return -1;
+  return targetRank * 8 + targetFile;
+}
+
+/**
  * Helper function to check which colour a square should be painted.
  * @param square Square to check.
  * @returns 1 (dark), 0 (not dark).

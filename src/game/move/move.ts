@@ -16,7 +16,7 @@ import { getPieceById } from '~/game/board/bitboard';
 import { castlingRights } from '~/game/consts/bits';
 import { isSquareAttacked } from '~/game/board/attacks';
 import { lsbIndex } from '~/game/board/bb';
-import { Piece, LeaperMoveBehavior } from '~/game/piece/piece';
+import { Piece } from '~/game/piece/piece';
 import type { PieceDefinition } from '~/game/piece/piece-definition';
 import { pieceRegistry } from '~/game/piece/piece-registry';
 
@@ -528,38 +528,6 @@ const updateRotatorMoves = (
   }
 
   pieceObj.setReverse(tempReverse);
-};
-
-/**
- * Function to check which move to look for in attack tables.
- * @param piece Piece object to search.
- * @param sourceSquare The piece's current position.
- */
-export const getCheckMove = (piece: Piece, sourceSquare: number) => {
-  const pieceMoveLength =
-    piece.getMoveBehavior() instanceof LeaperMoveBehavior
-      ? (piece.getMoveBehavior() as LeaperMoveBehavior).getLeaperOffsets().length
-      : 1;
-  const pieceMoves = piece.getColor() == colors.WHITE ? gameState.whiteMoves : gameState.blackMoves;
-  let checkMove = 0;
-
-  if (
-    piece.getRotationalMoveType() == 'ROTATE' &&
-    piece.getMoveBehavior() instanceof LeaperMoveBehavior
-  ) {
-    checkMove = (pieceMoves.get(Number('' + sourceSquare + piece.getId())) || 0) % pieceMoveLength;
-  } else if (
-    piece.getRotationalMoveType() == 'REVERSE_ROTATE' &&
-    piece.getMoveBehavior() instanceof LeaperMoveBehavior
-  ) {
-    // flip moves when at right square
-    const pieceDirection = piece.getReverse().get(sourceSquare) || 0;
-    const offset = pieceDirection * (pieceMoveLength / 2);
-    const currentMove = pieceMoves.get(Number(`${sourceSquare}${piece.getId()}`)) || 0;
-    checkMove = offset + ((currentMove % pieceMoveLength) % (pieceMoveLength / 2));
-  }
-
-  return checkMove;
 };
 
 /**
