@@ -7,6 +7,7 @@ import {
   assignColor,
   clearColor,
   detachSession,
+  pruneSessions,
 } from '~server/sessions';
 
 function fakeSocket() {
@@ -90,6 +91,22 @@ describe('sessions module', () => {
 
     detachSession(spectator.sessionId, undefined, 1000);
     expect(sessions.has(spectator.sessionId)).toBe(false);
+  });
+
+  test('pruneSessions removes expired disconnected colours only', () => {
+    const live = createSession('white', fakeSocket());
+    const stale = createSession('black', fakeSocket());
+    detachSession(stale.sessionId, undefined, 1000);
+
+    expect(pruneSessions(3000, 5000)).toBe(0);
+    expect(sessions.has(live.sessionId)).toBe(true);
+    expect(sessions.has(stale.sessionId)).toBe(true);
+
+    expect(pruneSessions(7000, 5000)).toBe(1);
+    expect(sessions.has(live.sessionId)).toBe(true);
+    expect(sessions.has(stale.sessionId)).toBe(false);
+    expect(colorMap.get('black')).toBeUndefined();
+    expect(colorMap.get('white')).toBe(live.sessionId);
   });
 
   test('a new connection reclaims a colour after the reconnect grace', () => {

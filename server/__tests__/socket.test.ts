@@ -7,6 +7,7 @@ import { loadTestPosition } from '~/utils';
 import { colorMap, createSession, sessions } from '~server/sessions';
 import { handleMessage, type SocketData } from '~server/socket';
 import { resetGameStatus } from '~server/rules';
+import { DEFAULT_MESSAGE_RATE_LIMIT } from '~server/ws-rate-limit';
 
 const startPosition = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -122,6 +123,18 @@ describe('websocket message handler', () => {
     expect(ws.data.clientColor).toBe('white');
     expect(colorMap.get('white')).toBe('claim-session');
     expect(ws.send).toHaveBeenCalledWith(expect.stringContaining('"type":"ack"'));
+  });
+
+  test('closes a socket that exceeds the message rate limit', () => {
+    const ws = fakeSocket();
+    for (let index = 0; index < DEFAULT_MESSAGE_RATE_LIMIT.capacity; index += 1) {
+      handleMessage(ws, '{}');
+    }
+
+    handleMessage(ws, '{}');
+
+    expect(ws.close).toHaveBeenCalledWith(4008, 'rate-limited');
+    expect(ws.send).toHaveBeenCalledWith(expect.stringContaining('"reason":"rate-limited"'));
   });
 
   test('reports an engine failure without throwing', () => {
