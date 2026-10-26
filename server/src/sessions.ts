@@ -272,6 +272,30 @@ export function detachSession(sessionId: string, ws?: Socket, now = Date.now()):
 }
 
 /**
+ * Remove disconnected sessions whose reconnect grace has expired.
+ *
+ * @param now Current time in milliseconds.
+ * @param graceMs Reconnect grace period.
+ * @returns Number of sessions removed.
+ */
+export function pruneSessions(now = Date.now(), graceMs = DEFAULT_RECONNECT_GRACE_MS): number {
+  let removed = 0;
+
+  for (const [sessionId, session] of sessions) {
+    if (session.ws || session.disconnectedAt == null) continue;
+    if (now - session.disconnectedAt < graceMs) continue;
+
+    sessions.delete(sessionId);
+    if (session.color && colorMap.get(session.color) === sessionId) {
+      colorMap.delete(session.color);
+    }
+    removed += 1;
+  }
+
+  return removed;
+}
+
+/**
  * Evict the session holding a colour (used by the CLI/admin endpoints).
  * Returns true if a session was removed.
  */
@@ -286,6 +310,6 @@ export function clearColor(color: NonNullable<Color>): boolean {
   }
   colorMap.delete(color);
   sessions.delete(sid);
-  console.log(`Cleared color ${color} (session ${sid})`);
+  console.log(`Cleared color ${color} (session ${sid.slice(0, 8)})`);
   return true;
 }

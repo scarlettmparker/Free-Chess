@@ -1,7 +1,9 @@
 import { adminCommands, isAdminAuthorized, runCommand, runConsoleCommand } from './admin.ts';
 import { broadcast, handleClose, handleMessage, handleOpen, type SocketData } from './socket.ts';
 import { captureInitialState } from './initial-state.ts';
+import { isOriginAllowed, parseAllowedOrigins } from './origin.ts';
 import { resetGameStatus } from './rules.ts';
+import { pruneSessions } from './sessions.ts';
 import { adminToken } from '../../config.js';
 import { mountGame } from '~/utils/index.ts';
 import { listLayouts, loadLayout } from '~/server/board-layouts';
@@ -19,10 +21,7 @@ const port = Number(Bun.env.PORT) || 4001;
 /**
  * Optional comma-separated host allowlist for browser connections.
  */
-const allowedOrigins = (Bun.env.ALLOWED_WS_ORIGINS || '')
-  .split(',')
-  .map((value) => value.trim())
-  .filter(Boolean);
+const allowedOrigins = parseAllowedOrigins(Bun.env.ALLOWED_WS_ORIGINS, Bun.env.ALLOWED_ORIGINS);
 
 /**
  * Loopback-only admin port. Not reverse-proxied.
@@ -35,20 +34,14 @@ const adminPort = Number(Bun.env.ADMIN_PORT) || port + 1;
 const maxPayloadLength = 16 * 1024;
 
 /**
- * Check whether an origin is allowed.
- *
- * @param origin Origin header.
- * @returns True if allowed.
+ * Largest queued payload before Bun closes a slow connection.
  */
-function isOriginAllowed(origin: string | null) {
-  if (!allowedOrigins.length) return true;
-  if (!origin) return false;
-  try {
-    return allowedOrigins.includes(new URL(origin).host);
-  } catch {
-    return false;
-  }
-}
+const backpressureLimit = 1_000_000;
+
+/**
+ * How often disconnected sessions are pruned.
+ */
+const sessionPruneIntervalMs = 30_000;
 
 /**
  * Mount the standard board layout, falling back to the default mount when the
@@ -67,6 +60,9 @@ function mountStandardLayout() {
 function start() {
   if (process.env.NODE_ENV === 'production' && !adminToken) {
     throw new Error('ADMIN_TOKEN is required in production');
+  }
+  if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
+    throw new Error('ALLOWED_WS_ORIGINS or ALLOWED_ORIGINS is required in production');
   }
 
   mountStandardLayout();
@@ -87,7 +83,7 @@ function start() {
         return new Response('Expected a WebSocket upgrade', { status: 400 });
       }
 
-      if (!isOriginAllowed(req.headers.get('origin'))) {
+      if (!isOriginAllowed(req.headers.get('origin'), allowedOrigins)) {
         return new Response('Origin not allowed', { status: 403 });
       }
 
@@ -108,6 +104,11 @@ function start() {
     },
     websocket: {
       maxPayloadLength,
+      backpressureLimit,
+      closeOnBackpressureLimit: true,
+      idleTimeout: 60,
+      sendPings: true,
+      perMessageDeflate: false,
       open: handleOpen,
       message: handleMessage,
       close: handleClose,
@@ -163,6 +164,11 @@ function start() {
     if (!cmd) return;
     runConsoleCommand(cmd, broadcast);
   });
+
+  const pruneTimer = setInterval(() => {
+    pruneSessions();
+  }, sessionPruneIntervalMs);
+  pruneTimer.unref();
 }
 
 if (import.meta.main) {

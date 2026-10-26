@@ -2,6 +2,7 @@ import type { ServerWebSocket } from 'bun';
 import { sessions, assignColor, attachSession as openSession, detachSession } from './sessions.ts';
 import { checkServerMove, isEncodedMove, updateGameStatus } from './rules.ts';
 import { getInitialState } from './initial-state.ts';
+import { DEFAULT_MESSAGE_RATE_LIMIT, TokenBucket } from './ws-rate-limit.ts';
 import { gameState, moveType } from '~/game/consts/board.ts';
 import { makeMove } from '~/game/move/move.ts';
 import {
@@ -36,8 +37,8 @@ export type SocketData = {
 export function safeSend(ws: { send(data: string): unknown }, obj: unknown) {
   try {
     ws.send(JSON.stringify(obj));
-  } catch {
-    // ignore send errors
+  } catch (error) {
+    console.debug('WebSocket send failed', error);
   }
 }
 
@@ -114,6 +115,23 @@ export function handleOpen(ws: ServerWebSocket<SocketData>) {
   sendGameState(ws);
 }
 
+const messageBuckets = new WeakMap<object, TokenBucket>();
+
+/**
+ * Take one message token for a socket.
+ *
+ * @param ws Socket sending the message.
+ * @returns True when the message is allowed.
+ */
+function allowMessage(ws: object): boolean {
+  let bucket = messageBuckets.get(ws);
+  if (!bucket) {
+    bucket = new TokenBucket(DEFAULT_MESSAGE_RATE_LIMIT);
+    messageBuckets.set(ws, bucket);
+  }
+  return bucket.take();
+}
+
 /**
  * Handle one client message.
  *
@@ -121,6 +139,12 @@ export function handleOpen(ws: ServerWebSocket<SocketData>) {
  * @param raw Raw message payload.
  */
 export function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
+  if (!allowMessage(ws)) {
+    safeSend(ws, { type: 'error', reason: 'rate-limited' });
+    ws.close(4008, 'rate-limited');
+    return;
+  }
+
   try {
     processMessage(ws, raw);
   } catch (error) {
@@ -150,12 +174,11 @@ function processMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
 
   const message = parsed as { type?: unknown; color?: unknown; move?: unknown };
 
-  console.log(
-    'Received message from client (color=%s, session=%s):',
-    ws.data.clientColor,
-    ws.data.sessionId,
-    message,
-  );
+  console.debug('WebSocket message', {
+    type: typeof message.type === 'string' ? message.type : 'unknown',
+    color: ws.data.clientColor,
+    session: ws.data.sessionId?.slice(0, 8) ?? 'none',
+  });
 
   if (message.type === 'hello') {
     if (message.color !== 'white' && message.color !== 'black') {
@@ -210,7 +233,7 @@ function processMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
       throw error;
     }
 
-    console.log('Move accepted, updating state');
+    console.debug('Move accepted', { move });
     const opponentColor = color === 'white' ? 'black' : 'white';
     const opponentSession = Array.from(sessions.values()).find(
       (session) => session.color === opponentColor && session.ws,
@@ -232,5 +255,8 @@ export function handleClose(ws: ServerWebSocket<SocketData>) {
   if (ws.data.sessionId) {
     detachSession(ws.data.sessionId, ws);
   }
-  console.log('Client disconnected', 'color:', ws.data.clientColor, 'session:', ws.data.sessionId);
+  console.debug('Client disconnected', {
+    color: ws.data.clientColor,
+    session: ws.data.sessionId?.slice(0, 8) ?? 'none',
+  });
 }
