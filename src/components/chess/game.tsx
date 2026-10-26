@@ -19,8 +19,16 @@ const resultKeys: Record<NonNullable<GameResult>, string> = {
  * Chess page body: status line and board.
  */
 const Game = () => {
-  const { view, status, playerColor, selectSquare, promotion, choosePromotion, cancelPromotion } =
-    useChessSession();
+  const {
+    view,
+    status,
+    notice,
+    playerColor,
+    selectSquare,
+    promotion,
+    choosePromotion,
+    cancelPromotion,
+  } = useChessSession();
   const { t } = useTranslation('chess');
 
   const turn = view.side === colors.WHITE ? t('white-to-move') : t('black-to-move');
@@ -32,6 +40,7 @@ const Game = () => {
       <div className={styles.status}>
         <span>{turn}</span>
         {status === 'connected' ? null : <span>{t(status)}</span>}
+        {notice ? <span>{t(notice)}</span> : null}
       </div>
       <Board view={view} onSelect={selectSquare} />
       <span>{side}</span>

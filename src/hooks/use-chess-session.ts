@@ -87,7 +87,7 @@ export function useChessSession() {
     [history.length, historyIndex, refresh],
   );
 
-  const { status, sendMove } = useMatchmakingSocket({
+  const { status, notice, sendMove } = useMatchmakingSocket({
     onSession(msg) {
       if (msg.sessionId) setStoredSession(msg.sessionId);
       if (msg.color === 'white') setPlayerColor(colors.WHITE);
@@ -272,6 +272,7 @@ export function useChessSession() {
   return {
     view,
     status,
+    notice,
     playerColor,
     selectSquare,
     promotion,
