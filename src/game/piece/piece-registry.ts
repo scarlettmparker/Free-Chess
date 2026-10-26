@@ -1,6 +1,20 @@
 import type { PieceDefinition } from './piece-definition';
 
 /**
+ * Sort move states by stored index before lookup.
+ *
+ * @param definition Definition to normalize.
+ * @returns The original definition, or a sorted copy.
+ */
+function normalizeDefinition(definition: PieceDefinition): PieceDefinition {
+  const states = definition.moveStates;
+  if (!Array.isArray(states) || states.length < 2) return definition;
+  const ordered = [...states].sort((a, b) => a.index - b.index);
+  if (ordered.every((state, index) => state === states[index])) return definition;
+  return { ...definition, moveStates: ordered };
+}
+
+/**
  * Maps piece definitions to dense engine ids and back.
  *
  * Built-in definitions register with their historical ids so that FEN and
@@ -27,7 +41,7 @@ export class PieceRegistry {
 
     const baseId = engineBaseId !== undefined ? engineBaseId : this.allocateBaseId();
 
-    this.definitions.set(definition.id, definition);
+    this.definitions.set(definition.id, normalizeDefinition(definition));
     this.engineBaseIdByDefinition.set(definition.id, baseId);
     this.definitionIdByEngineBaseId.set(baseId, definition.id);
 
@@ -50,7 +64,7 @@ export class PieceRegistry {
     if (existing === undefined) {
       return this.register(definition);
     }
-    this.definitions.set(definition.id, definition);
+    this.definitions.set(definition.id, normalizeDefinition(definition));
     return existing;
   }
 
