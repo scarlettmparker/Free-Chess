@@ -1,128 +1,58 @@
 # Free Chess
 
-A bitboard chess engine with a Sun-stack front-end and a Bun matchmaking
-service.
+Bitboard chess with a Preact/Fastify front end and a Bun matchmaking service.
 
-## Stack
-
-- Front-end: Preact via `@sun/*`, Fastify SSR, CSS modules, Vite.
-- Engine: TypeScript, shared by the front-end and the matchmaking server.
-- Matchmaking: Bun websockets, in-memory sessions.
-
-## Scripts
+## Run
 
 ```bash
 bun install
-bun run dev          # dev server on :5179 (stops the preview unit)
-bun run dev:server   # matchmaking on :4001 (stops the worker unit)
+bun run dev          # web app on :5179
+bun run dev:server   # matchmaking on :4001
 bun run test
 bun run lint
-bun run fmt
-bun run build        # build, then restart the preview unit
-bun run preview
-bun run restart:server
-bun run db:migrate
-bun run auth:create-admin --email you@example.com --name "Your Name"
-bun run db:backup    # optional output path as the first argument
-bun run db:prune-audit 180
+bun run build
 ```
 
-Preview services:
-
-- `sun-app@free-chess.service` on `:5179`, proxied as `chess.int.scarlettparker.co.uk`.
-- `sun-worker@free-chess-matchmaking.service` on `:4001`, proxied as `chess-server.int.scarlettparker.co.uk`.
-
-The browser connects to `wss://chess-server.int.scarlettparker.co.uk`. In dev it
-uses the same-origin `/ws` proxy on the Fastify server.
+Preview services are `sun-app@free-chess` (`:5179`) and
+`sun-worker@free-chess-matchmaking` (`:4001`). Browsers use
+`wss://chess-server.int.scarlettparker.co.uk`; development uses `/ws`.
 
 ## Sessions
 
-The browser keeps a `sessionId` in `localStorage` and reattaches with it. A
-colour stays reserved for its session for five seconds after a disconnect
-(`DEFAULT_RECONNECT_GRACE_MS`). After that, a new connection asking for the
-colour takes it over.
+The browser stores a `sessionId` and reattaches with it. A colour stays
+reserved for five seconds after a disconnect, then another connection may take
+it.
 
-The matchmaking service also listens on `127.0.0.1:4002` (`ADMIN_PORT`) for
-local admin commands. That port is not reverse-proxied and requires
+The matchmaking service listens on `127.0.0.1:4002` for admin commands
+(`list`, `cw`, `cb`, `clear`, `reset`). It is not reverse-proxied and requires
 `ADMIN_TOKEN`.
 
-```bash
-curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/list
-curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/cw      # clear white
-curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/cb      # clear black
-curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/clear   # clear both
-curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST http://127.0.0.1:4002/reset   # reset the game
-```
+WebSocket connections are origin-checked, rate-limited and pruned after their
+reconnect grace expires.
 
 ## Auth
 
-Admins live in a SQLite database managed by better-auth. Email and password
-sign-in is enabled, public sign-up is disabled, and the first admin is created
-with `auth:create-admin`. `/login` is public; the chess board stays public for
-guests.
+Auth uses existing accounts; public sign-up is disabled. Magic-link and Google
+sign-in are optional.
 
-Magic-link sign-in is available for existing accounts. Enter an email on
-`/login`, and the app sends a single-use link that expires after 15 minutes.
-Unknown and banned accounts get the same "check your inbox" page and no email.
-Links go out through Gmail SMTP. Set `SMTP_USER` to the Gmail address and
-`SMTP_PASSWORD` to an app password (2FA must be on). Without those in
-development the link is printed to the server log; in production the request
-returns an email-unavailable error and password login keeps working.
+## Environment
 
-Google sign-in is available for existing accounts when `GOOGLE_CLIENT_ID` and
-`GOOGLE_CLIENT_SECRET` are set. It uses the app-owned callback at
-`/api/auth/callback/google`, so that exact URL must be registered as an
-authorised redirect URI on the Google client. Unknown emails cannot create an
-account; existing accounts are linked by verified email.
+Required in production:
 
-The database defaults to `$XDG_DATA_HOME/free-chess/auth.db`, then
-`~/.local/share/free-chess/auth.db`. Set `AUTH_DB_PATH` to override it.
+- `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`
+- `CSRF_SECRET`
+- `ADMIN_TOKEN`
+- `ALLOWED_WS_ORIGINS` or `ALLOWED_ORIGINS`
 
-Environment:
+Optional:
 
-- `BETTER_AUTH_SECRET` - required in production.
-- `BETTER_AUTH_URL` - public origin, for example `https://chess.int.scarlettparker.co.uk`.
-- `BETTER_AUTH_TRUSTED_ORIGINS` - extra comma-separated origins.
-- `CSRF_SECRET` - HMAC key for native form CSRF tokens. Falls back to `BETTER_AUTH_SECRET`.
-- `ADMIN_TOKEN` - bearer token shared by the web app and the matchmaking admin API. Required in production.
-- `MATCHMAKING_ADMIN_URL` - loopback admin API URL, default `http://127.0.0.1:4002`.
-- `SMTP_HOST` - SMTP host, default `smtp.gmail.com`.
-- `SMTP_PORT` - SMTP port, default `587`.
-- `SMTP_USER` - Gmail address used to send magic links.
-- `SMTP_PASSWORD` - Gmail app password for `SMTP_USER`.
-- `MAIL_FROM` - From header, default `SMTP_USER`.
-- `GOOGLE_CLIENT_ID` - Google OAuth web client id. Google sign-in is hidden when unset.
-- `GOOGLE_CLIENT_SECRET` - Google OAuth web client secret.
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `MAIL_FROM`
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+- `AUTH_DB_PATH`
 
-Roles are defined in `src/server/permissions.ts`:
+## Deploy
 
-- `admin` - everything.
-- `game-admin` - reset, clear, list sessions.
-- `user-admin` - create, list, manage, and revoke users.
-- `user` - no admin permissions.
-
-Admin mutations and sign-in attempts append to `audit_log` in the auth
-database. `/admin/audit` shows the newest 200 entries and is limited to the
-`admin` role. `bun run db:prune-audit 180` removes entries older than the given
-number of days. The default is 180.
-
-## Deploy checklist
-
-- `BETTER_AUTH_SECRET`, `CSRF_SECRET`, and `ADMIN_TOKEN` are set. Keep `.env`
-  and `.env.production` at mode `600`.
-- `BETTER_AUTH_URL` uses `https`, and `ALLOWED_ORIGINS` lists every served host.
-- `SMTP_USER` and `SMTP_PASSWORD` are set when magic-link sign-in should work.
-- Run `bun run db:migrate` after deploy, then `bun run db:backup` on a timer.
-- Run `bun run db:prune-audit 180` on a timer so the audit table stays bounded.
-- Check both units, `sun-app@free-chess` and
+- Set the production environment and keep `.env*` at mode `600`.
+- Run `bun run deploy`.
+- Check both units: `sun-app@free-chess` and
   `sun-worker@free-chess-matchmaking`.
-
-## Layout
-
-- `src/game/**` - engine, FEN, move generation, perft.
-- `src/components/chess/**` - board, squares, pieces, status.
-- `src/hooks/**` - engine view model and matchmaking socket.
-- `src/entry-client.tsx`, `src/entry-server.tsx` - hydration and SSR entry.
-- `routes/index.js` - Fastify catch-all render route.
-- `server/src/**` - matchmaking service.
-- `public/piece/**` - sprites and move sounds.
