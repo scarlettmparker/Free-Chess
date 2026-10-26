@@ -1,4 +1,4 @@
-import { isAdminAuthorized, runCommand } from '~server/admin';
+import { isAdminAuthorized, runCommand, runConsoleCommand } from '~server/admin';
 import { colorMap, createSession, sessions } from '~server/sessions';
 
 describe('admin module', () => {
@@ -64,6 +64,19 @@ describe('admin module', () => {
       expect.objectContaining({
         type: 'state',
         state: expect.any(Object),
+      }),
+    );
+  });
+
+  test('broadcasts a console reset', () => {
+    const broadcast = vi.fn();
+
+    const result = runConsoleCommand('reset', broadcast);
+
+    expect(result.ok).toBe(true);
+    expect(broadcast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'state',
       }),
     );
   });

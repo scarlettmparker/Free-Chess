@@ -148,6 +148,19 @@ export function runCommand(
 }
 
 /**
+ * Run a command from the local console and log its result.
+ *
+ * @param cmd Command name.
+ * @param broadcast State broadcaster used by reset.
+ * @returns Command result.
+ */
+export function runConsoleCommand(cmd: string, broadcast: Broadcast = () => {}): CommandResult {
+  const result = runCommand(cmd, broadcast);
+  console.log(result.message);
+  return result;
+}
+
+/**
  * Checks a bearer token without leaking the comparison length.
  *
  * @param header Authorization header, when present.
