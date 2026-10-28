@@ -11,14 +11,15 @@ import styles from './nav.module.css';
  * Top navigation with the account controls.
  */
 const Nav = () => {
+  const { t } = useTranslation('nav');
   const { pathname } = useLocation();
   if (pathname.startsWith('/login')) return null;
 
   return (
     <nav className={styles.nav}>
       <Link to="/" className={styles.link}>
-        <Button variant="secondary" className={styles.button}>
-          Free Chess
+        <Button variant={pathname === '/' ? 'default' : 'secondary'} className={styles.button}>
+          {t('lobby')}
         </Button>
       </Link>
       <Suspense fallback={null}>

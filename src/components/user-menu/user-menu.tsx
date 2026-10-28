@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
 import {
   Button,
@@ -25,6 +25,7 @@ import styles from './user-menu.module.css';
  */
 const UserMenu = () => {
   const { t } = useTranslation('nav');
+  const { pathname } = useLocation();
   const { data: user } = usePageData<MeQuery['gaiaQueries']['me'] | null>(
     'currentUser',
     'currentUser',
@@ -35,15 +36,17 @@ const UserMenu = () => {
   if (!user) return null;
 
   const isAdmin = roles?.includes(FREE_CHESS_ADMIN_ROLE) ?? false;
+  const profileActive = pathname === '/profile' || pathname.startsWith('/profile/');
+  const adminActive = pathname === '/admin' || pathname.startsWith('/admin/');
 
   return (
     <div className={styles.account}>
       <Link to="/profile">
-        <Button variant="secondary">{t('profile')}</Button>
+        <Button variant={profileActive ? 'default' : 'secondary'}>{t('profile')}</Button>
       </Link>
       {isAdmin ? (
         <Link to="/admin">
-          <Button variant="secondary">{t('admin')}</Button>
+          <Button variant={adminActive ? 'default' : 'secondary'}>{t('admin')}</Button>
         </Link>
       ) : null}
       <DropdownMenu>
