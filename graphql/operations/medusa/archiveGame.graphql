@@ -1,0 +1,12 @@
+mutation ArchiveGame($input: GameArchiveInput!) {
+  medusaMutations {
+    archiveGame(input: $input) {
+      message
+      game {
+        id
+        code
+        archivedAt
+      }
+    }
+  }
+}

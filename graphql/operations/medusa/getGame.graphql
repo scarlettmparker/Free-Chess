@@ -1,0 +1,28 @@
+query GetGame($code: String!) {
+  medusaQueries {
+    game(code: $code) {
+      id
+      code
+      boardLayoutId
+      boardLayoutName
+      status
+      initialState
+      finalState
+      creatorAccountId
+      whiteAccountId
+      blackAccountId
+      result
+      winnerAccountId
+      moveCount
+      createdAt
+      startedAt
+      finishedAt
+      archivedAt
+      moves {
+        ply
+        move
+        playedAt
+      }
+    }
+  }
+}

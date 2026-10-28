@@ -1,0 +1,31 @@
+query MyGames($pagination: PaginationInput) {
+  medusaQueries {
+    myGames(pagination: $pagination) {
+      items {
+        id
+        code
+        boardLayoutName
+        status
+        finalState
+        creatorAccountId
+        whiteAccountId
+        blackAccountId
+        result
+        winnerAccountId
+        moveCount
+        createdAt
+        startedAt
+        finishedAt
+        archivedAt
+      }
+      pageInfo {
+        page
+        size
+        totalPages
+        totalCount
+        hasNextPage
+        hasPreviousPage
+      }
+    }
+  }
+}

@@ -1432,6 +1432,66 @@ type GalleryQueries {
   locateGalleryItems(ids: [ID!]!): [GalleryItem]
 }
 
+type Game {
+  archivedAt: DateTime!
+  blackAccountId: ID
+  boardLayoutId: ID
+  boardLayoutName: String!
+  code: String!
+  createdAt: DateTime!
+  creatorAccountId: ID!
+  finalState: JSON!
+  finishedAt: DateTime!
+  id: ID!
+  initialState: JSON!
+  moveCount: Int!
+  moves: [GameMove!]!
+  result: String
+  startedAt: DateTime
+  status: String!
+  whiteAccountId: ID
+  winnerAccountId: ID
+}
+
+input GameArchiveInput {
+  blackAccountId: ID
+  boardLayoutId: ID
+  boardLayoutName: String!
+  code: String!
+  createdAt: DateTime!
+  creatorAccountId: ID!
+  finalState: JSON!
+  finishedAt: DateTime!
+  initialState: JSON!
+  moves: [GameMoveInput!]!
+  result: String
+  startedAt: DateTime
+  whiteAccountId: ID
+  winnerAccountId: ID
+}
+
+type GameMove {
+  move: Long!
+  playedAt: DateTime!
+  ply: Int!
+}
+
+input GameMoveInput {
+  move: Long!
+  playedAt: DateTime!
+  ply: Int!
+}
+
+type GamePage {
+  items: [Game!]!
+  pageInfo: PageInfo!
+}
+
+type GameResponse {
+  game: Game!
+  message: String!
+}
+
 """ Response payload for the getPresignedDownloadUrl mutation."""
 type GetPresignedDownloadUrlResponse {
   message: String!
@@ -1683,6 +1743,7 @@ type MarkViewedResponse {
 }
 
 type MedusaMutations {
+  archiveGame(input: GameArchiveInput!): GameResponse!
   deleteBoardLayout(id: ID!): DeleteResponse!
   deletePiece(id: ID!): DeleteResponse!
   deletePieceSet(id: ID!): DeleteResponse!
@@ -1696,6 +1757,8 @@ type MedusaQueries {
   boardLayout(id: ID!): BoardLayout
   boardLayoutBySlug(slug: String!): BoardLayout
   boardLayouts: [BoardLayout!]!
+  game(code: String!): Game
+  myGames(pagination: PaginationInput): GamePage!
   piece(id: ID!): Piece
   pieceSet(id: ID!): PieceSet
   pieceSets: [PieceSet!]!
