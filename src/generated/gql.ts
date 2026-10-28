@@ -20,7 +20,7 @@ type Documents = {
     "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        roles\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": typeof types.ListAccountsDocument,
     "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}": typeof types.LoginDocument,
     "mutation LoginWithGoogle($code: String!, $redirectUri: String!) {\n  gaiaMutations {\n    loginWithGoogle(code: $code, redirectUri: $redirectUri) {\n      token\n    }\n  }\n}": typeof types.LoginWithGoogleDocument,
-    "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}": typeof types.MeDocument,
+    "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n      roles\n    }\n  }\n}": typeof types.MeDocument,
     "query MyRoles {\n  gaiaQueries {\n    myRoles\n  }\n}": typeof types.MyRolesDocument,
     "query propertySet($ownerKey: String!, $name: String!) {\n  gaiaQueries {\n    propertySet(ownerKey: $ownerKey, name: $name)\n  }\n}": typeof types.PropertySetDocument,
     "mutation RegisterAccount($input: RegisterInput!) {\n  gaiaMutations {\n    register(input: $input) {\n      accountId\n      personId\n      token\n    }\n  }\n}": typeof types.RegisterAccountDocument,
@@ -56,7 +56,7 @@ const documents: Documents = {
     "query ListAccounts($pagination: PaginationInput) {\n  gaiaQueries {\n    accounts(pagination: $pagination) {\n      items {\n        id\n        username\n        status\n        roles\n        createdAt\n        updatedAt\n      }\n      pageInfo {\n        totalCount\n      }\n    }\n  }\n}": types.ListAccountsDocument,
     "mutation Login($input: LoginInput!) {\n  gaiaMutations {\n    login(input: $input) {\n      token\n      accountId\n      personId\n    }\n  }\n}": types.LoginDocument,
     "mutation LoginWithGoogle($code: String!, $redirectUri: String!) {\n  gaiaMutations {\n    loginWithGoogle(code: $code, redirectUri: $redirectUri) {\n      token\n    }\n  }\n}": types.LoginWithGoogleDocument,
-    "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}": types.MeDocument,
+    "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n      roles\n    }\n  }\n}": types.MeDocument,
     "query MyRoles {\n  gaiaQueries {\n    myRoles\n  }\n}": types.MyRolesDocument,
     "query propertySet($ownerKey: String!, $name: String!) {\n  gaiaQueries {\n    propertySet(ownerKey: $ownerKey, name: $name)\n  }\n}": types.PropertySetDocument,
     "mutation RegisterAccount($input: RegisterInput!) {\n  gaiaMutations {\n    register(input: $input) {\n      accountId\n      personId\n      token\n    }\n  }\n}": types.RegisterAccountDocument,
@@ -127,7 +127,7 @@ export function graphql(source: "mutation LoginWithGoogle($code: String!, $redir
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}"): (typeof documents)["query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n    }\n  }\n}"];
+export function graphql(source: "query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n      roles\n    }\n  }\n}"): (typeof documents)["query Me {\n  gaiaQueries {\n    me {\n      id\n      username\n      personId\n      roles\n    }\n  }\n}"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -4,6 +4,7 @@ query Me {
       id
       username
       personId
+      roles
     }
   }
 }

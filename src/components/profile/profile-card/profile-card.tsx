@@ -15,8 +15,6 @@ const ProfileCard = () => {
     'currentUser',
     {},
   );
-  const { data: roles } = usePageData<string[]>('currentRoles', 'currentRoles', {});
-
   if (!user) return null;
 
   return (
@@ -29,9 +27,9 @@ const ProfileCard = () => {
         </div>
       </CardHeader>
       <CardBody>
-        {roles?.length ? (
+        {user.roles.length ? (
           <ul className={styles.roles}>
-            {roles.map((role) => (
+            {user.roles.map((role) => (
               <li key={role}>{role}</li>
             ))}
           </ul>

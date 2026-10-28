@@ -31,11 +31,9 @@ const UserMenu = () => {
     'currentUser',
     {},
   );
-  const { data: roles } = usePageData<string[]>('currentRoles', 'currentRoles', {});
-
   if (!user) return null;
 
-  const isAdmin = roles?.includes(FREE_CHESS_ADMIN_ROLE) ?? false;
+  const isAdmin = user.roles.includes(FREE_CHESS_ADMIN_ROLE);
   const profileActive = pathname === '/profile' || pathname.startsWith('/profile/');
   const adminActive = pathname === '/admin' || pathname.startsWith('/admin/');
 
@@ -65,9 +63,9 @@ const UserMenu = () => {
               </div>
             </CardHeader>
             <CardBody className={styles.body}>
-              {roles?.length ? (
+              {user.roles.length ? (
                 <ul className={styles.roles}>
-                  {roles.map((role) => (
+                  {user.roles.map((role) => (
                     <li key={role}>{role}</li>
                   ))}
                 </ul>
