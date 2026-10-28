@@ -1,0 +1,43 @@
+.game {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lg);
+}
+
+.players {
+  display: flex;
+  justify-content: center;
+  gap: var(--lg);
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.code {
+  margin: 0;
+}
+
+.status {
+  display: flex;
+  justify-content: center;
+  gap: var(--md);
+  flex-wrap: wrap;
+}
+
+.game_over {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--md);
+}
+
+.game_over_text {
+  margin: 0;
+}

@@ -97,7 +97,11 @@ const CreateGameForm = (props: CreateGameFormProps) => {
                 </FormItem>
               </FormField>
             ) : null}
-            {error ? <p className={styles.error}>{error}</p> : null}
+            {error ? (
+              <p className={styles.error} role="alert">
+                {error}
+              </p>
+            ) : null}
             <FormFooter className={styles.footer}>
               <Button type="submit" disabled={pending}>
                 {pending ? t('creating') : t('create-game')}

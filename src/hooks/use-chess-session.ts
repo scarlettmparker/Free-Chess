@@ -28,6 +28,7 @@ export function useChessSession(options: MatchmakingOptions = {}) {
   const [moves, setMoves] = useState<number[]>([]);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [latestStatus, setLatestStatus] = useState<MoveStatus | null>(null);
+  const [gameStatus, setGameStatus] = useState<string | null>(null);
   const [promotion, setPromotion] = useState<number[] | null>(null);
   const accountIdRef = useRef<string | null>(null);
 
@@ -70,6 +71,7 @@ export function useChessSession(options: MatchmakingOptions = {}) {
       setMoves(message.moves);
       setHistoryIndex(message.moves.length);
       setLatestStatus(message.status);
+      setGameStatus(message.status.status ?? null);
       applyPosition(message.initial, message.moves, message.moves.length, message.status);
       setSelectedSquare(null);
       setPromotion(null);
@@ -122,6 +124,7 @@ export function useChessSession(options: MatchmakingOptions = {}) {
         if (msg.color === 'white') setPlayerColor(colors.WHITE);
         else if (msg.color === 'black') setPlayerColor(colors.BLACK);
         else setPlayerColor(null);
+        if (options.gameId && msg.status) setGameStatus(msg.status);
       },
       onState: handleState,
       onOpponentMove: handleOpponentMove,
@@ -292,6 +295,7 @@ export function useChessSession(options: MatchmakingOptions = {}) {
     status,
     notice,
     playerColor,
+    gameStatus,
     selectSquare,
     promotion,
     choosePromotion,

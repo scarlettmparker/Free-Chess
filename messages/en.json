@@ -55,6 +55,23 @@
     "waiting-for-opponent": "Waiting for opponent",
     "unknown-player": "Unknown player"
   },
+  "play": {
+    "live-title": "Live game",
+    "replay-title": "Game replay",
+    "waiting-title": "Waiting for an opponent",
+    "waiting-body": "Share this game code with another player.",
+    "game-code": "Game code",
+    "game-over": "Game Over",
+    "view-replay": "View replay",
+    "replay-hint": "Use the left and right arrow keys to step through the game.",
+    "move-counter": "Move {{current}} of {{total}}",
+    "not-found": "Game not found",
+    "players": "Players",
+    "white": "White",
+    "black": "Black",
+    "you": "You",
+    "unknown-player": "Unknown player"
+  },
   "login": {
     "title": "Free Chess",
     "subtitle": "Sign in to admin.",

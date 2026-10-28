@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
-import { Button, Card, CardBody, CardDescription, CardHeader, CardTitle } from '@sun/components';
+import { Card, CardBody, CardDescription, CardHeader, CardTitle } from '@sun/components';
 import type { LobbyGame } from '~/utils/games-data';
 import styles from './open-games.module.css';
 
@@ -48,20 +48,18 @@ const OpenGames = (props: OpenGamesProps) => {
         {games.length === 0 ? (
           <p className={styles.no_games}>{t('no-open-games')}</p>
         ) : (
-          <div className={styles.list}>
+          <ul className={styles.list}>
             {games.map((game) => (
-              <Link key={game.id} to={`/play/${game.id}`} className={styles.link}>
-                <Button variant="secondary" className={styles.item}>
-                  <span className={styles.id}>{game.id}</span>
-                  <span className={styles.meta}>
-                    <span>{players(game)}</span>
-                    <span>{game.boardLayoutName ?? t('layout-standard')}</span>
-                    <span>{t(statusKeys[game.status])}</span>
-                  </span>
-                </Button>
-              </Link>
+              <li key={game.id}>
+                <Link to={`/play/${game.id}`} className={styles.item}>
+                  <strong className={styles.id}>{game.id}</strong>
+                  <span>{players(game)}</span>
+                  <span>{game.boardLayoutName ?? t('layout-standard')}</span>
+                  <span>{t(statusKeys[game.status])}</span>
+                </Link>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </CardBody>
     </Card>
