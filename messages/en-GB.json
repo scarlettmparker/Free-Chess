@@ -35,6 +35,26 @@
     "piece-body": "Piece body",
     "piece-foot": "Piece foot"
   },
+  "lobby": {
+    "title": "Play chess",
+    "create-title": "Create a game",
+    "create-description": "Start a game and share the code with an opponent.",
+    "layout-label": "Board layout",
+    "layout-standard": "Standard",
+    "create-game": "Create game",
+    "creating": "Creating…",
+    "create-failed": "Could not create a game. Try again.",
+    "sign-in-required": "Sign in to create a game.",
+    "sign-in": "Sign in",
+    "open-title": "Your open games",
+    "open-description": "Games waiting for an opponent or already in progress.",
+    "no-open-games": "No open games yet.",
+    "status-waiting": "Waiting for opponent",
+    "status-active": "In progress",
+    "status-finished": "Finished",
+    "waiting-for-opponent": "Waiting for opponent",
+    "unknown-player": "Unknown player"
+  },
   "login": {
     "title": "Free Chess",
     "subtitle": "Sign in to admin.",

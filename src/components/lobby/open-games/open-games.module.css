@@ -1,0 +1,36 @@
+.card {
+  width: 100%;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+}
+
+.link {
+  display: block;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--lg);
+  width: 100%;
+}
+
+.id {
+  flex-shrink: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--lg);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.no_games {
+  margin: 0;
+}
