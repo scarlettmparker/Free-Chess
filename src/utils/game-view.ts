@@ -149,6 +149,7 @@ function mapMoves(legalMoves: number[]): Map<string, MoveList> {
  * @param playerColor Colour assigned to this client, or null.
  * @param viewMoveIndex Move-history index to highlight, or the latest move when omitted.
  * @param atLatest Whether the viewed position is the live position.
+ * @param interactive Whether the board accepts moves.
  * @returns The board view.
  */
 export function buildBoardView(
@@ -156,6 +157,7 @@ export function buildBoardView(
   playerColor: PlayerColor | null,
   viewMoveIndex?: number,
   atLatest = true,
+  interactive = true,
 ): BoardView {
   const candidates: MoveList = { moves: [], count: 0 };
   generateMoves(candidates, gameState.pieces);
@@ -184,6 +186,7 @@ export function buildBoardView(
 
   const gameOver = gameState.gameOver || sideMoves.length === 0;
   const canMove =
+    interactive &&
     playerColor != null &&
     playerColor === gameState.side &&
     !gameOver &&

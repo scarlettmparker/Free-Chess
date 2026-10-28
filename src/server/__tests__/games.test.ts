@@ -98,20 +98,23 @@ describe('games', () => {
       { idFactory: () => 'SEAT001' },
     );
 
-    expect(assignSeat(id, 'creator-seat')).toEqual({ status: 'creator', color: null });
+    const waitingGame = getGame(id);
+    expect(waitingGame?.status).toBe('waiting');
+    expect(waitingGame?.whiteAccountId).toBe('creator-seat');
+    expect(waitingGame?.blackAccountId).toBeNull();
+
+    expect(assignSeat(id, 'creator-seat')).toEqual({ status: 'existing', color: 'white' });
 
     const joined = assignSeat(id, 'joiner-seat');
-    expect(joined.status).toBe('joined');
-    expect(joined.status === 'joined' ? joined.color : null).not.toBeNull();
+    expect(joined).toEqual({ status: 'joined', color: 'black' });
 
     const game = getGame(id);
     expect(game?.status).toBe('active');
-    expect(game?.whiteAccountId).toBeTruthy();
-    expect(game?.blackAccountId).toBeTruthy();
-    expect([game?.whiteAccountId, game?.blackAccountId]).toContain('creator-seat');
-    expect([game?.whiteAccountId, game?.blackAccountId]).toContain('joiner-seat');
+    expect(game?.whiteAccountId).toBe('creator-seat');
+    expect(game?.blackAccountId).toBe('joiner-seat');
 
-    expect(assignSeat(id, 'joiner-seat').status).toBe('existing');
+    expect(assignSeat(id, 'creator-seat')).toEqual({ status: 'existing', color: 'white' });
+    expect(assignSeat(id, 'joiner-seat')).toEqual({ status: 'existing', color: 'black' });
     expect(assignSeat(id, 'spectator-seat')).toEqual({ status: 'spectator' });
   });
 

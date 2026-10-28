@@ -149,9 +149,24 @@ export function useChessSession(options: MatchmakingOptions = {}) {
   const view = useMemo(
     () =>
       mounted
-        ? buildBoardView(selectedSquare, playerColor, historyIndex, historyIndex === moves.length)
+        ? buildBoardView(
+            selectedSquare,
+            playerColor,
+            historyIndex,
+            historyIndex === moves.length,
+            options.gameId ? gameStatus === 'active' : true,
+          )
         : emptyBoardView(playerColor),
-    [mounted, selectedSquare, playerColor, version, historyIndex, moves.length],
+    [
+      mounted,
+      selectedSquare,
+      playerColor,
+      version,
+      historyIndex,
+      moves.length,
+      options.gameId,
+      gameStatus,
+    ],
   );
 
   /**
@@ -181,6 +196,7 @@ export function useChessSession(options: MatchmakingOptions = {}) {
   const selectSquare = useCallback(
     (key: number) => {
       if (!mounted || !view.canMove) return;
+      if (options.gameId && gameStatus !== 'active') return;
       if (historyIndex !== moves.length) return;
       const square = view.squares[key];
 
@@ -202,7 +218,16 @@ export function useChessSession(options: MatchmakingOptions = {}) {
 
       setSelectedSquare(square.selectable ? key : null);
     },
-    [mounted, view, selectedSquare, playMove, historyIndex, moves.length],
+    [
+      mounted,
+      view,
+      selectedSquare,
+      playMove,
+      historyIndex,
+      moves.length,
+      options.gameId,
+      gameStatus,
+    ],
   );
 
   /**

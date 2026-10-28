@@ -27,6 +27,7 @@
     "rate-limited": "Too many messages. Slow down.",
     "color-taken": "That colour is taken",
     "game-started": "Game already started",
+    "game-not-started": "Waiting for an opponent",
     "move-rejected": "Move rejected",
     "rejected": "Connection rejected",
     "not-found": "Page not found",

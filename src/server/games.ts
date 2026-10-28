@@ -233,16 +233,6 @@ export type SeatAssignment =
     }
   | {
       /**
-       * Account is the creator and colours are not assigned yet.
-       */
-      status: 'creator';
-      /**
-       * No colour until the second account joins.
-       */
-      color: null;
-    }
-  | {
-      /**
        * Account already holds a seat.
        */
       status: 'existing';
@@ -339,8 +329,16 @@ export function createGame(
           id, status, board_layout_id, board_layout_name, initial_state,
           creator_account_id, white_account_id, black_account_id, result,
           winner_account_id, created_at, started_at, finished_at
-        ) VALUES (?, 'waiting', ?, ?, ?, ?, NULL, NULL, NULL, NULL, ?, NULL, NULL)`,
-        [id, input.boardLayoutId, input.boardLayoutName, initial, input.creatorAccountId, now],
+        ) VALUES (?, 'waiting', ?, ?, ?, ?, ?, NULL, NULL, NULL, ?, NULL, NULL)`,
+        [
+          id,
+          input.boardLayoutId,
+          input.boardLayoutName,
+          initial,
+          input.creatorAccountId,
+          input.creatorAccountId,
+          now,
+        ],
       );
       if (result.changes > 0) return id;
     }
@@ -455,31 +453,35 @@ export function assignSeat(gameId: string, accountId: string): SeatAssignment {
       return { status: 'existing', color: 'black' };
     }
 
-    if (
-      row.status === 'waiting' &&
-      row.white_account_id === null &&
-      row.black_account_id === null
-    ) {
-      if (row.creator_account_id === accountId) {
-        db.run('COMMIT');
-        return { status: 'creator', color: null };
-      }
+    const now = new Date().toISOString();
 
-      const creatorColor: GameColor = randomInt(2) === 0 ? 'white' : 'black';
-      const joinerColor: GameColor = creatorColor === 'white' ? 'black' : 'white';
-      const whiteId = creatorColor === 'white' ? row.creator_account_id : accountId;
-      const blackId = creatorColor === 'black' ? row.creator_account_id : accountId;
-      const now = new Date().toISOString();
+    if (row.status === 'waiting' && row.white_account_id === null) {
+      if (row.creator_account_id === accountId) {
+        db.run('UPDATE games SET white_account_id = ? WHERE id = ?', [accountId, gameId]);
+        db.run('COMMIT');
+        return { status: 'existing', color: 'white' };
+      }
 
       db.run(
         `UPDATE games
          SET status = 'active', white_account_id = ?, black_account_id = ?,
              started_at = ?
          WHERE id = ?`,
-        [whiteId, blackId, now, gameId],
+        [row.creator_account_id, accountId, now, gameId],
       );
       db.run('COMMIT');
-      return { status: 'joined', color: joinerColor };
+      return { status: 'joined', color: 'black' };
+    }
+
+    if (row.status === 'waiting' && row.black_account_id === null) {
+      db.run(
+        `UPDATE games
+         SET status = 'active', black_account_id = ?, started_at = ?
+         WHERE id = ?`,
+        [accountId, now, gameId],
+      );
+      db.run('COMMIT');
+      return { status: 'joined', color: 'black' };
     }
 
     db.run('COMMIT');

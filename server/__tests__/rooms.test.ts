@@ -208,8 +208,8 @@ describe('room sessions', () => {
     expect(getGame(id)?.status).toBe('waiting');
     expect(messages(creatorWs)[0]).toMatchObject({
       type: 'session',
-      seat: 'creator',
-      color: null,
+      seat: 'white',
+      color: 'white',
       status: 'waiting',
     });
 
@@ -223,10 +223,46 @@ describe('room sessions', () => {
 
     const game = getGame(id);
     expect(game?.status).toBe('active');
-    expect([game?.whiteAccountId, game?.blackAccountId]).toContain(creator);
-    expect([game?.whiteAccountId, game?.blackAccountId]).toContain(joiner);
-    expect(messages(joinerWs)[0]).toMatchObject({ type: 'session', status: 'active' });
+    expect(game?.whiteAccountId).toBe(creator);
+    expect(game?.blackAccountId).toBe(joiner);
+    expect(messages(joinerWs)[0]).toMatchObject({
+      type: 'session',
+      seat: 'black',
+      color: 'black',
+      status: 'active',
+    });
     expect(lastMessage(creatorWs)).toMatchObject({ type: 'state', status: 'active' });
+  });
+
+  it('blocks moves before an opponent joins', () => {
+    const id = 'ROOM008';
+    const creator = 'creator-room-8';
+    createGame(
+      {
+        boardLayoutId: null,
+        boardLayoutName: 'Standard',
+        initialState: standardInitial(),
+        creatorAccountId: creator,
+      },
+      { idFactory: () => id },
+    );
+
+    const creatorWs = makeSocket();
+    openRoomSession(
+      creatorWs,
+      id,
+      createGameToken({ gameId: id, accountId: creator }, secret),
+      secret,
+    );
+
+    const room = getRoom(id) as Room;
+    const move = firstMove(room);
+    handleRoomMessage(creatorWs, { type: 'move', move });
+
+    expect(listMoves(id)).toHaveLength(0);
+    expect(messages(creatorWs)).toContainEqual(
+      expect.objectContaining({ type: 'move-rejected', reason: 'game-not-started' }),
+    );
   });
 
   it('does not let a spectator move', () => {

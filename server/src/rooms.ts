@@ -29,7 +29,7 @@ import { verifyGameToken } from '~/server/game-token';
 /**
  * Seat held by a room connection.
  */
-export type RoomSeat = GameColor | 'creator' | 'spectator';
+export type RoomSeat = GameColor | 'spectator';
 
 /**
  * Socket shape used by the room layer.
@@ -274,13 +274,6 @@ export function seatForAccount(room: Room, accountId: string | null): RoomSeat {
   if (!accountId) return 'spectator';
   if (room.whiteAccountId === accountId) return 'white';
   if (room.blackAccountId === accountId) return 'black';
-  if (
-    room.whiteAccountId === null &&
-    room.blackAccountId === null &&
-    room.creatorAccountId === accountId
-  ) {
-    return 'creator';
-  }
   return 'spectator';
 }
 
@@ -512,6 +505,16 @@ export function handleRoomMessage(ws: RoomSocket, message: { type?: unknown; mov
 
   const room = ws.data.room;
   if (!room) return;
+
+  if (room.status === 'waiting') {
+    rejectRoomMove(ws, room, 'game-not-started');
+    return;
+  }
+
+  if (room.status === 'finished') {
+    rejectRoomMove(ws, room, 'game-over');
+    return;
+  }
 
   if (!isEncodedMove(message.move)) {
     rejectRoomMove(ws, room, 'invalid-payload');
