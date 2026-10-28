@@ -22,7 +22,7 @@ type GameBoardPreviewProps = {
  * Read-only board for game history cards.
  */
 const GameBoardPreview = (props: GameBoardPreviewProps) => {
-  const { state, size = 28 } = props;
+  const { state, size = 32 } = props;
   const { t } = useTranslation('profile');
   const occupants = useMemo(() => {
     const bitboards = new Map(

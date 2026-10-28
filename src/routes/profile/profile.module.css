@@ -4,5 +4,8 @@
   align-items: flex-start;
   justify-content: center;
   gap: var(--xl);
+  width: 100%;
+  max-width: 90rem;
+  margin: 0 auto;
   padding: var(--xl) var(--lg);
 }
