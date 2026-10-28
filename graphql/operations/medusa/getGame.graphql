@@ -11,6 +11,15 @@ query GetGame($code: String!) {
       creatorAccountId
       whiteAccountId
       blackAccountId
+      whitePlayer {
+        id
+        username
+      }
+      blackPlayer {
+        id
+        username
+      }
+      viewerSeat
       result
       winnerAccountId
       moveCount

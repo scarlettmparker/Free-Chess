@@ -10,13 +10,11 @@ if (existsSync(tmpDb)) rmSync(tmpDb);
 
 const {
   assignSeat,
-  countResultsForAccount,
   createGame,
   deleteGame,
   finishGame,
   generateGameId,
   getGame,
-  listGamesForAccount,
   listMoves,
   listPendingArchiveIds,
   markGameArchiveFailed,
@@ -141,7 +139,7 @@ describe('games', () => {
     expect(moves.map((entry) => entry.move)).toEqual([100, 200]);
   });
 
-  it('records a finished result and account totals', () => {
+  it('records a finished result', () => {
     const id = createGame(
       {
         boardLayoutId: 1,
@@ -161,9 +159,6 @@ describe('games', () => {
     expect(finishGame(id, result, winnerId)).toBe(true);
     expect(finishGame(id, result, winnerId)).toBe(false);
     expect(getGame(id)?.status).toBe('finished');
-    expect(countResultsForAccount(winnerId).wins).toBe(1);
-    expect(countResultsForAccount('loser-account').losses).toBe(1);
-    expect(listGamesForAccount(winnerId).games[0]?.id).toBe(id);
   });
 
   it('keeps a finished game until archiving succeeds', () => {

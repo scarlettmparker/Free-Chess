@@ -1,0 +1,20 @@
+query LobbySupport($ids: [ID!]!) {
+  gaiaQueries {
+    me {
+      id
+      username
+      personId
+    }
+  }
+  medusaQueries {
+    boardLayouts {
+      id
+      name
+      description
+    }
+    players(ids: $ids) {
+      id
+      username
+    }
+  }
+}

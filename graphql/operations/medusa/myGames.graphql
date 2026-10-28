@@ -10,6 +10,15 @@ query MyGames($pagination: PaginationInput) {
         creatorAccountId
         whiteAccountId
         blackAccountId
+        whitePlayer {
+          id
+          username
+        }
+        blackPlayer {
+          id
+          username
+        }
+        viewerSeat
         result
         winnerAccountId
         moveCount
@@ -25,6 +34,12 @@ query MyGames($pagination: PaginationInput) {
         totalCount
         hasNextPage
         hasPreviousPage
+      }
+      record {
+        wins
+        losses
+        draws
+        played
       }
     }
   }

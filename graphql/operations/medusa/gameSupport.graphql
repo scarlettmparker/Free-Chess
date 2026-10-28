@@ -1,0 +1,15 @@
+query GameSupport($ids: [ID!]!) {
+  gaiaQueries {
+    me {
+      id
+      username
+      personId
+    }
+  }
+  medusaQueries {
+    players(ids: $ids) {
+      id
+      username
+    }
+  }
+}

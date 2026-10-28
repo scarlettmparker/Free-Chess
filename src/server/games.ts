@@ -105,54 +105,6 @@ export type CreateGameInput = {
 };
 
 /**
- * Page of games for one account.
- */
-export type GamePage = {
-  /**
-   * Games on this page.
-   */
-  games: GameDto[];
-  /**
-   * Total games for the account.
-   */
-  total: number;
-  /**
-   * Zero based page index.
-   */
-  page: number;
-  /**
-   * Page size.
-   */
-  pageSize: number;
-  /**
-   * Total number of pages.
-   */
-  totalPages: number;
-};
-
-/**
- * Win loss and draw totals for one account.
- */
-export type AccountGameRecord = {
-  /**
-   * Finished games won.
-   */
-  wins: number;
-  /**
-   * Finished games lost.
-   */
-  losses: number;
-  /**
-   * Finished games drawn.
-   */
-  draws: number;
-  /**
-   * Finished games played.
-   */
-  played: number;
-};
-
-/**
  * Result of binding a socket account to a game.
  */
 export type SeatAssignment =
@@ -217,6 +169,9 @@ function toGameDto(row: GameRow): GameDto {
     creatorAccountId: row.creator_account_id,
     whiteAccountId: row.white_account_id,
     blackAccountId: row.black_account_id,
+    whitePlayer: null,
+    blackPlayer: null,
+    viewerSeat: 'spectator',
     result: row.result as GameOutcome | null,
     winnerAccountId: row.winner_account_id,
     moveCount: 0,
@@ -319,44 +274,24 @@ export function listMoves(gameId: string): GameDto['moves'] {
 }
 
 /**
- * Lists games where an account is the creator or holds a seat.
+ * Lists waiting and active games.
  *
- * @param accountId Account id.
- * @param page Zero based page index.
- * @param pageSize Page size.
- * @returns Page of games.
+ * @param limit Maximum number of games.
+ * @returns Open games.
  */
-export function listGamesForAccount(accountId: string, page = 0, pageSize = 20): GamePage {
-  const safePage = Number.isFinite(page) ? Math.max(0, Math.floor(page)) : 0;
-  const safeSize = Number.isFinite(pageSize)
-    ? Math.min(100, Math.max(1, Math.floor(pageSize)))
-    : 20;
+export function listOpenGames(limit = 50): GameDto[] {
   const db = openGameDatabase();
 
   try {
-    const where = 'creator_account_id = ? OR white_account_id = ? OR black_account_id = ?';
-    const total = Number(
-      (
-        db
-          .query(`SELECT COUNT(*) AS total FROM games WHERE ${where}`)
-          .get(accountId, accountId, accountId) as { total: number }
-      ).total,
-    );
     const rows = db
       .query(
-        `SELECT * FROM games WHERE ${where}
+        `SELECT * FROM games
+         WHERE status IN ('waiting', 'active')
          ORDER BY created_at DESC
-         LIMIT ? OFFSET ?`,
+         LIMIT ?`,
       )
-      .all(accountId, accountId, accountId, safeSize, safePage * safeSize) as GameRow[];
-
-    return {
-      games: rows.map(toGameDto),
-      total,
-      page: safePage,
-      pageSize: safeSize,
-      totalPages: Math.ceil(total / safeSize) || 1,
-    };
+      .all(limit) as GameRow[];
+    return rows.map(toGameDto);
   } finally {
     db.close();
   }
@@ -565,42 +500,6 @@ export function deleteGame(gameId: string) {
 
   try {
     db.run('DELETE FROM games WHERE id = ?', [gameId]);
-  } finally {
-    db.close();
-  }
-}
-
-/**
- * Counts finished wins losses and draws for an account.
- *
- * @param accountId Account id.
- * @returns Result totals.
- */
-export function countResultsForAccount(accountId: string): AccountGameRecord {
-  const db = openGameDatabase();
-
-  try {
-    const row = db
-      .query(
-        `SELECT
-           COALESCE(SUM(CASE WHEN winner_account_id = ? THEN 1 ELSE 0 END), 0) AS wins,
-           COALESCE(SUM(CASE WHEN status = 'finished' AND winner_account_id IS NOT NULL
-             AND winner_account_id <> ? THEN 1 ELSE 0 END), 0) AS losses,
-           COALESCE(SUM(CASE WHEN status = 'finished' AND winner_account_id IS NULL
-             THEN 1 ELSE 0 END), 0) AS draws
-         FROM games
-         WHERE white_account_id = ? OR black_account_id = ?`,
-      )
-      .get(accountId, accountId, accountId, accountId) as {
-      wins: number;
-      losses: number;
-      draws: number;
-    };
-
-    const wins = Number(row.wins);
-    const losses = Number(row.losses);
-    const draws = Number(row.draws);
-    return { wins, losses, draws, played: wins + losses + draws };
   } finally {
     db.close();
   }

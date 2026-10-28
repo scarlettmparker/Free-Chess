@@ -1,26 +1,26 @@
 import { defineLoader } from '@sun/ssr';
 import { executeDocument, getCookieValue } from '@sun/api';
 import {
-  GetAccountDocument,
-  ListBoardLayoutsDocument,
-  type GetAccountQuery,
-  type ListBoardLayoutsQuery,
+  GameSupportDocument,
+  GetGameDocument,
+  LobbySupportDocument,
+  MyGamesDocument,
+  type GameSupportQuery,
+  type GetGameQuery,
+  type LobbySupportQuery,
+  type MyGamesQuery,
 } from '~/generated/graphql';
-import { AUTH_COOKIE, getCurrentUser } from '~/utils/auth';
-import { gameState } from '~/game/consts/board';
+import { AUTH_COOKIE } from '~/utils/auth';
 import { createGameToken } from '~/server/game-token';
 import {
-  countResultsForAccount,
   getGame,
-  listGamesForAccount,
   listMoves,
-  type AccountGameRecord,
+  listOpenGames,
   type GameDto,
   type GameOutcome,
   type GameStatus,
 } from '~/server/games';
-import { replayGameMoves } from '~/utils/game-replay';
-import { serializeGameState, type SerializedGameState } from '~/utils/game-serialize';
+import type { SerializedGameState } from '~/utils/game-serialize';
 import { clientSecret } from '../../config.js';
 
 /**
@@ -275,7 +275,7 @@ export type GameHistoryData = {
   /**
    * Win loss and draw totals.
    */
-  record: AccountGameRecord;
+  record: MyGamesQuery['medusaQueries']['myGames']['record'];
 };
 
 /**
@@ -296,21 +296,13 @@ function emptyHistory(page: number): GameHistoryData {
 }
 
 /**
- * Resolves usernames for a set of account ids.
+ * Maps player usernames by account id.
  *
- * @param accountIds Account ids to resolve.
+ * @param players Players to map.
  * @returns Usernames keyed by account id.
  */
-async function loadUsernames(accountIds: Array<string | null>): Promise<Map<string, string>> {
-  const unique = [...new Set(accountIds.filter((id): id is string => Boolean(id)))];
-  const entries = await Promise.all(
-    unique.map(async (id) => {
-      const result = await executeDocument<GetAccountQuery>(GetAccountDocument, { id });
-      const username = result.success ? result.data?.gaiaQueries.account?.username : null;
-      return [id, username ?? id] as const;
-    }),
-  );
-  return new Map(entries);
+function playerNames(players: Array<{ id: string; username: string }>): Map<string, string> {
+  return new Map(players.map((player) => [player.id, player.username]));
 }
 
 /**
@@ -349,41 +341,35 @@ function scoreFor(result: GameOutcome | null): string {
 }
 
 /**
- * Reads the signed-in account from a cookie.
- *
- * @param cookie Raw cookie header.
- * @returns Account or null.
- */
-async function currentAccount(cookie: string | undefined) {
-  const token = getCookieValue(cookie, AUTH_COOKIE);
-  return getCurrentUser(token);
-}
-
-/**
- * Loads the lobby layouts and the viewer's open games.
+ * Loads the lobby layouts and the open games.
  */
 defineLoader({
   pattern: 'lobby',
   async loader(_params, context) {
-    const layoutsResult = await executeDocument<ListBoardLayoutsQuery>(ListBoardLayoutsDocument);
-    const layouts = layoutsResult.success
-      ? (layoutsResult.data?.medusaQueries.boardLayouts ?? []).map((layout) => ({
-          id: String(layout.id),
+    const token = getCookieValue(context.cookie, AUTH_COOKIE);
+    const open = listOpenGames();
+    const ids = [
+      ...new Set(
+        open.flatMap((game) =>
+          [game.whiteAccountId, game.blackAccountId].filter((id): id is string => id !== null),
+        ),
+      ),
+    ];
+
+    const support = await executeDocument<LobbySupportQuery>(LobbySupportDocument, { ids }, token);
+    const layouts = support.success
+      ? (support.data?.medusaQueries.boardLayouts ?? []).map((layout) => ({
+          id: layout.id,
           name: layout.name,
           description: layout.description ?? null,
         }))
       : [];
+    const usernames = playerNames(support.data?.medusaQueries.players ?? []);
+    const user = support.data?.gaiaQueries.me ?? null;
 
-    const user = await currentAccount(context.cookie);
     if (!user) {
       return { lobby: { layouts, games: [], signedIn: false } as LobbyData };
     }
-
-    const page = listGamesForAccount(user.id, 0, 50);
-    const open = page.games.filter((game) => game.status !== 'finished');
-    const usernames = await loadUsernames(
-      open.flatMap((game) => [game.whiteAccountId, game.blackAccountId]),
-    );
 
     const games: LobbyGame[] = open.map((game) => ({
       id: game.id,
@@ -410,11 +396,44 @@ defineLoader({
   pattern: 'game',
   async loader(params, context) {
     const id = typeof params.id === 'string' ? params.id : '';
+    const cookieToken = getCookieValue(context.cookie, AUTH_COOKIE);
     const game = id ? getGame(id) : null;
-    if (!game) return { game: null };
 
-    const user = await currentAccount(context.cookie);
-    const usernames = await loadUsernames([game.whiteAccountId, game.blackAccountId]);
+    if (!game) {
+      const result = await executeDocument<GetGameQuery>(
+        GetGameDocument,
+        { code: id },
+        cookieToken,
+      );
+      const archived = result.success ? result.data?.medusaQueries.game : null;
+      if (!archived) return { game: null };
+
+      const data: PlayGameData = {
+        id: archived.code,
+        status: archived.status as GameStatus,
+        result: archived.result as GameOutcome | null,
+        boardLayoutName: archived.boardLayoutName,
+        initial: archived.initialState as SerializedGameState,
+        moves: archived.moves.map((move) => move.move),
+        whiteAccountId: archived.whiteAccountId,
+        blackAccountId: archived.blackAccountId,
+        whiteUsername: archived.whitePlayer?.username ?? null,
+        blackUsername: archived.blackPlayer?.username ?? null,
+        viewerSeat: archived.viewerSeat as GameViewerSeat,
+        token: null,
+      };
+
+      return { game: data };
+    }
+
+    const ids = [game.whiteAccountId, game.blackAccountId].filter(
+      (accountId): accountId is string => accountId !== null,
+    );
+    const support = cookieToken
+      ? await executeDocument<GameSupportQuery>(GameSupportDocument, { ids }, cookieToken)
+      : null;
+    const user = support?.data?.gaiaQueries.me ?? null;
+    const usernames = playerNames(support?.data?.medusaQueries.players ?? []);
     const token =
       user && clientSecret
         ? createGameToken({ gameId: game.id, accountId: user.id }, clientSecret)
@@ -448,25 +467,24 @@ defineLoader({
  */
 defineLoader({
   pattern: 'replay',
-  async loader(params) {
+  async loader(params, context) {
     const id = typeof params.id === 'string' ? params.id : '';
-    const game = id ? getGame(id) : null;
-    if (!game) return { replay: null };
+    if (!id) return { replay: null };
 
-    const usernames = await loadUsernames([game.whiteAccountId, game.blackAccountId]);
+    const token = getCookieValue(context.cookie, AUTH_COOKIE);
+    const result = await executeDocument<GetGameQuery>(GetGameDocument, { code: id }, token);
+    const game = result.success ? result.data?.medusaQueries.game : null;
+    if (!game || !game.finalState) return { replay: null };
+
     const data: ReplayGameData = {
-      id: game.id,
+      id: game.code,
       status: game.status as GameStatus,
       result: game.result as GameOutcome | null,
       boardLayoutName: game.boardLayoutName,
       initial: game.initialState as SerializedGameState,
-      moves: listMoves(game.id).map((entry) => entry.move),
-      whiteUsername: game.whiteAccountId
-        ? (usernames.get(game.whiteAccountId) ?? game.whiteAccountId)
-        : null,
-      blackUsername: game.blackAccountId
-        ? (usernames.get(game.blackAccountId) ?? game.blackAccountId)
-        : null,
+      moves: game.moves.map((move) => move.move),
+      whiteUsername: game.whitePlayer?.username ?? null,
+      blackUsername: game.blackPlayer?.username ?? null,
       createdAt: game.createdAt,
       finishedAt: game.finishedAt,
     };
@@ -482,44 +500,39 @@ defineLoader({
   pattern: 'gameHistory',
   async loader(params, context) {
     const pageIndex = Math.max(0, Number(params.page ?? 0) || 0);
-    const user = await currentAccount(context.cookie);
-    if (!user) return { gameHistory: emptyHistory(pageIndex) };
+    const token = getCookieValue(context.cookie, AUTH_COOKIE);
+    if (!token) return { gameHistory: emptyHistory(pageIndex) };
 
-    const page = listGamesForAccount(user.id, pageIndex, 10);
-    const usernames = await loadUsernames(
-      page.games.flatMap((game) => [game.whiteAccountId, game.blackAccountId]),
+    const result = await executeDocument<MyGamesQuery>(
+      MyGamesDocument,
+      { pagination: { page: pageIndex, size: 10 } },
+      token,
     );
+    const page = result.success ? result.data?.medusaQueries.myGames : null;
+    if (!page) return { gameHistory: emptyHistory(pageIndex) };
 
-    const games: GameHistoryEntry[] = page.games.map((game) => {
-      const moves = listMoves(game.id).map((entry) => entry.move);
-      replayGameMoves(game.initialState as SerializedGameState, moves, moves.length);
-      return {
-        id: game.id,
-        status: game.status as GameStatus,
-        result: game.result as GameOutcome | null,
-        boardLayoutName: game.boardLayoutName,
-        whiteUsername: game.whiteAccountId
-          ? (usernames.get(game.whiteAccountId) ?? game.whiteAccountId)
-          : null,
-        blackUsername: game.blackAccountId
-          ? (usernames.get(game.blackAccountId) ?? game.blackAccountId)
-          : null,
-        viewerSeat: viewerSeat(game, user.id),
-        finalState: serializeGameState(gameState),
-        score: scoreFor(game.result as GameOutcome | null),
-        createdAt: game.createdAt,
-        finishedAt: game.finishedAt,
-      };
-    });
+    const games: GameHistoryEntry[] = page.items.map((game) => ({
+      id: game.code,
+      status: game.status as GameStatus,
+      result: game.result as GameOutcome | null,
+      boardLayoutName: game.boardLayoutName,
+      whiteUsername: game.whitePlayer?.username ?? null,
+      blackUsername: game.blackPlayer?.username ?? null,
+      viewerSeat: game.viewerSeat as GameViewerSeat,
+      finalState: game.finalState as SerializedGameState,
+      score: scoreFor(game.result as GameOutcome | null),
+      createdAt: game.createdAt,
+      finishedAt: game.finishedAt,
+    }));
 
     return {
       gameHistory: {
         games,
-        total: page.total,
-        page: page.page,
-        pageSize: page.pageSize,
-        totalPages: page.totalPages,
-        record: countResultsForAccount(user.id),
+        total: page.pageInfo.totalCount,
+        page: page.pageInfo.page,
+        pageSize: page.pageInfo.size,
+        totalPages: page.pageInfo.totalPages,
+        record: page.record,
       } as GameHistoryData,
     };
   },

@@ -1436,6 +1436,7 @@ type GalleryQueries {
 type Game {
   archivedAt: DateTime
   blackAccountId: ID
+  blackPlayer: GamePlayer
   boardLayoutId: ID
   boardLayoutName: String!
   code: String!
@@ -1450,7 +1451,9 @@ type Game {
   result: String
   startedAt: DateTime
   status: String!
+  viewerSeat: String!
   whiteAccountId: ID
+  whitePlayer: GamePlayer
   winnerAccountId: ID
 }
 
@@ -1486,6 +1489,19 @@ input GameMoveInput {
 type GamePage {
   items: [Game!]!
   pageInfo: PageInfo!
+  record: GameRecord!
+}
+
+type GamePlayer {
+  id: ID!
+  username: String!
+}
+
+type GameRecord {
+  draws: Int!
+  losses: Int!
+  played: Int!
+  wins: Int!
 }
 
 type GameResponse {
@@ -1764,6 +1780,7 @@ type MedusaQueries {
   pieceSet(id: ID!): PieceSet
   pieceSets: [PieceSet!]!
   pieces(all: Boolean): [Piece!]!
+  players(ids: [ID!]!): [GamePlayer!]!
 }
 
 type Mutation {
