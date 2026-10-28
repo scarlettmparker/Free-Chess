@@ -5,7 +5,3 @@
   gap: var(--lg);
   padding: var(--xl) var(--lg);
 }
-
-.title {
-  margin: 0;
-}

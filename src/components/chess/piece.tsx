@@ -1,16 +1,49 @@
-import { gameState } from '~/game/consts/board';
 import { useTranslation } from '@sun/i18n';
 import styles from './piece.module.css';
 
-type PieceProps = {
+export type PieceSprite = {
   /**
-   * Piece id used by the sprite sheet.
+   * Head sprite key.
    */
-  pieceId: number;
+  headKey: string;
+  /**
+   * Body sprite key.
+   */
+  bodyKey: string;
+  /**
+   * Foot sprite key.
+   */
+  footKey: string;
+};
+
+export type PieceVisual = {
+  /**
+   * Piece id.
+   */
+  id: number;
+  /**
+   * Sprite keys for the piece.
+   */
+  sprite: PieceSprite;
+  /**
+   * Piece colour, 0 for white and 1 for black.
+   */
+  color: 0 | 1;
   /**
    * Whether the king is in check.
    */
   checked: boolean;
+};
+
+type PieceProps = {
+  /**
+   * Piece to render.
+   */
+  piece: PieceVisual;
+  /**
+   * Whether the piece is decorative.
+   */
+  decorative?: boolean;
 };
 
 /**
@@ -25,38 +58,39 @@ export function partUrl(key: string, color: 0 | 1): string {
 }
 
 /**
- * Piece sprite rendered as head/body/foot layers.
+ * Piece sprite rendered as head, body and foot layers.
  */
 const Piece = (props: PieceProps) => {
-  const { pieceId, checked } = props;
+  const { piece, decorative } = props;
   const { t } = useTranslation('chess');
-  const enginePiece = gameState.pieces.find((piece) => piece.getId() === pieceId);
-  const rawSprite = enginePiece?.getSprite();
-  const color = enginePiece?.getColor() === 1 ? 1 : 0;
   const sprite =
-    rawSprite && rawSprite.headKey && rawSprite.bodyKey && rawSprite.footKey
-      ? rawSprite
+    piece.sprite.headKey && piece.sprite.bodyKey && piece.sprite.footKey
+      ? piece.sprite
       : { headKey: 'king-head', bodyKey: 'king-body', footKey: 'king-foot' };
 
   return (
-    <span className={styles.composite_piece} aria-label={t('piece')}>
-      {checked ? <span className={styles.check_glow} aria-hidden="true" /> : null}
+    <span
+      className={styles.composite_piece}
+      aria-label={decorative ? undefined : t('piece')}
+      aria-hidden={decorative ? 'true' : undefined}
+    >
+      {piece.checked ? <span className={styles.check_glow} aria-hidden="true" /> : null}
       <img
         className={styles.part_head}
-        src={partUrl(sprite.headKey, color)}
-        alt={t('piece-head')}
+        src={partUrl(sprite.headKey, piece.color)}
+        alt={decorative ? '' : t('piece-head')}
         draggable={false}
       />
       <img
         className={styles.part_body}
-        src={partUrl(sprite.bodyKey, color)}
-        alt={t('piece-body')}
+        src={partUrl(sprite.bodyKey, piece.color)}
+        alt={decorative ? '' : t('piece-body')}
         draggable={false}
       />
       <img
         className={styles.part_foot}
-        src={partUrl(sprite.footKey, color)}
-        alt={t('piece-foot')}
+        src={partUrl(sprite.footKey, piece.color)}
+        alt={decorative ? '' : t('piece-foot')}
         draggable={false}
       />
     </span>

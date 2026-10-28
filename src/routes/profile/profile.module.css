@@ -1,0 +1,8 @@
+.page {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--xl);
+  padding: var(--xl) var(--lg);
+}

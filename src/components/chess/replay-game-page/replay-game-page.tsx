@@ -31,7 +31,6 @@ const ReplayGamePage = (props: ReplayGamePageProps) => {
 
   return (
     <main className={styles.page}>
-      <h1 className={styles.title}>{t('replay-title')}</h1>
       <ReplayGame game={game} />
     </main>
   );

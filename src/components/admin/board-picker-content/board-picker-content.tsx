@@ -16,14 +16,20 @@ type BoardPickerContentProps = {
    * Selects a layout.
    */
   onSelect: (layout: BoardLayoutDto) => void;
+  /**
+   * Translation namespace for empty and unnamed layout labels.
+   */
+  namespace?: 'admin' | 'lobby';
 };
 
 /**
  * Layout list and preview with data loaded inside suspense.
  */
 const BoardPickerContent = (props: BoardPickerContentProps) => {
-  const { selectedId, onSelect } = props;
-  const { t } = useTranslation('admin');
+  const { selectedId, onSelect, namespace = 'admin' } = props;
+  const { t: tAdmin } = useTranslation('admin');
+  const { t: tLobby } = useTranslation('lobby');
+  const t = namespace === 'lobby' ? tLobby : tAdmin;
   const { data: boards } = usePageData<BoardLayoutDto[]>('boards', 'boards', {});
   const { data: pieces } = usePageData<MedusaPieceDefinitionDto[]>('pieces', 'pieces', {});
   const sprites = new Map(

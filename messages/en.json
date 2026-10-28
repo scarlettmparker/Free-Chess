@@ -41,6 +41,10 @@
     "create-description": "Start a game and share the code with an opponent.",
     "layout-label": "Board layout",
     "layout-standard": "Standard",
+    "choose-layout-title": "Choose a board layout",
+    "no-layouts": "No board layouts available.",
+    "unnamed-layout": "Unnamed layout",
+    "cancel": "Cancel",
     "create-game": "Create game",
     "creating": "Creating…",
     "create-failed": "Could not create a game. Try again.",
@@ -54,6 +58,37 @@
     "status-finished": "Finished",
     "waiting-for-opponent": "Waiting for opponent",
     "unknown-player": "Unknown player"
+  },
+  "profile": {
+    "title": "Profile",
+    "manage-title": "Manage account",
+    "avatar-alt": "{{username}} avatar",
+    "roles-title": "Roles",
+    "no-roles": "No roles assigned.",
+    "board-label": "Final board position",
+    "board-standard": "Standard",
+    "you-vs": "You vs {{opponent}}",
+    "players-vs": "{{white}} vs {{black}}",
+    "unknown-player": "Unknown player",
+    "status-waiting": "Waiting for opponent",
+    "status-active": "In progress",
+    "status-finished": "Finished",
+    "view-replay": "View replay",
+    "view-game": "View game",
+    "game-history": "Game history",
+    "wins": "Wins",
+    "losses": "Losses",
+    "draws": "Draws",
+    "played": "Played",
+    "no-games": "No games yet.",
+    "danger-zone-title": "Danger zone",
+    "danger-zone-body": "Deactivating your account signs you out and removes access until it is restored.",
+    "deactivate-account": "Deactivate account",
+    "deactivate-title": "Deactivate {{username}}?",
+    "deactivate-body": "This signs you out and disables the account.",
+    "deactivate-failed": "Could not deactivate the account. Try again.",
+    "cancel-label": "Cancel",
+    "confirm-label": "Deactivate"
   },
   "play": {
     "live-title": "Live game",
@@ -96,12 +131,17 @@
     "or": "OR",
     "google-label": "Continue with Google",
     "google-title": "Sign in with Google",
-    "error-google": "Google sign-in failed. Try again or use another method."
+    "error-google": "Google sign-in failed. Try again or use another method.",
+    "deactivated": "This account has been deactivated."
   },
   "nav": {
     "sign-in": "Sign in",
     "logout": "Sign out",
-    "admin": "Admin"
+    "admin": "Admin",
+    "profile": "Profile",
+    "manage-account": "Manage account",
+    "account": "Account menu",
+    "no-roles": "No roles assigned."
   },
   "admin": {
     "game": "Game",

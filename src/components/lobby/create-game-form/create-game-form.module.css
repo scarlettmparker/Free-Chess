@@ -2,7 +2,7 @@
   width: 100%;
 }
 
-.footer {
+.actions {
   display: flex;
   justify-content: flex-end;
 }

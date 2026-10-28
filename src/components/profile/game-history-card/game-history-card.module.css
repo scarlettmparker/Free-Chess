@@ -1,0 +1,15 @@
+.card {
+  width: 100%;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md);
+  flex-wrap: wrap;
+}
+
+.score {
+  margin: 0;
+}

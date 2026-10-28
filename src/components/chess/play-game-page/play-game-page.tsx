@@ -29,7 +29,6 @@ const PlayGamePage = (props: PlayGamePageProps) => {
 
   return (
     <main className={styles.page}>
-      <h1 className={styles.title}>{t('live-title')}</h1>
       <PlayGame game={game} />
     </main>
   );

@@ -275,6 +275,12 @@ describe('room sessions', () => {
       createGameToken({ gameId: id, accountId: room.whiteAccountId as string }, secret),
       secret,
     );
+    expect(messages(reconnectWs)[0]).toMatchObject({
+      type: 'session',
+      color: 'white',
+      seat: 'white',
+      status: 'active',
+    });
     expect(lastMessage(reconnectWs)).toMatchObject({
       type: 'state',
       moves: [move],

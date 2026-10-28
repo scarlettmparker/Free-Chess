@@ -13,7 +13,7 @@ const LobbyContent = () => {
   return (
     <div className={styles.content}>
       <CreateGameForm layouts={data.layouts} signedIn={data.signedIn} />
-      <OpenGames games={data.games} />
+      {data.signedIn ? <OpenGames games={data.games} /> : null}
     </div>
   );
 };

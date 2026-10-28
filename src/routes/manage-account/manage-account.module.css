@@ -1,0 +1,7 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--lg);
+  padding: var(--xl) var(--lg);
+}

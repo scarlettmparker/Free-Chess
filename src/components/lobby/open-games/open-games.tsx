@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
 import { Card, CardBody, CardDescription, CardHeader, CardTitle } from '@sun/components';
+import { DocumentDuplicateOutline } from 'preact-heroicons';
 import type { LobbyGame } from '~/utils/games-data';
 import styles from './open-games.module.css';
 
@@ -12,15 +13,6 @@ type OpenGamesProps = {
 };
 
 /**
- * Translation key for each game status.
- */
-const statusKeys = {
-  waiting: 'status-waiting',
-  active: 'status-active',
-  finished: 'status-finished',
-} as const;
-
-/**
  * Lists games waiting for an opponent or already in progress.
  */
 const OpenGames = (props: OpenGamesProps) => {
@@ -28,14 +20,29 @@ const OpenGames = (props: OpenGamesProps) => {
   const { t } = useTranslation('lobby');
 
   /**
-   * Labels the players shown on a game row.
+   * Describes the opponent or board layout for a game.
    *
    * @param game Game to describe.
-   * @returns Player label.
+   * @returns Short detail line.
    */
-  const players = (game: LobbyGame): string => {
-    if (game.status === 'waiting') return t('waiting-for-opponent');
-    return `${game.whiteUsername ?? t('unknown-player')} vs ${game.blackUsername ?? t('unknown-player')}`;
+  const detail = (game: LobbyGame): string => {
+    if (game.status === 'active') {
+      return `${game.whiteUsername ?? t('unknown-player')} vs ${game.blackUsername ?? t('unknown-player')}`;
+    }
+    return game.boardLayoutName ?? t('layout-standard');
+  };
+
+  /**
+   * Copies the game code.
+   *
+   * @param id Game code to copy.
+   */
+  const copyCode = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(id);
+    } catch (error) {
+      console.error('Could not copy game code', error);
+    }
   };
 
   return (
@@ -50,13 +57,23 @@ const OpenGames = (props: OpenGamesProps) => {
         ) : (
           <ul className={styles.list}>
             {games.map((game) => (
-              <li key={game.id}>
-                <Link to={`/play/${game.id}`} className={styles.item}>
-                  <strong className={styles.id}>{game.id}</strong>
-                  <span>{players(game)}</span>
-                  <span>{game.boardLayoutName ?? t('layout-standard')}</span>
-                  <span>{t(statusKeys[game.status])}</span>
-                </Link>
+              <li key={game.id} className={styles.item}>
+                <div className={styles.info}>
+                  <div className={styles.code_line}>
+                    <Link to={`/play/${game.id}`} className={styles.code_link}>
+                      {game.id}
+                    </Link>
+                    <button
+                      type="button"
+                      className={styles.copy}
+                      aria-label={t('copy-code', { code: game.id })}
+                      onClick={() => copyCode(game.id)}
+                    >
+                      <DocumentDuplicateOutline width={16} height={16} aria-hidden="true" />
+                    </button>
+                  </div>
+                  <p className={styles.detail}>{detail(game)}</p>
+                </div>
               </li>
             ))}
           </ul>

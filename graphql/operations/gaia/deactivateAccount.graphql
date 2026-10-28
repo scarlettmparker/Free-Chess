@@ -1,0 +1,7 @@
+mutation deactivateAccount {
+  gaiaMutations {
+    deactivateAccount {
+      message
+    }
+  }
+}

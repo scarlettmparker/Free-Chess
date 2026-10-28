@@ -16,7 +16,7 @@ describe('buildBoardView', () => {
     const view = buildBoardView(null, colors.WHITE);
 
     expect(view.squares).toHaveLength(64);
-    expect(view.squares.filter((square) => square.pieceId != null)).toHaveLength(32);
+    expect(view.squares.filter((square) => square.piece != null)).toHaveLength(32);
     expect(view.side).toBe(colors.WHITE);
     expect(view.orientation).toBe('white');
     expect(view.canMove).toBe(true);
@@ -47,7 +47,7 @@ describe('buildBoardView', () => {
   test('opponent pieces are not selectable', () => {
     const view = buildBoardView(null, colors.WHITE);
     const blackPiece = view.squares.find(
-      (square) => square.pieceId != null && gameState.blackPieceIds.includes(square.pieceId),
+      (square) => square.piece != null && gameState.blackPieceIds.includes(square.piece.id),
     );
 
     expect(blackPiece).toBeDefined();
@@ -80,15 +80,15 @@ describe('buildBoardView', () => {
     const view = buildBoardView(null, colors.WHITE);
     const king = view.squares.find(
       (square) =>
-        square.pieceId != null &&
-        gameState.whitePieceIds.includes(square.pieceId) &&
-        getPieceById(square.pieceId)?.getKing(),
+        square.piece != null &&
+        gameState.whitePieceIds.includes(square.piece.id) &&
+        getPieceById(square.piece.id)?.getKing(),
     );
     expect(king).toBeDefined();
 
     gameState.checked = [true, false];
     const checkedView = buildBoardView(null, colors.WHITE);
 
-    expect(checkedView.squares[king!.key].checked).toBe(true);
+    expect(checkedView.squares[king!.key].piece?.checked).toBe(true);
   });
 });

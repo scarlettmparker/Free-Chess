@@ -3,21 +3,25 @@
   flex-direction: column;
   align-items: center;
   gap: var(--lg);
+  width: 100%;
 }
 
-.players {
+.layout {
   display: flex;
+  flex-direction: row;
+  align-items: flex-start;
   justify-content: center;
-  gap: var(--lg);
-  flex-wrap: wrap;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  gap: var(--xl);
+  flex-wrap: nowrap;
+}
+
+.side {
+  flex-shrink: 0;
+  width: 20rem;
 }
 
 .card {
   width: 100%;
-  max-width: 420px;
 }
 
 .code {

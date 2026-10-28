@@ -7,6 +7,8 @@ import AdminCardSkeleton from '~/components/admin/admin-card-skeleton';
 const ChessPage = lazy(() => import('~/routes/index'));
 const PlayPage = lazy(() => import('~/routes/play'));
 const ReplayPage = lazy(() => import('~/routes/replay'));
+const ProfilePage = lazy(() => import('~/routes/profile'));
+const ManageAccountPage = lazy(() => import('~/routes/manage-account'));
 const LoginPage = lazy(() => import('~/routes/login'));
 const AdminLayout = lazy(() => import('~/routes/admin/admin-layout'));
 const AdminPage = lazy(() => import('~/routes/admin'));
@@ -42,6 +44,22 @@ export const routes: RouteObject[] = [
     element: (
       <Suspense fallback={null}>
         <ReplayPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/profile',
+    element: (
+      <Suspense fallback={null}>
+        <ProfilePage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/manage-account',
+    element: (
+      <Suspense fallback={null}>
+        <ManageAccountPage />
       </Suspense>
     ),
   },

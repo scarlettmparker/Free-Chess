@@ -15,13 +15,17 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   const { data } = usePageData<LoginOptions>('loginOptions', 'loginOptions', {});
   const sent = searchParams.get('sent') === '1';
+  const deactivated = searchParams.get('deactivated') === '1';
+  let description = t('subtitle');
+  if (sent) description = t('sent-subtitle');
+  if (deactivated) description = t('deactivated');
 
   return (
     <div className={styles.wrapper}>
       <Card className={styles.card}>
         <CardHeader>
           <CardTitle>{sent ? t('sent-title') : t('title')}</CardTitle>
-          <CardDescription>{sent ? t('sent-subtitle') : t('subtitle')}</CardDescription>
+          <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardBody>
           {sent ? <MagicLinkSent /> : <LoginPanel googleEnabled={data?.google ?? false} />}

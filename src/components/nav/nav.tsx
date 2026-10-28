@@ -1,13 +1,11 @@
 import { Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
-import { Button, Form } from '@sun/components';
+import { Button } from '@sun/components';
 import { usePageData } from '@sun/ssr/react';
-import CsrfField from '~/utils/csrf-field';
-import RoleCheck from '~/utils/role-check';
+import UserMenu from '~/components/user-menu';
 import type { MeQuery } from '~/generated/graphql';
 import styles from './nav.module.css';
-import { FREE_CHESS_ADMIN_ROLE } from '~/utils/roles';
 
 /**
  * Top navigation with the account controls.
@@ -35,7 +33,11 @@ const Nav = () => {
  */
 const NavAccount = () => {
   const { t } = useTranslation('nav');
-  const { data: currentUser } = usePageData<MeQuery["gaiaQueries"]["me"] | null>('currentUser', 'currentUser', {});
+  const { data: currentUser } = usePageData<MeQuery['gaiaQueries']['me'] | null>(
+    'currentUser',
+    'currentUser',
+    {},
+  );
 
   if (!currentUser) {
     return (
@@ -47,23 +49,7 @@ const NavAccount = () => {
     );
   }
 
-  return (
-    <div className={styles.account}>
-      <RoleCheck roles={[FREE_CHESS_ADMIN_ROLE]} match="any">
-        <Link to="/admin" className={styles.link}>
-          <Button variant="secondary" className={styles.button}>
-            {t('admin')}
-          </Button>
-        </Link>
-      </RoleCheck>
-      <Form action="/__logout" method="post">
-        <CsrfField />
-        <Button type="submit" variant="secondary" className={styles.button}>
-          {t('logout')}
-        </Button>
-      </Form>
-    </div>
-  );
+  return <UserMenu />;
 };
 
 export default Nav;

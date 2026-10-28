@@ -70,7 +70,7 @@ const Square = (props: SquareProps) => {
       tabIndex={tabIndex}
       aria-label={`${file}${rank}`}
     >
-      {square.pieceId != null ? <Piece pieceId={square.pieceId} checked={square.checked} /> : null}
+      {square.piece ? <Piece piece={square.piece} /> : null}
       {showFile ? <span className={styles.file}>{file}</span> : null}
       {showRank ? <span className={styles.rank}>{rank}</span> : null}
     </button>

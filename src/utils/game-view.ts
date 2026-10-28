@@ -10,6 +10,7 @@ import {
 import { generateMoves } from '~/game/move/legal-move-generator';
 import { isLegalMove } from '~/game/move/move';
 import { getMovePiece, getMoveSource, getMoveTarget, type MoveList } from '~/game/move/move-def';
+import type { PieceVisual } from '~/components/chess/piece';
 
 export type SquareHighlight = 'none' | 'selected' | 'target' | 'latest';
 
@@ -25,7 +26,7 @@ export type SquareView = {
   /**
    * Piece on the square, if any.
    */
-  pieceId: number | null;
+  piece: PieceVisual | null;
   /**
    * Legal moves starting from this square.
    */
@@ -34,10 +35,6 @@ export type SquareView = {
    * Highlight applied by selection or the latest move.
    */
   highlight: SquareHighlight;
-  /**
-   * Whether the king on this square is in check.
-   */
-  checked: boolean;
   /**
    * Whether the piece can be selected by the player to move.
    */
@@ -93,10 +90,9 @@ export function emptyBoardView(playerColor: PlayerColor | null = null): BoardVie
     squares: Array.from({ length: BOARD_SIZE * BOARD_SIZE }, (_, key) => ({
       key,
       isLight: (Math.floor(key / BOARD_SIZE) + (key % BOARD_SIZE)) % 2 === 0,
-      pieceId: null,
+      piece: null,
       moves: EMPTY_MOVE_LIST,
       highlight: 'none',
-      checked: false,
       selectable: false,
     })),
     side: colors.WHITE,
@@ -196,7 +192,22 @@ export function buildBoardView(
 
   const squares: SquareView[] = pieces.map((pieceId, key) => {
     const isWhitePiece = pieceId != null && gameState.whitePieceIds.includes(pieceId);
-    const piece = pieceId == null ? null : getPieceById(pieceId);
+    const enginePiece = pieceId == null ? null : getPieceById(pieceId);
+    const piece: PieceVisual | null =
+      pieceId == null
+        ? null
+        : {
+            id: pieceId,
+            sprite: enginePiece?.getSprite() ?? {
+              headKey: 'king-head',
+              bodyKey: 'king-body',
+              footKey: 'king-foot',
+            },
+            color: isWhitePiece ? 0 : 1,
+            checked:
+              enginePiece?.getKing() === true &&
+              gameState.checked[isWhitePiece ? colors.WHITE : colors.BLACK] === true,
+          };
 
     let highlight: SquareHighlight = 'none';
     if (selectedSquare != null) {
@@ -213,16 +224,12 @@ export function buildBoardView(
     return {
       key,
       isLight: (Math.floor(key / BOARD_SIZE) + (key % BOARD_SIZE)) % 2 === 0,
-      pieceId,
+      piece,
       moves:
         pieceId == null
           ? EMPTY_MOVE_LIST
           : (movesByPieceAndSquare.get(`${pieceId}-${key}`) ?? EMPTY_MOVE_LIST),
       highlight,
-      checked:
-        piece != null &&
-        piece.getKing() &&
-        gameState.checked[isWhitePiece ? colors.WHITE : colors.BLACK] === true,
       selectable:
         canMove &&
         isWhitePiece === (gameState.side === colors.WHITE) &&

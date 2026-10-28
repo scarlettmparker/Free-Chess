@@ -14,13 +14,37 @@
 .item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--lg);
   flex-wrap: wrap;
   padding: var(--md) var(--lg);
 }
 
-.id {
-  flex-shrink: 0;
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+}
+
+.code_line {
+  display: flex;
+  align-items: center;
+  gap: var(--sm);
+}
+
+.code_link {
+  text-decoration: underline;
+}
+
+.copy {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.detail {
+  margin: 0;
 }
 
 .no_games {

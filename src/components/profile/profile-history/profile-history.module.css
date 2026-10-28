@@ -1,0 +1,25 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lg);
+  width: 100%;
+  max-width: 36rem;
+}
+
+.history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--lg);
+}
+
+.no_games {
+  margin: 0;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+}

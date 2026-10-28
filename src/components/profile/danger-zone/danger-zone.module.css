@@ -1,0 +1,14 @@
+.card {
+  width: 100%;
+  max-width: 20rem;
+}
+
+.body,
+.error {
+  margin: 0;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}

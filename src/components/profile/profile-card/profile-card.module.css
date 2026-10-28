@@ -1,0 +1,31 @@
+.card {
+  width: fit-content;
+  min-width: 20rem;
+  max-width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--md);
+}
+
+.heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+  margin-left: var(--lg);
+}
+
+.roles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sm);
+}
+
+.no_roles {
+  margin: 0;
+}
