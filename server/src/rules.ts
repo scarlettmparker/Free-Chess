@@ -25,14 +25,35 @@ import { serializeGameState } from '~/utils/game-serialize.ts';
 const MAX_ENCODED_MOVE = 0xffffffff;
 
 /**
- * Consecutive half-moves without a pawn move or capture.
+ * Draw counters owned by one game.
  */
-let halfmoveClock = 0;
+export type GameStatusTracker = {
+  /**
+   * Consecutive half-moves without a pawn move or capture.
+   */
+  halfmoveClock: number;
+  /**
+   * Number of times each position has appeared.
+   */
+  positionCounts: Map<string, number>;
+};
 
 /**
- * Number of times each position has appeared in this game.
+ * Draw counters used by the legacy global game.
  */
-let positionCounts = new Map<string, number>();
+const defaultTracker: GameStatusTracker = {
+  halfmoveClock: 0,
+  positionCounts: new Map(),
+};
+
+/**
+ * Creates draw counters for one game.
+ *
+ * @returns Empty status tracker.
+ */
+export function createGameStatusTracker(): GameStatusTracker {
+  return { halfmoveClock: 0, positionCounts: new Map() };
+}
 
 /**
  * Checks whether a value is an encoded 32-bit move.
@@ -204,26 +225,30 @@ function positionKey(): string {
 
 /**
  * Resets draw counters and game-over state for a new game.
+ *
+ * @param tracker Status tracker to reset.
  */
-export function resetGameStatus(): void {
-  halfmoveClock = 0;
+export function resetGameStatus(tracker: GameStatusTracker = defaultTracker): void {
+  tracker.halfmoveClock = 0;
   gameState.gameOver = false;
   gameState.result = null;
   gameState.checked = checkedForSideToMove();
-  positionCounts = new Map([[positionKey(), 1]]);
+  tracker.positionCounts = new Map([[positionKey(), 1]]);
 }
 
 /**
  * Recomputes check, draw and game-over state for the current position.
+ *
+ * @param tracker Status tracker for the game.
  */
-export function evaluateGameStatus(): void {
+export function evaluateGameStatus(tracker: GameStatusTracker = defaultTracker): void {
   const key = positionKey();
-  const count = positionCounts.get(key) ?? 1;
+  const count = tracker.positionCounts.get(key) ?? 1;
   gameState.checked = checkedForSideToMove();
   gameState.gameOver = false;
   gameState.result = null;
 
-  if (halfmoveClock >= 100 || count >= 3 || hasOnlyKings()) {
+  if (tracker.halfmoveClock >= 100 || count >= 3 || hasOnlyKings()) {
     gameState.gameOver = true;
     gameState.result = 'draw';
     return;
@@ -239,16 +264,17 @@ export function evaluateGameStatus(): void {
  * Updates draw counters and game-over state after a move has been applied.
  *
  * @param move Encoded move that was just applied.
+ * @param tracker Status tracker for the game.
  */
-export function updateGameStatus(move: number): void {
+export function updateGameStatus(move: number, tracker: GameStatusTracker = defaultTracker): void {
   const piece = gameState.pieces.find((candidate) => candidate.getId() === getMovePiece(move));
   if (piece?.getPawn() || getMoveCapture(move)) {
-    halfmoveClock = 0;
+    tracker.halfmoveClock = 0;
   } else {
-    halfmoveClock += 1;
+    tracker.halfmoveClock += 1;
   }
 
   const key = positionKey();
-  positionCounts.set(key, (positionCounts.get(key) ?? 0) + 1);
-  evaluateGameStatus();
+  tracker.positionCounts.set(key, (tracker.positionCounts.get(key) ?? 0) + 1);
+  evaluateGameStatus(tracker);
 }

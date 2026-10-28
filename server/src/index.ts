@@ -1,5 +1,6 @@
 import { adminCommands, isAdminAuthorized, runCommand, runConsoleCommand } from './admin.ts';
 import { broadcast, handleClose, handleMessage, handleOpen, type SocketData } from './socket.ts';
+import { pruneRooms } from './rooms.ts';
 import { captureInitialState } from './initial-state.ts';
 import { isOriginAllowed, parseAllowedOrigins } from './origin.ts';
 import { resetGameStatus } from './rules.ts';
@@ -95,6 +96,11 @@ function start() {
         sessionId: url.searchParams.get('sessionId'),
         clientColor: null,
         requestedColor,
+        gameId: url.searchParams.get('gameId'),
+        token: url.searchParams.get('token'),
+        accountId: null,
+        seat: null,
+        room: null,
       };
 
       if (server.upgrade(req, { data })) {
@@ -167,6 +173,7 @@ function start() {
 
   const pruneTimer = setInterval(() => {
     pruneSessions();
+    pruneRooms();
   }, sessionPruneIntervalMs);
   pruneTimer.unref();
 }

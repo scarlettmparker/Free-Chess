@@ -10,6 +10,15 @@ import {
   serializeGameState,
   type SerializedGameState,
 } from '~/utils/game-serialize.ts';
+import {
+  closeRoomSession,
+  handleRoomMessage,
+  openRoomSession,
+  sendRoomState,
+  type Room,
+  type RoomSeat,
+} from './rooms.ts';
+import { clientSecret } from '../../config.js';
 
 export type Color = 'white' | 'black' | null;
 
@@ -26,6 +35,26 @@ export type SocketData = {
    * Colour requested on the query string.
    */
   requestedColor: Color;
+  /**
+   * Game id supplied on the query string.
+   */
+  gameId: string | null;
+  /**
+   * Signed game token supplied on the query string.
+   */
+  token: string | null;
+  /**
+   * Account proven by the signed token.
+   */
+  accountId: string | null;
+  /**
+   * Seat held in the current game.
+   */
+  seat: RoomSeat | null;
+  /**
+   * Cached game room.
+   */
+  room: Room | null;
 };
 
 /**
@@ -96,6 +125,11 @@ export function reject(ws: ServerWebSocket<SocketData>, reason: string) {
  * @param ws Socket that opened.
  */
 export function handleOpen(ws: ServerWebSocket<SocketData>) {
+  if (ws.data.gameId) {
+    openRoomSession(ws, ws.data.gameId, ws.data.token, clientSecret);
+    return;
+  }
+
   const result = openSession(ws.data.sessionId, ws.data.requestedColor, ws);
 
   if (result.status === 'rejected') {
@@ -150,6 +184,10 @@ export function handleMessage(ws: ServerWebSocket<SocketData>, raw: string | Buf
   } catch (error) {
     console.error('WebSocket message handling failed', error);
     safeSend(ws, { type: 'error', reason: 'server-error' });
+    if (ws.data.gameId) {
+      sendRoomState(ws);
+      return;
+    }
     sendGameState(ws);
   }
 }
@@ -178,7 +216,13 @@ function processMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
     type: typeof message.type === 'string' ? message.type : 'unknown',
     color: ws.data.clientColor,
     session: ws.data.sessionId?.slice(0, 8) ?? 'none',
+    game: ws.data.gameId ?? 'none',
   });
+
+  if (ws.data.gameId) {
+    handleRoomMessage(ws, message);
+    return;
+  }
 
   if (message.type === 'hello') {
     if (message.color !== 'white' && message.color !== 'black') {
@@ -252,11 +296,14 @@ function processMessage(ws: ServerWebSocket<SocketData>, raw: string | Buffer) {
  * @param ws Socket that closed.
  */
 export function handleClose(ws: ServerWebSocket<SocketData>) {
-  if (ws.data.sessionId) {
+  if (ws.data.gameId) {
+    closeRoomSession(ws);
+  } else if (ws.data.sessionId) {
     detachSession(ws.data.sessionId, ws);
   }
   console.debug('Client disconnected', {
     color: ws.data.clientColor,
     session: ws.data.sessionId?.slice(0, 8) ?? 'none',
+    game: ws.data.gameId ?? 'none',
   });
 }
