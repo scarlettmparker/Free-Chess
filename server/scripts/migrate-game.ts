@@ -4,13 +4,15 @@
  */
 
 import { BUILTIN_DEFINITIONS } from '~/game/piece/builtins';
-import { openGameDatabase, resolveGameDbPath } from '~/server/game-db';
+import { ensureGameTables, openGameDatabase, resolveGameDbPath } from '~/server/game-db';
 
 const STARTING_FEN =
   '[7][3][5][9][11][5][3][7]/[1][1][1][1][1][1][1][1]/8/8/8/8/[0][0][0][0][0][0][0][0]/[6][2][4][8][10][4][2][6] w KQkq - 0 1';
 
 const db = openGameDatabase();
 const now = new Date().toISOString();
+
+ensureGameTables(db);
 
 db.run(`CREATE TABLE IF NOT EXISTS piece_definitions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
