@@ -25,6 +25,20 @@ export function resolveGameDbPath() {
 }
 
 /**
+ * Adds a column to a table when it is missing.
+ *
+ * @param db Open SQLite database handle.
+ * @param table Table to alter.
+ * @param column Column to add.
+ * @param definition Column definition.
+ */
+function addColumnIfMissing(db: Database, table: string, column: string, definition: string) {
+  const columns = db.query(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
+  if (columns.some((entry) => entry.name === column)) return;
+  db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+}
+
+/**
  * Creates the account game tables when they are missing.
  *
  * @param db Open SQLite database handle.
@@ -36,20 +50,30 @@ export function ensureGameTables(db: Database) {
       board_layout_id INTEGER,
       board_layout_name TEXT,
       initial_state TEXT NOT NULL,
+      final_state TEXT,
       creator_account_id TEXT NOT NULL,
       white_account_id TEXT,
       black_account_id TEXT,
       result TEXT,
       winner_account_id TEXT,
+      archive_state TEXT,
+      archive_error TEXT,
+      archive_attempted_at TEXT,
       created_at TEXT NOT NULL,
       started_at TEXT,
       finished_at TEXT
     )`);
 
+  addColumnIfMissing(db, 'games', 'final_state', 'TEXT');
+  addColumnIfMissing(db, 'games', 'archive_state', 'TEXT');
+  addColumnIfMissing(db, 'games', 'archive_error', 'TEXT');
+  addColumnIfMissing(db, 'games', 'archive_attempted_at', 'TEXT');
+
   db.run('CREATE INDEX IF NOT EXISTS games_white_account_idx ON games(white_account_id)');
   db.run('CREATE INDEX IF NOT EXISTS games_black_account_idx ON games(black_account_id)');
   db.run('CREATE INDEX IF NOT EXISTS games_creator_account_idx ON games(creator_account_id)');
   db.run('CREATE INDEX IF NOT EXISTS games_created_at_idx ON games(created_at DESC)');
+  db.run('CREATE INDEX IF NOT EXISTS games_archive_state_idx ON games(archive_state)');
 
   db.run(`CREATE TABLE IF NOT EXISTS game_moves (
       game_id TEXT NOT NULL REFERENCES games(id) ON DELETE CASCADE,

@@ -70,7 +70,7 @@ input AddTorrentInput {
   torrentFileBase64: String
 }
 
-""" Response payload for the addTorrent mutation."""
+"""Response payload for the addTorrent mutation."""
 type AddTorrentResponse {
   job: TorrentJob!
   message: String!
@@ -395,7 +395,7 @@ input BoardPlacementInput {
   square: Int!
 }
 
-""" Represents a storage bucket."""
+"""Represents a storage bucket."""
 type Bucket {
   created: String
   globalAliases: [String!]
@@ -413,7 +413,7 @@ type BulkCreateQuestionsResponse {
   questions: [Question!]!
 }
 
-""" Response payload for the cancelTorrent mutation."""
+"""Response payload for the cancelTorrent mutation."""
 type CancelTorrentResponse {
   job: TorrentJob!
   message: String!
@@ -780,7 +780,7 @@ type DeleteConfigurationResponse {
   message: String!
 }
 
-""" Response payload for the deleteFile mutation."""
+"""Response payload for the deleteFile mutation."""
 type DeleteFileResponse {
   key: String!
   message: String!
@@ -791,7 +791,7 @@ type DeleteIpWhitelistEntryResponse {
   message: String!
 }
 
-""" Response payload for the deleteKey mutation."""
+"""Response payload for the deleteKey mutation."""
 type DeleteKeyResponse {
   key: String!
   message: String!
@@ -836,7 +836,7 @@ input DeleteSubtitleInput {
   subtitleKey: String!
 }
 
-""" Response payload for deleteSubtitle."""
+"""Response payload for deleteSubtitle."""
 type DeleteSubtitleResponse {
   key: String!
   message: String!
@@ -1184,94 +1184,95 @@ input FetchSubtitleInput {
   subtitleKey: String
 }
 
-""" Response payload for fetchSubtitle."""
+"""Response payload for fetchSubtitle."""
 type FetchSubtitleResponse {
   subtitleKey: String
   vtt: String!
 }
 
-""" Represents a file object in a bucket."""
+"""Represents a file object in a bucket."""
 type File {
   key: String!
   lastModified: String
   size: Int
 }
 
-""" Mutations for filestore operations including multipart upload support.
-"""
+"""Mutations for filestore operations including multipart upload support."""
 type FilestoreMutations {
-  """ Adds a torrent from a magnet link or base64-encoded .torrent file."""
+  """Adds a torrent from a magnet link or base64-encoded .torrent file."""
   addTorrent(input: AddTorrentInput!): AddTorrentResponse!
 
-  """ Cancels a torrent download and clears its scratch files."""
+  """Cancels a torrent download and clears its scratch files."""
   cancelTorrent(jobId: String!): CancelTorrentResponse!
 
-  """ Delete a file."""
+  """Delete a file."""
   deleteFile(input: BucketKeyInput!): DeleteFileResponse!
 
-  """ Delete a key and propagate: recursively delete the key, all sub-keys and files under it.
+  """
+  Delete a key and propagate: recursively delete the key, all sub-keys and files under it.
   """
   deleteKey(input: BucketKeyInput!): DeleteKeyResponse!
 
-  """ Deletes a subtitle object."""
+  """Deletes a subtitle object."""
   deleteSubtitle(input: DeleteSubtitleInput!): DeleteSubtitleResponse!
 
-  """ Fetches a subtitle and optionally persists it."""
+  """Fetches a subtitle and optionally persists it."""
   fetchSubtitle(input: FetchSubtitleInput!): FetchSubtitleResponse!
 
-  """ Returns a presigned GET URL for direct browser download."""
+  """Returns a presigned GET URL for direct browser download."""
   getPresignedDownloadUrl(input: BucketKeyInput!): GetPresignedDownloadUrlResponse!
 
-  """ Returns a presigned PUT URL for direct browser-to-storage upload."""
+  """Returns a presigned PUT URL for direct browser-to-storage upload."""
   getPresignedUploadUrl(input: PresignInput!): GetPresignedUploadUrlResponse!
 
-  """ Batch-presigns multiple PUT URLs for multi-file uploads."""
+  """Batch-presigns multiple PUT URLs for multi-file uploads."""
   getPresignedUploadUrls(input: [PresignInput!]!): GetPresignedUploadUrlsResponse!
 
-  """ Pauses a torrent download."""
+  """Pauses a torrent download."""
   pauseTorrent(jobId: String!): PauseTorrentResponse!
 
-  """ Create a directory key (folder)."""
+  """Create a directory key (folder)."""
   putKey(input: PutKeyInput!): PutKeyResponse!
 
-  """ Renames a single file or a directory prefix. Validates conflicts when merge is false.
+  """
+  Renames a single file or a directory prefix. Validates conflicts when merge is false.
   """
   renameKey(input: RenameKeyInput!): RenameKeyResponse!
 
-  """ Resumes a paused torrent download."""
+  """Resumes a paused torrent download."""
   resumeTorrent(jobId: String!): ResumeTorrentResponse!
 
-  """ Searches OpenSubtitles for a video."""
+  """Searches OpenSubtitles for a video."""
   searchSubtitles(input: SearchSubtitlesInput!): [SubtitleSearchResult!]!
 }
 
-""" Queries for filestore operations."""
+"""Queries for filestore operations."""
 type FilestoreQueries {
   health: String
   listBuckets: [Bucket!]
 
-  """ List all active image key details in a bucket."""
+  """List all active image key details in a bucket."""
   listImages(bucket: String!): [KeyDetail!]
 
-  """ List keys under a prefix, returning objects and directory entries."""
+  """List keys under a prefix, returning objects and directory entries."""
   listKeys(bucket: String!, prefix: String): [KeyEntry!]
 
-  """ Locate a single key's metadata by bucket and key path."""
+  """Locate a single key's metadata by bucket and key path."""
   locate(bucket: String!, keyPath: String!): KeyDetail
 
-  """ Locate a single active image key detail by bucket and key path."""
+  """Locate a single active image key detail by bucket and key path."""
   locateImage(bucket: String!, keyPath: String!): KeyDetail
 
-  """ Searches Prowlarr for torrents matching the query."""
+  """Searches Prowlarr for torrents matching the query."""
   searchTorrents(query: String!): [TorrentSearchResult!]!
 
-  """ Lists subtitles for a video key."""
+  """Lists subtitles for a video key."""
   subtitles(bucket: String!, keyPath: String!): [Subtitle!]!
 
-  """ Look up a single torrent download job by id."""
+  """Look up a single torrent download job by id."""
   torrentJob(jobId: String!): TorrentJob
 
-  """ List torrent download jobs, optionally filtered by bucket and status."""
+  """List torrent download jobs, optionally filtered by bucket and status."""
   torrentJobs(bucket: String, status: TorrentJobStatus): [TorrentJob!]
 }
 
@@ -1433,15 +1434,15 @@ type GalleryQueries {
 }
 
 type Game {
-  archivedAt: DateTime!
+  archivedAt: DateTime
   blackAccountId: ID
   boardLayoutId: ID
   boardLayoutName: String!
   code: String!
   createdAt: DateTime!
   creatorAccountId: ID!
-  finalState: JSON!
-  finishedAt: DateTime!
+  finalState: JSON
+  finishedAt: DateTime
   id: ID!
   initialState: JSON!
   moveCount: Int!
@@ -1492,19 +1493,19 @@ type GameResponse {
   message: String!
 }
 
-""" Response payload for the getPresignedDownloadUrl mutation."""
+"""Response payload for the getPresignedDownloadUrl mutation."""
 type GetPresignedDownloadUrlResponse {
   message: String!
   url: String!
 }
 
-""" Response payload for the getPresignedUploadUrl mutation."""
+"""Response payload for the getPresignedUploadUrl mutation."""
 type GetPresignedUploadUrlResponse {
   message: String!
   url: String!
 }
 
-""" Response payload for the getPresignedUploadUrls mutation."""
+"""Response payload for the getPresignedUploadUrls mutation."""
 type GetPresignedUploadUrlsResponse {
   message: String!
   urls: [String!]!
@@ -1665,7 +1666,7 @@ enum ItemStatus {
 """A JSON scalar"""
 scalar JSON
 
-""" Detailed metadata for a specific key."""
+"""Detailed metadata for a specific key."""
 type KeyDetail {
   archivedAt: String
   bucket: String!
@@ -1679,7 +1680,7 @@ type KeyDetail {
   status: String!
 }
 
-""" Directory-like entry for a bucket key."""
+"""Directory-like entry for a bucket key."""
 type KeyEntry {
   description: String
   isDirectory: Boolean!
@@ -1688,7 +1689,7 @@ type KeyEntry {
   name: String
   size: Int
 
-  """ Present only when this key is an in-progress torrent download."""
+  """Present only when this key is an in-progress torrent download."""
   torrent: TorrentDownload
 }
 
@@ -1720,7 +1721,7 @@ type LogoutResponse {
 """A 64-bit signed integer"""
 scalar Long
 
-""" Torrent metadata captured when a job is added."""
+"""Torrent metadata captured when a job is added."""
 type MagnetDetail {
   comment: String
   createdBy: String
@@ -1876,7 +1877,7 @@ input PaginationInput {
   sorts: [SortInput!]
 }
 
-""" Response payload for the pauseTorrent mutation."""
+"""Response payload for the pauseTorrent mutation."""
 type PauseTorrentResponse {
   job: TorrentJob!
   message: String!
@@ -2016,7 +2017,7 @@ enum PostStatus {
   HIDDEN
 }
 
-""" Input for a single presigned-upload request."""
+"""Input for a single presigned-upload request."""
 input PresignInput {
   bucket: String!
   contentType: String
@@ -2085,7 +2086,7 @@ input PutKeyInput {
   key: String
 }
 
-""" Response payload for the putKey mutation."""
+"""Response payload for the putKey mutation."""
 type PutKeyResponse {
   key: String!
   message: String!
@@ -2334,7 +2335,7 @@ input RenameKeyInput {
   targetKey: String!
 }
 
-""" Response payload for the renameKey mutation."""
+"""Response payload for the renameKey mutation."""
 type RenameKeyResponse {
   conflicts: [String!]!
   hasConflicts: Boolean!
@@ -2358,7 +2359,7 @@ type ResetPasswordResponse {
   message: String!
 }
 
-""" Response payload for the resumeTorrent mutation."""
+"""Response payload for the resumeTorrent mutation."""
 type ResumeTorrentResponse {
   job: TorrentJob!
   message: String!
@@ -2528,7 +2529,7 @@ type SubmitAnswerResponse {
   message: String!
 }
 
-""" A subtitle object attached to a video key."""
+"""A subtitle object attached to a video key."""
 type Subtitle {
   bucket: String!
   createdAt: String
@@ -2541,7 +2542,7 @@ type Subtitle {
   subtitleKey: String!
 }
 
-""" A subtitle returned by an OpenSubtitles search."""
+"""A subtitle returned by an OpenSubtitles search."""
 type SubtitleSearchResult {
   downloads: Int
   fileId: Int
@@ -2553,7 +2554,7 @@ type SubtitleSearchResult {
   subtitleKey: String
 }
 
-""" Where a subtitle object came from."""
+"""Where a subtitle object came from."""
 enum SubtitleSource {
   LOCAL
   OPENSUBTITLES
@@ -2604,7 +2605,8 @@ enum ThreadStatus {
   LOCKED
 }
 
-""" The live download state attached to a key while a torrent is in progress.
+"""
+The live download state attached to a key while a torrent is in progress.
 """
 type TorrentDownload {
   downloadRateBps: Int
@@ -2619,14 +2621,14 @@ type TorrentDownload {
   totalBytes: Long
 }
 
-""" A single file declared within a torrent."""
+"""A single file declared within a torrent."""
 type TorrentFile {
   indexInTorrent: Int!
   path: String!
   size: Long!
 }
 
-""" A single torrent download job tracked in the database."""
+"""A single torrent download job tracked in the database."""
 type TorrentJob {
   bucket: String!
   completedAt: String
@@ -2649,7 +2651,7 @@ type TorrentJob {
   uploadedBytes: Long!
 }
 
-""" Lifecycle state of a torrent download job."""
+"""Lifecycle state of a torrent download job."""
 enum TorrentJobStatus {
   CANCELLED
   COMPLETED
@@ -2662,7 +2664,7 @@ enum TorrentJobStatus {
   UPLOADING
 }
 
-""" A torrent search result from Prowlarr."""
+"""A torrent search result from Prowlarr."""
 type TorrentSearchResult {
   leechers: Int!
   magnet: String!

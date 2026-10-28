@@ -1,6 +1,5 @@
 import type { GameArchiveInput } from '~/generated/graphql';
-import type { GameDto, GameMoveDto } from '~/server/games';
-import type { SerializedGameState } from '~/utils/game-serialize';
+import type { GameDto } from '~/server/games';
 
 type GameArchiveSource = {
   /**
@@ -10,11 +9,7 @@ type GameArchiveSource = {
   /**
    * Stored live moves.
    */
-  moves: GameMoveDto[];
-  /**
-   * Final engine snapshot.
-   */
-  finalState: SerializedGameState;
+  moves: GameDto['moves'];
   /**
    * Sun board layout id when known.
    */
@@ -28,17 +23,20 @@ type GameArchiveSource = {
  * @returns Archive mutation input.
  */
 export function buildGameArchiveInput(source: GameArchiveSource): GameArchiveInput {
-  const { game, moves, finalState, boardLayoutId = null } = source;
+  const { game, moves, boardLayoutId = null } = source;
   if (!game.finishedAt) {
     throw new Error('Cannot archive a game without a finish time');
   }
+  if (!game.finalState) {
+    throw new Error('Cannot archive a game without a final state');
+  }
 
   return {
-    code: game.id,
+    code: game.code,
     boardLayoutId,
-    boardLayoutName: game.boardLayoutName ?? 'Standard',
+    boardLayoutName: game.boardLayoutName,
     initialState: game.initialState,
-    finalState,
+    finalState: game.finalState,
     creatorAccountId: game.creatorAccountId,
     whiteAccountId: game.whiteAccountId,
     blackAccountId: game.blackAccountId,
@@ -47,10 +45,6 @@ export function buildGameArchiveInput(source: GameArchiveSource): GameArchiveInp
     createdAt: game.createdAt,
     startedAt: game.startedAt,
     finishedAt: game.finishedAt,
-    moves: moves.map((move) => ({
-      ply: move.ply,
-      move: move.move,
-      playedAt: move.playedAt,
-    })),
+    moves,
   };
 }

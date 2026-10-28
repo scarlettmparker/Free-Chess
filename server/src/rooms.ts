@@ -144,6 +144,19 @@ export const ROOM_IDLE_MS = 30 * 60 * 1000;
  */
 const rooms: Map<string, Room> = new Map();
 
+type GameFinishedHandler = (gameId: string) => void;
+
+let gameFinishedHandler: GameFinishedHandler | null = null;
+
+/**
+ * Registers a handler for games that finish in a room.
+ *
+ * @param handler Handler to call, or null to clear.
+ */
+export function setGameFinishedHandler(handler: GameFinishedHandler | null) {
+  gameFinishedHandler = handler;
+}
+
 /**
  * Sends a JSON message without throwing when the socket is gone.
  *
@@ -200,7 +213,8 @@ function cloneTracker(tracker: GameStatusTracker): GameStatusTracker {
  */
 export function loadRoom(game: GameDto): Room {
   const tracker = createGameStatusTracker();
-  restoreRoomState(game.initialState);
+  const initial = game.initialState as SerializedGameState;
+  restoreRoomState(initial);
   resetGameStatus(tracker);
 
   const moves = listMoves(game.id).map((entry) => entry.move);
@@ -214,12 +228,12 @@ export function loadRoom(game: GameDto): Room {
 
   return {
     gameId: game.id,
-    initial: game.initialState,
+    initial,
     snapshot: serializeGameState(gameState),
     moves,
     tracker,
-    status: game.status,
-    result: game.result,
+    status: game.status as GameStatus,
+    result: game.result as GameOutcome | null,
     creatorAccountId: game.creatorAccountId,
     whiteAccountId: game.whiteAccountId,
     blackAccountId: game.blackAccountId,
@@ -256,8 +270,8 @@ export function getRoom(gameId: string): Room | null {
  * @param game Stored game.
  */
 function syncRoom(room: Room, game: GameDto) {
-  room.status = game.status;
-  room.result = game.result;
+  room.status = game.status as GameStatus;
+  room.result = game.result as GameOutcome | null;
   room.creatorAccountId = game.creatorAccountId;
   room.whiteAccountId = game.whiteAccountId;
   room.blackAccountId = game.blackAccountId;
@@ -562,7 +576,8 @@ export function handleRoomMessage(ws: RoomSocket, message: { type?: unknown; mov
     room.status = 'finished';
     room.result = room.snapshot.result;
     const winningColor = winnerColor(room.result);
-    finishGame(room.gameId, room.result, accountForColor(room, winningColor));
+    finishGame(room.gameId, room.result, accountForColor(room, winningColor), room.snapshot);
+    gameFinishedHandler?.(room.gameId);
   }
 
   safeSend(ws, { type: 'move-accepted', move, status: moveStatus(room) });

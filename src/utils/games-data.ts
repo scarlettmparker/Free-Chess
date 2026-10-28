@@ -387,7 +387,7 @@ defineLoader({
 
     const games: LobbyGame[] = open.map((game) => ({
       id: game.id,
-      status: game.status,
+      status: game.status as GameStatus,
       boardLayoutName: game.boardLayoutName,
       createdAt: game.createdAt,
       whiteUsername: game.whiteAccountId
@@ -422,10 +422,10 @@ defineLoader({
 
     const data: PlayGameData = {
       id: game.id,
-      status: game.status,
-      result: game.result,
+      status: game.status as GameStatus,
+      result: game.result as GameOutcome | null,
       boardLayoutName: game.boardLayoutName,
-      initial: game.initialState,
+      initial: game.initialState as SerializedGameState,
       moves: listMoves(game.id).map((entry) => entry.move),
       whiteAccountId: game.whiteAccountId,
       blackAccountId: game.blackAccountId,
@@ -456,10 +456,10 @@ defineLoader({
     const usernames = await loadUsernames([game.whiteAccountId, game.blackAccountId]);
     const data: ReplayGameData = {
       id: game.id,
-      status: game.status,
-      result: game.result,
+      status: game.status as GameStatus,
+      result: game.result as GameOutcome | null,
       boardLayoutName: game.boardLayoutName,
-      initial: game.initialState,
+      initial: game.initialState as SerializedGameState,
       moves: listMoves(game.id).map((entry) => entry.move),
       whiteUsername: game.whiteAccountId
         ? (usernames.get(game.whiteAccountId) ?? game.whiteAccountId)
@@ -492,11 +492,11 @@ defineLoader({
 
     const games: GameHistoryEntry[] = page.games.map((game) => {
       const moves = listMoves(game.id).map((entry) => entry.move);
-      replayGameMoves(game.initialState, moves, moves.length);
+      replayGameMoves(game.initialState as SerializedGameState, moves, moves.length);
       return {
         id: game.id,
-        status: game.status,
-        result: game.result,
+        status: game.status as GameStatus,
+        result: game.result as GameOutcome | null,
         boardLayoutName: game.boardLayoutName,
         whiteUsername: game.whiteAccountId
           ? (usernames.get(game.whiteAccountId) ?? game.whiteAccountId)
@@ -506,7 +506,7 @@ defineLoader({
           : null,
         viewerSeat: viewerSeat(game, user.id),
         finalState: serializeGameState(gameState),
-        score: scoreFor(game.result),
+        score: scoreFor(game.result as GameOutcome | null),
         createdAt: game.createdAt,
         finishedAt: game.finishedAt,
       };

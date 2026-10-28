@@ -1,6 +1,7 @@
 import { adminCommands, isAdminAuthorized, runCommand, runConsoleCommand } from './admin.ts';
+import { startArchiveWorker } from './archive-worker.ts';
 import { broadcast, handleClose, handleMessage, handleOpen, type SocketData } from './socket.ts';
-import { pruneRooms } from './rooms.ts';
+import { pruneRooms, setGameFinishedHandler } from './rooms.ts';
 import { captureInitialState } from './initial-state.ts';
 import { isOriginAllowed, parseAllowedOrigins } from './origin.ts';
 import { resetGameStatus } from './rules.ts';
@@ -8,6 +9,7 @@ import { pruneSessions } from './sessions.ts';
 import { adminToken } from '../../config.js';
 import { mountGame } from '~/utils/index.ts';
 import { listLayouts, loadLayout } from '~/server/board-layouts';
+import { configureSunApi, archiveFinishedGame } from '~/server/game-archive-client';
 
 /**
  * HTTP and WebSocket host for the matchmaking service.
@@ -66,9 +68,14 @@ function start() {
     throw new Error('ALLOWED_WS_ORIGINS or ALLOWED_ORIGINS is required in production');
   }
 
+  configureSunApi();
+  setGameFinishedHandler((gameId) => {
+    void archiveFinishedGame(gameId);
+  });
   mountStandardLayout();
   captureInitialState();
   resetGameStatus();
+  startArchiveWorker();
 
   Bun.serve<SocketData>({
     hostname: host,

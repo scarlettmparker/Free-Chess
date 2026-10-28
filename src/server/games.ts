@@ -1,4 +1,5 @@
 import { randomInt } from 'node:crypto';
+import type { GetGameQuery } from '~/generated/graphql';
 import type { SerializedGameState } from '~/utils/game-serialize';
 import { openGameDatabase } from '~/server/game-db';
 
@@ -42,6 +43,10 @@ type GameRow = {
    */
   initial_state: string;
   /**
+   * Serialized final position.
+   */
+  final_state: string | null;
+  /**
    * Account that created the game.
    */
   creator_account_id: string;
@@ -75,81 +80,7 @@ type GameRow = {
   finished_at: string | null;
 };
 
-/**
- * Public game shape used by loaders and the worker.
- */
-export type GameDto = {
-  /**
-   * Seven character game id.
-   */
-  id: string;
-  /**
-   * Lifecycle state.
-   */
-  status: GameStatus;
-  /**
-   * Local board layout id.
-   */
-  boardLayoutId: number | null;
-  /**
-   * Board layout display name.
-   */
-  boardLayoutName: string | null;
-  /**
-   * Serialized starting position.
-   */
-  initialState: SerializedGameState;
-  /**
-   * Account that created the game.
-   */
-  creatorAccountId: string;
-  /**
-   * Account holding white.
-   */
-  whiteAccountId: string | null;
-  /**
-   * Account holding black.
-   */
-  blackAccountId: string | null;
-  /**
-   * Final engine result.
-   */
-  result: GameOutcome | null;
-  /**
-   * Account that won.
-   */
-  winnerAccountId: string | null;
-  /**
-   * Creation timestamp.
-   */
-  createdAt: string;
-  /**
-   * Time the second seat was filled.
-   */
-  startedAt: string | null;
-  /**
-   * Time the game finished.
-   */
-  finishedAt: string | null;
-};
-
-/**
- * Stored move row.
- */
-export type GameMoveDto = {
-  /**
-   * Encoded move offset.
-   */
-  move: number;
-  /**
-   * Zero based half move index.
-   */
-  ply: number;
-  /**
-   * Time the move was accepted.
-   */
-  playedAt: string;
-};
+export type GameDto = NonNullable<GetGameQuery['medusaQueries']['game']>;
 
 /**
  * Input required to create an account game.
@@ -277,18 +208,23 @@ const GAME_ID_ATTEMPTS = 8;
 function toGameDto(row: GameRow): GameDto {
   return {
     id: row.id,
+    code: row.id,
     status: row.status as GameStatus,
-    boardLayoutId: row.board_layout_id,
-    boardLayoutName: row.board_layout_name,
+    boardLayoutId: row.board_layout_id == null ? null : String(row.board_layout_id),
+    boardLayoutName: row.board_layout_name ?? 'Standard',
     initialState: JSON.parse(row.initial_state) as SerializedGameState,
+    finalState: row.final_state ? (JSON.parse(row.final_state) as SerializedGameState) : null,
     creatorAccountId: row.creator_account_id,
     whiteAccountId: row.white_account_id,
     blackAccountId: row.black_account_id,
     result: row.result as GameOutcome | null,
     winnerAccountId: row.winner_account_id,
+    moveCount: 0,
     createdAt: row.created_at,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
+    archivedAt: null,
+    moves: [],
   };
 }
 
@@ -368,7 +304,7 @@ export function getGame(id: string): GameDto | null {
  * @param gameId Game id.
  * @returns Moves ordered by ply.
  */
-export function listMoves(gameId: string): GameMoveDto[] {
+export function listMoves(gameId: string): GameDto['moves'] {
   const db = openGameDatabase();
   const rows = db
     .query('SELECT move, ply, played_at FROM game_moves WHERE game_id = ? ORDER BY ply ASC')
@@ -527,12 +463,14 @@ export function recordMove(gameId: string, move: number): { ply: number; playedA
  * @param gameId Game id.
  * @param result Engine result.
  * @param winnerAccountId Winning account or null for a draw.
+ * @param finalState Final engine snapshot.
  * @returns True when the game moved to finished.
  */
 export function finishGame(
   gameId: string,
   result: GameOutcome,
   winnerAccountId: string | null,
+  finalState: SerializedGameState | null = null,
 ): boolean {
   const db = openGameDatabase();
   const finishedAt = new Date().toISOString();
@@ -540,11 +478,93 @@ export function finishGame(
   try {
     const updated = db.run(
       `UPDATE games
-       SET status = 'finished', result = ?, winner_account_id = ?, finished_at = ?
+       SET status = 'finished', result = ?, winner_account_id = ?, finished_at = ?,
+           final_state = COALESCE(?, final_state), archive_state = 'pending',
+           archive_error = NULL, archive_attempted_at = NULL
        WHERE id = ? AND status <> 'finished'`,
-      [result, winnerAccountId, finishedAt, gameId],
+      [result, winnerAccountId, finishedAt, finalState ? JSON.stringify(finalState) : null, gameId],
     );
     return updated.changes > 0;
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Lists finished games that still need archiving.
+ *
+ * @param limit Maximum number of games.
+ * @returns Game ids.
+ */
+export function listPendingArchiveIds(limit = 20): string[] {
+  const db = openGameDatabase();
+
+  try {
+    const rows = db
+      .query(
+        `SELECT id FROM games
+         WHERE status = 'finished'
+         ORDER BY finished_at ASC, created_at ASC
+         LIMIT ?`,
+      )
+      .all(limit) as Array<{ id: string }>;
+    return rows.map((row) => row.id);
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Marks a finished game as waiting for archiving.
+ *
+ * @param gameId Game id.
+ */
+export function markGameArchivePending(gameId: string) {
+  const db = openGameDatabase();
+
+  try {
+    db.run(
+      `UPDATE games
+       SET archive_state = 'pending', archive_error = NULL, archive_attempted_at = ?
+       WHERE id = ?`,
+      [new Date().toISOString(), gameId],
+    );
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Records a failed archive attempt.
+ *
+ * @param gameId Game id.
+ * @param error Error message.
+ */
+export function markGameArchiveFailed(gameId: string, error: string) {
+  const db = openGameDatabase();
+
+  try {
+    db.run(
+      `UPDATE games
+       SET archive_state = 'failed', archive_error = ?, archive_attempted_at = ?
+       WHERE id = ?`,
+      [error, new Date().toISOString(), gameId],
+    );
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * Deletes a game and its moves.
+ *
+ * @param gameId Game id.
+ */
+export function deleteGame(gameId: string) {
+  const db = openGameDatabase();
+
+  try {
+    db.run('DELETE FROM games WHERE id = ?', [gameId]);
   } finally {
     db.close();
   }

@@ -12,11 +12,15 @@ const {
   assignSeat,
   countResultsForAccount,
   createGame,
+  deleteGame,
   finishGame,
   generateGameId,
   getGame,
   listGamesForAccount,
   listMoves,
+  listPendingArchiveIds,
+  markGameArchiveFailed,
+  markGameArchivePending,
   recordMove,
 } = await import('~/server/games');
 
@@ -160,5 +164,28 @@ describe('games', () => {
     expect(countResultsForAccount(winnerId).wins).toBe(1);
     expect(countResultsForAccount('loser-account').losses).toBe(1);
     expect(listGamesForAccount(winnerId).games[0]?.id).toBe(id);
+  });
+
+  it('keeps a finished game until archiving succeeds', () => {
+    const id = createGame(
+      {
+        boardLayoutId: null,
+        boardLayoutName: 'Standard',
+        initialState,
+        creatorAccountId: 'archive-creator',
+      },
+      { idFactory: () => 'ARCHIVE1' },
+    );
+
+    expect(finishGame(id, 'draw', null, initialState)).toBe(true);
+    expect(getGame(id)?.finalState).toEqual(initialState);
+    expect(listPendingArchiveIds()).toContain(id);
+
+    markGameArchiveFailed(id, 'Sun unavailable');
+    markGameArchivePending(id);
+    deleteGame(id);
+
+    expect(getGame(id)).toBeNull();
+    expect(listPendingArchiveIds()).not.toContain(id);
   });
 });

@@ -36,6 +36,11 @@ export const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
  */
 export const clientSecret = process.env.CSRF_SECRET || process.env.BETTER_AUTH_SECRET || '';
 
+/**
+ * API key for the Free Chess archive service account.
+ */
+export const sunApiKey = process.env.FREE_CHESS_API_KEY || '';
+
 export const manifestPath = './dist/client/.vite/manifest.json';
 
 /**
@@ -50,4 +55,8 @@ export const adminToken = process.env.ADMIN_TOKEN || '';
 
 if (isProduction && !adminToken) {
   console.warn('ADMIN_TOKEN is empty; game admin actions will be rejected by the worker');
+}
+
+if (isProduction && !sunApiKey) {
+  console.warn('FREE_CHESS_API_KEY is empty; game archiving will be rejected by Sun');
 }

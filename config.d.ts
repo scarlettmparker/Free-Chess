@@ -6,6 +6,7 @@ declare const backendHost: string;
 declare const backendPort: number;
 declare const allowedOrigins: string[];
 declare const clientSecret: string;
+declare const sunApiKey: string;
 declare const manifestPath: string;
 declare const matchmakingUrl: string;
 declare const adminToken: string;
@@ -18,6 +19,7 @@ export {
   backendPort,
   allowedOrigins,
   clientSecret,
+  sunApiKey,
   manifestPath,
   matchmakingUrl,
   adminToken,

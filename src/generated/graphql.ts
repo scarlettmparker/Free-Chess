@@ -49,21 +49,21 @@ export type GameArchiveInput = {
   boardLayoutId?: string | number | null | undefined;
   boardLayoutName: string;
   code: string;
-  createdAt: unknown;
+  createdAt: string;
   creatorAccountId: string | number;
   finalState: unknown;
-  finishedAt: unknown;
+  finishedAt: string;
   initialState: unknown;
   moves: Array<GameMoveInput>;
   result?: string | null | undefined;
-  startedAt?: unknown;
+  startedAt?: string | null | undefined;
   whiteAccountId?: string | number | null | undefined;
   winnerAccountId?: string | number | null | undefined;
 };
 
 export type GameMoveInput = {
-  move: unknown;
-  playedAt: unknown;
+  move: number;
+  playedAt: string;
   ply: number;
 };
 
@@ -150,14 +150,14 @@ export type GetAccountQueryVariables = Exact<{
 }>;
 
 
-export type GetAccountQuery = { gaiaQueries: { account: { id: string, username: string, status: AccountStatus, roles: Array<string>, createdAt: unknown, updatedAt: unknown } | null } };
+export type GetAccountQuery = { gaiaQueries: { account: { id: string, username: string, status: AccountStatus, roles: Array<string>, createdAt: string | null, updatedAt: string | null } | null } };
 
 export type ListAccountsQueryVariables = Exact<{
   pagination?: PaginationInput | null | undefined;
 }>;
 
 
-export type ListAccountsQuery = { gaiaQueries: { accounts: { items: Array<{ id: string, username: string, status: AccountStatus, roles: Array<string>, createdAt: unknown, updatedAt: unknown }>, pageInfo: { totalCount: number } } } };
+export type ListAccountsQuery = { gaiaQueries: { accounts: { items: Array<{ id: string, username: string, status: AccountStatus, roles: Array<string>, createdAt: string | null, updatedAt: string | null }>, pageInfo: { totalCount: number } } } };
 
 export type LoginMutationVariables = Exact<{
   input: LoginInput;
@@ -248,14 +248,14 @@ export type ArchiveGameMutationVariables = Exact<{
 }>;
 
 
-export type ArchiveGameMutation = { medusaMutations: { archiveGame: { message: string, game: { id: string, code: string, archivedAt: unknown } } } };
+export type ArchiveGameMutation = { medusaMutations: { archiveGame: { message: string, game: { id: string, code: string, archivedAt: string | null } } } };
 
 export type AuditLogsQueryVariables = Exact<{
   pagination?: PaginationInput | null | undefined;
 }>;
 
 
-export type AuditLogsQuery = { medusaQueries: { auditLogs: { total: number, items: Array<{ id: string, createdAt: unknown, actorId: string | null, actorEmail: string | null, action: string, target: string | null, outcome: string, detail: string | null, ip: string | null }> } } };
+export type AuditLogsQuery = { medusaQueries: { auditLogs: { total: number, items: Array<{ id: string, createdAt: string | null, actorId: string | null, actorEmail: string | null, action: string, target: string | null, outcome: string, detail: string | null, ip: string | null }> } } };
 
 export type DeleteBoardLayoutMutationVariables = Exact<{
   id: string | number;
@@ -283,14 +283,14 @@ export type GetBoardLayoutQueryVariables = Exact<{
 }>;
 
 
-export type GetBoardLayoutQuery = { medusaQueries: { boardLayout: { id: string, slug: string, name: string, description: string | null, isSystem: boolean, createdAt: unknown, updatedAt: unknown, placements: Array<{ definitionId: string, color: number, square: number }> } | null } };
+export type GetBoardLayoutQuery = { medusaQueries: { boardLayout: { id: string, slug: string, name: string, description: string | null, isSystem: boolean, createdAt: string | null, updatedAt: string | null, placements: Array<{ definitionId: string, color: number, square: number }> } | null } };
 
 export type GetGameQueryVariables = Exact<{
   code: string;
 }>;
 
 
-export type GetGameQuery = { medusaQueries: { game: { id: string, code: string, boardLayoutId: string | null, boardLayoutName: string, status: string, initialState: unknown, finalState: unknown, creatorAccountId: string, whiteAccountId: string | null, blackAccountId: string | null, result: string | null, winnerAccountId: string | null, moveCount: number, createdAt: unknown, startedAt: unknown, finishedAt: unknown, archivedAt: unknown, moves: Array<{ ply: number, move: unknown, playedAt: unknown }> } | null } };
+export type GetGameQuery = { medusaQueries: { game: { id: string, code: string, boardLayoutId: string | null, boardLayoutName: string, status: string, initialState: unknown, finalState: unknown, creatorAccountId: string, whiteAccountId: string | null, blackAccountId: string | null, result: string | null, winnerAccountId: string | null, moveCount: number, createdAt: string, startedAt: string | null, finishedAt: string | null, archivedAt: string | null, moves: Array<{ ply: number, move: number, playedAt: string }> } | null } };
 
 export type GetPieceQueryVariables = Exact<{
   id: string | number;
@@ -309,7 +309,7 @@ export type GetPieceSetQuery = { medusaQueries: { pieceSet: { id: string, name: 
 export type ListBoardLayoutsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type ListBoardLayoutsQuery = { medusaQueries: { boardLayouts: Array<{ id: string, slug: string, name: string, description: string | null, isSystem: boolean, createdAt: unknown, updatedAt: unknown, placements: Array<{ definitionId: string, color: number, square: number }> }> } };
+export type ListBoardLayoutsQuery = { medusaQueries: { boardLayouts: Array<{ id: string, slug: string, name: string, description: string | null, isSystem: boolean, createdAt: string | null, updatedAt: string | null, placements: Array<{ definitionId: string, color: number, square: number }> }> } };
 
 export type ListPieceSetsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -328,7 +328,7 @@ export type MyGamesQueryVariables = Exact<{
 }>;
 
 
-export type MyGamesQuery = { medusaQueries: { myGames: { items: Array<{ id: string, code: string, boardLayoutName: string, status: string, finalState: unknown, creatorAccountId: string, whiteAccountId: string | null, blackAccountId: string | null, result: string | null, winnerAccountId: string | null, moveCount: number, createdAt: unknown, startedAt: unknown, finishedAt: unknown, archivedAt: unknown }>, pageInfo: { page: number, size: number, totalPages: number, totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean } } } };
+export type MyGamesQuery = { medusaQueries: { myGames: { items: Array<{ id: string, code: string, boardLayoutName: string, status: string, finalState: unknown, creatorAccountId: string, whiteAccountId: string | null, blackAccountId: string | null, result: string | null, winnerAccountId: string | null, moveCount: number, createdAt: string, startedAt: string | null, finishedAt: string | null, archivedAt: string | null }>, pageInfo: { page: number, size: number, totalPages: number, totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean } } } };
 
 export type SaveBoardLayoutMutationVariables = Exact<{
   input: BoardLayoutInput;
