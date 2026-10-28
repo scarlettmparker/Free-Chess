@@ -40,7 +40,13 @@
   padding: 0;
   border: 0;
   background: none;
+  color: var(--tertiary);
   cursor: pointer;
+  text-decoration: underline;
+}
+
+.copy:hover {
+  color: var(--tertiary-hover);
 }
 
 .detail {
