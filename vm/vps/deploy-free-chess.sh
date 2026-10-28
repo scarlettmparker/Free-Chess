@@ -80,7 +80,7 @@ render_env() {
     "$out"
   cat >>"$out" <<ENV
 MATCHMAKING_URL=http://127.0.0.1:4001
-ALLOWED_WS_ORIGINS=chess.scarlettparker.co.uk
+ALLOWED_WS_ORIGINS=chess.int.scarlettparker.co.uk,chess.scarlettparker.co.uk
 GAME_DB_PATH=/var/lib/free-chess/game.db
 HOST=0.0.0.0
 PORT=4001
