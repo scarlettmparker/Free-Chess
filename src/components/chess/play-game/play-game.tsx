@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
 import { Card, CardBody, CardDescription, CardHeader, CardTitle } from '@sun/components';
+import { DocumentDuplicateOutline } from 'preact-heroicons';
 import type { GameResult } from '~/game/consts/board';
 import { useChessSession } from '~/hooks/use-chess-session';
 import type { PlayGameData } from '~/utils/games-data';
@@ -48,6 +49,17 @@ const PlayGame = (props: PlayGameProps) => {
   const result = view.result ?? game.result;
   const resultKey = result ? resultKeys[result] : 'game-over';
 
+  /**
+   * Copies the game code.
+   */
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(game.id);
+    } catch (error) {
+      console.error('Could not copy game code', error);
+    }
+  };
+
   return (
     <div className={styles.game}>
       <div className={styles.layout}>
@@ -60,9 +72,19 @@ const PlayGame = (props: PlayGameProps) => {
                 <CardDescription>{t('waiting-body')}</CardDescription>
               </CardHeader>
               <CardBody>
-                <p className={styles.code}>
-                  {t('game-code')} {game.id}
-                </p>
+                <div className={styles.code_row}>
+                  <p className={styles.code}>
+                    {t('game-code')} {game.id}
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.copy}
+                    aria-label={t('copy-code', { code: game.id })}
+                    onClick={copyCode}
+                  >
+                    <DocumentDuplicateOutline width={16} height={16} aria-hidden="true" />
+                  </button>
+                </div>
               </CardBody>
             </Card>
           </aside>

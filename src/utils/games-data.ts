@@ -150,6 +150,14 @@ export type PlayGameData = {
    * Signed token for the room socket.
    */
   token: string | null;
+  /**
+   * Creation timestamp.
+   */
+  createdAt: string;
+  /**
+   * Finish timestamp.
+   */
+  finishedAt: string | null;
 };
 
 /**
@@ -421,6 +429,8 @@ defineLoader({
         blackUsername: archived.blackPlayer?.username ?? null,
         viewerSeat: archived.viewerSeat as GameViewerSeat,
         token: null,
+        createdAt: archived.createdAt,
+        finishedAt: archived.finishedAt,
       };
 
       return { game: data };
@@ -456,6 +466,8 @@ defineLoader({
         : null,
       viewerSeat: viewerSeat(game, user?.id ?? null),
       token,
+      createdAt: game.createdAt,
+      finishedAt: game.finishedAt,
     };
 
     return { game: data };

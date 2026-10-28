@@ -7,6 +7,7 @@ export type SessionMsg = {
   gameId?: string;
   accountId?: string;
   seat?: string;
+  guestToken?: string | null;
 };
 
 export type RejectMsg = { type: 'reject'; reason?: string };
@@ -16,6 +17,26 @@ export const setStoredSession = (id: string | null) => {
   if (id) localStorage.setItem('fc_sessionId', id);
   else localStorage.removeItem('fc_sessionId');
 };
+
+/**
+ * Reads the stored guest token for a game.
+ *
+ * @param gameId Game id.
+ * @returns Guest token, or null.
+ */
+function getStoredGuestToken(gameId: string): string | null {
+  return localStorage.getItem(`fc_guest_token:${gameId}`);
+}
+
+/**
+ * Stores the guest token for a game.
+ *
+ * @param gameId Game id.
+ * @param token Guest token.
+ */
+function setStoredGuestToken(gameId: string, token: string) {
+  localStorage.setItem(`fc_guest_token:${gameId}`, token);
+}
 
 /**
  * Adds query parameters to a WebSocket URL.
@@ -153,8 +174,12 @@ export const connectToGame = (
   onSession?: (msg: SessionMsg) => void,
 ): Promise<WebSocket> => {
   const params: Array<[string, string]> = [['gameId', gameId]];
-  if (token) params.push(['token', token]);
-  return connectUrl(withParams(baseUrl, params), onSession);
+  const gameToken = token ?? getStoredGuestToken(gameId);
+  if (gameToken) params.push(['token', gameToken]);
+  return connectUrl(withParams(baseUrl, params), (msg) => {
+    if (msg.guestToken) setStoredGuestToken(gameId, msg.guestToken);
+    onSession?.(msg);
+  });
 };
 
 /**

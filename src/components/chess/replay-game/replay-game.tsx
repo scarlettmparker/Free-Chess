@@ -34,7 +34,7 @@ const ReplayGame = (props: ReplayGameProps) => {
   const { game } = props;
   const { t: tChess } = useTranslation('chess');
   const { t } = useTranslation('play');
-  const { view, historyIndex, moveCount } = useGameReplay({
+  const { view } = useGameReplay({
     initialState: game.initial,
     moves: game.moves,
     result: game.result,
@@ -43,20 +43,6 @@ const ReplayGame = (props: ReplayGameProps) => {
 
   return (
     <div className={styles.game}>
-      <ul className={styles.players} aria-label={t('players')}>
-        <li>
-          {t('white')} | {game.whiteUsername ?? t('unknown-player')}
-        </li>
-        <li>
-          {t('black')} | {game.blackUsername ?? t('unknown-player')}
-        </li>
-      </ul>
-
-      <p className={styles.hint}>{t('replay-hint')}</p>
-      <p className={styles.counter} role="status">
-        {t('move-counter', { current: historyIndex, total: moveCount })}
-      </p>
-
       <Board view={view} onSelect={noop} />
 
       {game.result ? (

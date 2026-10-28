@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { gameState, moveType } from '~/game/consts/board.ts';
 import { makeMove } from '~/game/move/move.ts';
 import {
@@ -24,7 +25,7 @@ import {
   type GameOutcome,
   type GameStatus,
 } from '~/server/games';
-import { verifyGameToken } from '~/server/game-token';
+import { createGameToken, verifyGameToken } from '~/server/game-token';
 
 /**
  * Seat held by a room connection.
@@ -455,26 +456,30 @@ export function openRoomSession(
     return;
   }
 
-  const accountId = claims?.accountId ?? null;
+  let accountId: string;
+  let guestToken: string | null = null;
+  if (claims) {
+    accountId = claims.accountId;
+  } else {
+    accountId = randomUUID();
+    guestToken = createGameToken({ gameId, accountId }, secret);
+  }
   let game = getGame(gameId);
   if (!game) {
     rejectRoom(ws, 'game-not-found');
     return;
   }
 
-  let joined = false;
-  if (accountId) {
-    const assignment = assignSeat(gameId, accountId);
-    if (assignment.status === 'not-found') {
-      rejectRoom(ws, 'game-not-found');
-      return;
-    }
-    joined = assignment.status === 'joined';
-    game = getGame(gameId);
-    if (!game) {
-      rejectRoom(ws, 'game-not-found');
-      return;
-    }
+  const assignment = assignSeat(gameId, accountId);
+  if (assignment.status === 'not-found') {
+    rejectRoom(ws, 'game-not-found');
+    return;
+  }
+  const joined = assignment.status === 'joined';
+  game = getGame(gameId);
+  if (!game) {
+    rejectRoom(ws, 'game-not-found');
+    return;
   }
 
   let room: Room | null;
@@ -499,7 +504,7 @@ export function openRoomSession(
   ws.data.seat = seatForAccount(room, accountId);
   ws.data.room = room;
 
-  safeSend(ws, sessionMessage(room, accountId));
+  safeSend(ws, { ...sessionMessage(room, accountId), guestToken });
 
   if (joined) {
     broadcastRoomState(room);

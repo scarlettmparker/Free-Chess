@@ -24,8 +24,27 @@
   width: 100%;
 }
 
+.code_row {
+  display: flex;
+  align-items: center;
+  gap: var(--sm);
+}
+
 .code {
   margin: 0;
+}
+
+.copy {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--tertiary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.copy:hover {
+  color: var(--tertiary-hover);
 }
 
 .status {

@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
 import { useTranslation } from '@sun/i18n';
 import { usePageData } from '@sun/ssr/react';
 import PlayGame from '~/components/chess/play-game';
+import ReplayGame from '~/components/chess/replay-game';
 import type { PlayGameData } from '~/utils/games-data';
 import styles from './play-game-page.module.css';
 
@@ -31,9 +31,7 @@ const PlayGamePage = (props: PlayGamePageProps) => {
   if (game.status === 'finished') {
     return (
       <main className={styles.page}>
-        <p className={styles.notice}>
-          {t('game-over')} | <Link to={`/replay/${game.id}`}>{t('view-replay')}</Link>
-        </p>
+        <ReplayGame game={game} />
       </main>
     );
   }

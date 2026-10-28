@@ -234,6 +234,46 @@ describe('room sessions', () => {
     expect(lastMessage(creatorWs)).toMatchObject({ type: 'state', status: 'active' });
   });
 
+  it('assigns black to a signed guest identity', () => {
+    const id = 'ROOM00G';
+    const creator = 'creator-room-guest';
+    createGame(
+      {
+        boardLayoutId: null,
+        boardLayoutName: 'Standard',
+        initialState: standardInitial(),
+        creatorAccountId: creator,
+      },
+      { idFactory: () => id },
+    );
+
+    const creatorWs = makeSocket();
+    openRoomSession(
+      creatorWs,
+      id,
+      createGameToken({ gameId: id, accountId: creator }, secret),
+      secret,
+    );
+    const guestWs = makeSocket();
+    openRoomSession(guestWs, id, null, secret);
+
+    const session = messages(guestWs)[0];
+    expect(session).toMatchObject({
+      type: 'session',
+      seat: 'black',
+      status: 'active',
+    });
+    expect(getGame(id)?.blackAccountId).toBe(session.accountId);
+
+    const reconnectWs = makeSocket();
+    openRoomSession(reconnectWs, id, String(session.guestToken), secret);
+    expect(messages(reconnectWs)[0]).toMatchObject({
+      type: 'session',
+      seat: 'black',
+      status: 'active',
+    });
+  });
+
   it('blocks moves before an opponent joins', () => {
     const id = 'ROOM008';
     const creator = 'creator-room-8';

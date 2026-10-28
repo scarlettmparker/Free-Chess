@@ -67,6 +67,7 @@ type ServerMessage =
       gameId?: string;
       accountId?: string;
       seat?: string;
+      guestToken?: string | null;
     }
   | {
       type: 'state';

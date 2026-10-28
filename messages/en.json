@@ -97,6 +97,7 @@
     "waiting-title": "Waiting for an opponent",
     "waiting-body": "Share this game code with another player.",
     "game-code": "Game code",
+    "copy-code": "Copy game code {{code}}",
     "game-over": "Game Over",
     "view-replay": "View replay",
     "replay-hint": "Use the left and right arrow keys to step through the game.",
