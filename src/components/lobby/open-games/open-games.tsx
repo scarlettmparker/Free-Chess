@@ -20,19 +20,6 @@ const OpenGames = (props: OpenGamesProps) => {
   const { t } = useTranslation('lobby');
 
   /**
-   * Describes the opponent or board layout for a game.
-   *
-   * @param game Game to describe.
-   * @returns Short detail line.
-   */
-  const detail = (game: LobbyGame): string => {
-    if (game.status === 'active') {
-      return `${game.whiteUsername ?? t('unknown-player')} vs ${game.blackUsername ?? t('unknown-player')}`;
-    }
-    return game.boardLayoutName ?? t('layout-standard');
-  };
-
-  /**
    * Copies the game code.
    *
    * @param id Game code to copy.
@@ -71,8 +58,9 @@ const OpenGames = (props: OpenGamesProps) => {
                     >
                       <DocumentDuplicateOutline width={16} height={16} aria-hidden="true" />
                     </button>
+                    <span aria-hidden="true">-</span>
+                    <span>{game.boardLayoutName ?? t('layout-standard')}</span>
                   </div>
-                  <p className={styles.detail}>{detail(game)}</p>
                 </div>
               </li>
             ))}

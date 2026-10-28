@@ -1,11 +1,15 @@
 .page {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: minmax(18rem, 1fr) 2fr;
+  align-items: start;
   gap: var(--xl);
   width: 100%;
   max-width: 90rem;
   margin: 0 auto;
   padding: var(--xl) var(--lg);
+}
+
+.profile_column {
+  width: 100%;
+  min-width: 20rem;
 }

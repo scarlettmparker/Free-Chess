@@ -9,9 +9,11 @@ import styles from './profile.module.css';
 const Profile = () => {
   return (
     <main className={styles.page}>
-      <Suspense fallback={null}>
-        <ProfileCard />
-      </Suspense>
+      <div className={styles.profile_column}>
+        <Suspense fallback={null}>
+          <ProfileCard />
+        </Suspense>
+      </div>
       <Suspense fallback={null}>
         <ProfileHistory />
       </Suspense>

@@ -9,12 +9,14 @@ import styles from './manage-account.module.css';
 const ManageAccount = () => {
   return (
     <main className={styles.page}>
-      <Suspense fallback={null}>
-        <ProfileCard />
-      </Suspense>
-      <Suspense fallback={null}>
-        <DangerZone />
-      </Suspense>
+      <div className={styles.settings}>
+        <Suspense fallback={null}>
+          <ProfileCard />
+        </Suspense>
+        <Suspense fallback={null}>
+          <DangerZone />
+        </Suspense>
+      </div>
     </main>
   );
 };

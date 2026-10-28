@@ -5,3 +5,10 @@
   gap: var(--lg);
   padding: var(--xl) var(--lg);
 }
+
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lg);
+  width: 20rem;
+}
